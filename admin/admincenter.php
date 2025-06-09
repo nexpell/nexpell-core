@@ -254,8 +254,6 @@ function dashnavi() {
                         . '<i class="' . $icon_class . ' ac-link"></i> ' 
                         . $link_name 
                         . '</a></li>';
-
-                    #$cat_links_html .= '<li class="' . $active_class . '"><a href="' . $url . '"><i class="bi bi-plus-lg ac-link"></i> ' . $link_name . '</a></li>';
                 }
             }
 
@@ -313,7 +311,7 @@ header('Content-Type: text/html; charset=UTF-8');
 	<meta name="copyright" content="Copyright &copy; 2017-2023 by webspell-rm.de">
 	<meta name="author" content="webspell-rm.de">
 
-	<link rel="SHORTCUT ICON" href="/admin/favicon.ico">
+	<link rel="SHORTCUT ICON" href="/admin/images/favicon.ico">
 
 	<title>Webspell-RM - Bootstrap Admin Theme</title>
 
@@ -326,14 +324,10 @@ header('Content-Type: text/html; charset=UTF-8');
 	<link href="/admin/css/metisMenu.css" rel="stylesheet" />
 
 	<!-- Custom Fonts -->
-	<!--<link href='../components/fontawesome/css/all.css' rel='stylesheet' type='text/css'>-->
 	<link href="/admin/css/bootstrap-icons.min.css" rel="stylesheet">
 
 	<!-- colorpicker -->
 	<link href="/admin/css/bootstrap-colorpicker.min.css" rel="stylesheet">
-
-	<!-- DataTables -->
-	<!--<link href="/admin/css/dataTables.bootstrap5.min.css" rel="stylesheet" type="text/css" />-->
     
 
 </head>
@@ -343,11 +337,11 @@ header('Content-Type: text/html; charset=UTF-8');
 	<div id="wrapper">
 		<!-- Navigation -->
 
-		<ul class="nav justify-content-between" style="width: 100%; margin-bottom: 25px; margin-top: 0px;background: #fe821d;box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px; !important;">
+		<ul class="nav justify-content-between" style="width: 100%; margin-bottom: 25px; margin-top: 0px;background: #eaeaea;box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px; !important;">
    
-            <li class="nav-item" style="width: 70%;margin-left: 6px;">
+            <li class="nav-item" style="width: 80%;margin-left: 6px;">
                 <a class="navbar-brand" href="/admin/admincenter.php">
-        		            <img src="/admin/images/rm.png" style="width: 230px;margin-top: 7px; margin-bottom: 7px;" alt="setting">
+        		            <img src="/admin/images/logo.png" style="width: 230px;margin-top: 7px; margin-bottom: 7px;" alt="setting">
         		        </a>
             </li>
             <li class="nav-item">

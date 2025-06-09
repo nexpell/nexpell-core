@@ -70,11 +70,9 @@ echo '<div class="card">
         </ol>
     </nav>  
 
-    <div class="card-body">
+    <div class="card-body p-0">
 
         <div class="container py-5">
-
-        <h2>' . $languageService->get('title') . '</h2>
 
         <form method="post">
         <table class="table table-bordered table-striped bg-white shadow-sm">

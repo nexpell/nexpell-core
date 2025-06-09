@@ -56,9 +56,9 @@ echo'<div class="card">
           <div class="col-md-6">
             <div class="card">
               <div class="card-header">
-                <img src="/admin/images/info-logo.png" style="max-width: 100%;height: auto;">
+                <img src="/admin/images/logo.png" style="max-width: 100%;height: 25px;">
               </div>            
-              <div class="card-body" style="min-height: 270px">
+              <div class="card-body" style="min-height: 398px">
                 <h4>'.$languageService->get('welcome').'</h4>
                 '.$languageService->get('hello').' <b>'.$username.'</b> '.$languageService->get('last_login').' '.$lastlogin_formatted.'.
                 '. $languageService->get('welcome_message').'
