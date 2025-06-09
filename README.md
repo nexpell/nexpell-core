@@ -1,76 +1,72 @@
-# Webspell-RM 3.0 – Next Generation (2025)
+# nexpell 1.0 – Next Generation CMS (2025)
 
-**Webspell-RM 3.0** ist ein vollständig neu entwickeltes, modulares und sicheres Open-Source CMS für Communities, Clans und Teams – bereit für das Jahr 2025 und darüber hinaus.
+**nexpell** ist ein vollständig neu entwickeltes, modulares und sicheres Open-Source CMS für Communities, Clans und Teams – bereit für das Jahr 2025 und darüber hinaus.
 
-![Logo](https://www.webspell-rm.de/includes/plugins/picupdate/images/390.png)
-![Logo](https://www.webspell-rm.de/includes/plugins/picupdate/images/371.png)
+![nexpell Logo](https://www.nexpell.de/assets/images/logo_dark.png)
 
-👉 Offizielle Website: [webspell-rm.de](https://www.webspell-rm.de)  
-👉 Forum & Support: [webspell-rm.de/forum.html](https://www.webspell-rm.de/forum.html)  
-👉 Dokumentation: [webspell-rm.de/wiki.html](https://www.webspell-rm.de/wiki.html)
+👉 **Offizielle Website:** [https://www.nexpell.de](https://www.nexpell.de)  
+👉 **Forum & Support:** [https://www.nexpell.de/forum.html](https://www.nexpell.de/forum.html)  
+👉 **Dokumentation:** [https://www.nexpell.de/wiki.html](https://www.nexpell.de/wiki.html)
 
 ---
 
 ## 🚀 Highlights
 
-- ✅ **Installer-basiertes Setup (1 Datei – alles drin!)**
-- 🔌 **Erweiterbares Plugin-System**
-- 🎨 **Moderne Themes mit Bootstrap 5**
-- 🌍 **Multilingual mit Sprachdateien**
-- 🔐 **DSGVO-konform & reCAPTCHA**
-- 🛡️ **Sicher: CSRF-, XSS- & IP-Schutz**
-- 📈 **Statistiken, Admincenter 2.0, Rollen & Rechte**
-- 📱 **100 % Responsive Design (Frontend & Admin)**
-- 📦 **PHP 8.x Unterstützung & saubere OOP-Struktur**
+- ✅ Installer-basiertes Setup *(1 Datei – alles drin!)*
+- 🔌 Erweiterbares Plugin-System
+- 🎨 Moderne Themes mit Bootstrap 5
+- 🌍 Multilingual durch Sprachdateien
+- 🔐 DSGVO-konform & reCAPTCHA
+- 🛡️ Schutz vor CSRF, XSS & IP-Missbrauch
+- 📈 Statistiken, Admincenter 2.0, Rollen & Rechte
+- 📱 100 % Responsive Design (Frontend & Admin)
+- 📦 PHP 8.x Unterstützung & saubere OOP-Struktur
 
 ---
 
 ## 📥 Installation in 6 Schritten
 
-Die Installation erfolgt **ausschließlich über den neuen Web-Installer**.  
-Dieser lädt automatisch **alle Systemdateien und SQL-Strukturen** auf deinen Webserver – kein manuelles Hochladen notwendig.
+Die Installation erfolgt **ausschließlich über den neuen Web-Installer**, der alle Systemdateien und SQL-Strukturen automatisch einrichtet.
 
 ### 🔧 Voraussetzungen
 
-Bevor du den Installer startest, stellt Webspell-RM sicher, dass dein Webserver folgende Anforderungen erfüllt:
-
 - PHP **≥ 8.1**
-- MySQL **8** / MariaDB **≥ 10.3**
-- Schreibrechte für relevante Ordner (z. B. `/config`, `/uploads`, etc.)
-- Apache/Nginx mit mod_rewrite empfohlen
+- MySQL **8** oder MariaDB **≥ 10.3**
+- Schreibrechte für `/config`, `/uploads`, etc.
+- Apache/Nginx mit `mod_rewrite` empfohlen
 
-**⚠️ Wird eine Voraussetzung nicht erfüllt, wird die Installation blockiert!**
-
----
+> ⚠️ Wird eine Voraussetzung nicht erfüllt, blockiert der Installer den Vorgang!
 
 ### 🛠️ Installationsschritte
 
-1. **Lade den offiziellen Installer herunter**  
-   👉 [Download Installer (.php)](https://www.webspell-rm.de/download)
+1. **Installer herunterladen:**  
+   [Download Installer (.php)](https://www.nexpell.de/download)
 
-2. **Lade den `Installer` auf deinen Webserver (Root-Verzeichnis)**
+2. **Hochladen:**  
+   Lade den Installer auf deinen Webserver (Root-Verzeichnis)
 
-3. **Rufe im Browser auf:**  
+3. **Installer aufrufen:**  
+   `https://deinedomain.de/installer.php`
 
+4. **Durch die 6 Schritte folgen:**
+   - Serverprüfung
+   - Datenbankkonfiguration
+   - Systeminstallation
+   - Admin-Zugang anlegen
+   - Sprache & Einstellungen
+   - Cleanup
 
-4. **Folge den 6 Installationsschritten:**
-- Schritt 1: Serverprüfung
-- Schritt 2: Datenbankzugang
-- Schritt 3: Systemdaten laden (automatisch)
-- Schritt 4: Administrator anlegen
-- Schritt 5: Sprache & Einstellungen
-- Schritt 6: Abschluss & Cleanup
+5. **Fertigstellung:**  
+   - CMS wird automatisch installiert
+   - DB-Tabellen werden erstellt
+   - Setup konfiguriert
 
-5. Nach der Installation wird:
-- Die komplette CMS-Struktur auf den Webserver entpackt
-- Alle Datenbanktabellen angelegt
-- Dein System konfiguriert
-
-6. **Entferne den `Install Ordner` danach aus Sicherheitsgründen**
+6. **Wichtig:**  
+   Entferne den `install/`-Ordner nach Abschluss der Installation!
 
 ---
 
-## 📂 Systemstruktur (wird durch den Installer angelegt)
+## 📂 Systemstruktur
 
 ```plaintext
 /admin/             → Adminbereich mit modularer Navigation  
@@ -81,34 +77,36 @@ Bevor du den Installer startest, stellt Webspell-RM sicher, dass dein Webserver 
 /config/            → Konfigurationen (wird automatisch erstellt)  
 /install/           → Nur während des Setups vorhanden  
 /uploads/           → Medien und Dateien  
+```
 
-🧩 Erweiterbarkeit
+---
 
-    Eigene Themes via /themes/
+## 🧩 Erweiterbarkeit
 
-    Eigene Plugins via /plugins/
+- Eigene Themes via `/themes/`
+- Eigene Plugins via `/plugins/`
+- Eigene Module mit Routing und Zugriffskontrolle
+- Template-System mit `{{ platzhalter }}`-Syntax
+- Saubere OOP-Struktur mit modernem PHP
 
-    Eigene Module mit Routing und Zugriffskontrolle
+---
 
-    Template-System mit {{ platzhalter }}-Syntax
+## 📚 Dokumentation & Hilfe
 
-    Vollständig objektorientiert mit modernen PHP-Strukturen
+- 📖 [nexpell Wiki](https://www.nexpell.de/wiki.html)  
+- 💬 [Forum](https://www.nexpell.de/forum.html)  
+- 🐛 Bugs & Feedback: *GitHub Issues (folgt)*
 
-📚 Dokumentation & Hilfe
+---
 
-    📖 Webspell-RM Wiki
+## 🤝 Mitwirken
 
-    💬 Forum
+Pull Requests, Bugreports & Feature-Wünsche sind willkommen!  
+Bitte halte dich an unseren Beitrag-Guide (folgt demnächst).
 
-    🐛 Bug melden: GitHub Issues
+---
 
-🤝 Mitwirken
+## 📜 Lizenz
 
-Pull Requests, Fehlerberichte und Feature-Vorschläge sind jederzeit willkommen.
-Bitte lies unseren Beitrag-Guide (folgt demnächst).
-
-📜 Lizenz
-
-Dieses Projekt steht unter der GNU General Public License v3.0.
-Copyright © 2025
-webspell-rm.de        
+nexpell wird unter der **GNU General Public License v3.0** veröffentlicht.  
+© 2025 [nexpell.de](https://www.nexpell.de)

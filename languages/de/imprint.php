@@ -50,16 +50,17 @@ $language_array = array(
     'company_alert' => 'Wichtiger Hinweis: Alle angegebenen Daten dienen ausschließlich Informationszwecken.',
 
     'imprint_info' => '<small>
-
-            Diese Website verwendet Webspell-RM 3.0 (Next Generation) – ein modernes, quelloffenes Content-Management-System.<br>
+            <img src="/images/logo.png" alt="nexpell Logo" style="height:25px; vertical-align:middle;">&nbsp;
+            Diese Website verwendet <strong>nexpell</strong> – ein modernes, quelloffenes Content-Management-System der nächsten Generation.<br>
             Die Software basiert auf PHP 8.1 oder höher, MySQL 8 bzw. MariaDB 10 und nutzt Bootstrap 5 für das Frontend-Layout.<br>
-            Weitere Informationen und Dokumentation findest du im <a href="https://www.webspell-rm.de/wiki" target="_blank" rel="noopener">Webspell-RM Wiki</a>.<br>
-            Quellcode und Download: <a href="https://www.webspell-rm.de" target="_blank" rel="noopener">www.webspell-rm.de</a><br>
-            Webspell-RM wird unter der GNU General Public License (GPL) veröffentlicht.<br>
-            © 2018–2025 by <a href="https://www.webspell-rm.de" target="_blank" rel="noopener">webspell-rm.de</a> – Webspell-RM
+            Weitere Informationen und Dokumentation findest du im <a href="https://www.nexpell.de/wiki" target="_blank" rel="noopener">nexpell Wiki</a>.<br>
+            Quellcode und Download: <a href="https://www.nexpell.de" target="_blank" rel="noopener">www.nexpell.de</a><br>
+            nexpell wird unter der GNU General Public License (GPL) veröffentlicht.<br>
+            © 2025 by <a href="https://www.nexpell.de" target="_blank" rel="noopener">nexpell.de</a>
             <br>
             Verwendete Drittanbieter-Bibliotheken: <strong>jQuery</strong>, <strong>Bootstrap</strong>, <strong>Bootswatch</strong> (alle unter MIT-Lizenz).
-        </small>'
+        </small>',
+
 
 
     
