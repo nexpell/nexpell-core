@@ -1,0 +1,127 @@
+<!-- imprint_content -->
+<style>
+.type-fields { display: none; }
+</style>
+
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-paragraph"></i> {imprint}
+    </div>
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb t-5 p-2 bg-light">
+            <li class="breadcrumb-item">
+                <a href="admincenter.php?site=user_roles">{imprint}</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">New / Edit</li>
+        </ol>
+    </nav>
+
+    <div class="card-body">
+        <div class="container py-5">
+            <h3 class="mb-4">{imprint}</h3>
+
+            <form class="form-horizontal" method="post" action="">
+                <!-- Auswahl des Typs -->
+                <div class="mb-3">
+                    <select name="type" id="type" class="form-select">
+                        <option value="private" {private_selected}>{private_option}</option>
+                        <option value="association" {association_selected}>{association_option}</option>
+                        <option value="small_business" {small_business_selected}>{small_business_option}</option>
+                        <option value="company" {company_selected}>{company_option}</option>
+                    </select>
+                </div>
+
+                <!-- Felder für private Anbieter -->
+                <div id="fields_private" class="type-fields">
+                    <div class="mb-3">
+                        <label>{name_label}</label>
+                        <input type="text" name="company_name_private" value="{company_name_private_value}" placeholder="{name_placeholder}" class="form-control">
+                    </div>
+                </div>
+
+                <!-- Felder für Vereine -->
+                <div id="fields_association" class="type-fields">
+                    <div class="mb-3">
+                        <label>{association_name_label}</label>
+                        <input type="text" name="company_name_association" value="{company_name_association_value}" placeholder="{association_name_placeholder}" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label>{represented_by_label}</label>
+                        <input type="text" name="represented_by_association" value="{represented_by_association_value}" placeholder="{represented_by_placeholder}" class="form-control">
+                    </div>
+                </div>
+
+                <!-- Felder für Kleinunternehmer -->
+                <div id="fields_small_business" class="type-fields">
+                    <div class="mb-3">
+                        <label>{small_business_name_label}</label>
+                        <input type="text" name="company_name_small_business" value="{company_name_small_business_value}" placeholder="{small_business_name_placeholder}" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label>{tax_id_label}</label>
+                        <input type="text" name="tax_id_small_business" value="{tax_id_small_business_value}" placeholder="{tax_id_placeholder}" class="form-control">
+                    </div>
+                </div>
+
+                <!-- Felder für Unternehmen -->
+                <div id="fields_company" class="type-fields">
+                    <div class="mb-3">
+                        <label>{company_name_label}</label>
+                        <input type="text" name="company_name_company" value="{company_name_company_value}" placeholder="{company_name_placeholder}" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label>{represented_by_company_label}</label>
+                        <input type="text" name="represented_by_company" value="{represented_by_company_value}" placeholder="{represented_by_company_placeholder}" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label>{tax_id_company_label}</label>
+                        <input type="text" name="tax_id_company" value="{tax_id_company_value}" placeholder="{tax_id_company_placeholder}" class="form-control">
+                    </div>
+                </div>
+
+                <!-- Allgemeine Felder -->
+                <div class="common-fields mt-3">
+                    <div class="mb-3">
+                        <label>{email_label}</label>
+                        <input type="email" name="email" value="{email_value}" placeholder="{email_placeholder}" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label>{website_label}</label>
+                        <input type="url" name="website" value="{website_value}" placeholder="{website_placeholder}" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label>{phone_label}</label>
+                        <input type="tel" name="phone" value="{phone_value}" placeholder="{phone_placeholder}" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label>{disclaimer_label}</label>
+                        <textarea name="disclaimer" placeholder="{disclaimer_placeholder}" class="ckeditor">{disclaimer_value}</textarea>
+                    </div>
+                </div>
+
+                <input type="hidden" name="captcha_hash" value="{hash}" />
+                <button type="submit" name="submit" class="btn btn-primary btn-sm">{save_button}</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const typeSelect = document.getElementById('type');
+    const typeFields = document.querySelectorAll('.type-fields');
+
+    function updateTypeFields() {
+        typeFields.forEach(el => el.style.display = 'none');
+        const selected = typeSelect.value;
+        const activeField = document.getElementById('fields_' + selected);
+        if (activeField) activeField.style.display = 'block';
+    }
+
+    typeSelect.addEventListener('change', updateTypeFields);
+    updateTypeFields(); // Initial bei Seitenladen
+});
+</script>
+
+<!-- end -->

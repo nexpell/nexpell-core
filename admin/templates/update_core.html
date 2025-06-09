@@ -1,0 +1,50 @@
+<!-- update_core_content -->
+
+<div class="card">
+            <div class="card-header">
+                <i class="bi bi-paragraph"></i> Update Manager
+            </div>
+
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb t-5 p-2 bg-light">
+                    <li class="breadcrumb-item">
+                        <a href="admincenter.php?site=user_roles">Update Manager</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">update</li>
+                </ol>
+            </nav>
+
+            <div class="card-body">
+                <div class="container py-5">
+                    <h2 class="mb-4">Update Manager</h2>
+
+
+
+
+
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <p><strong>Installierte Version:</strong> {current_version}</p>
+            <p><strong>Verfügbare Version:</strong> {new_version}</p>
+            <p><strong>Änderungen:</strong><br>{changelog}</p>
+        </div>
+    </div>
+
+{if show_button}
+    <form method="post" class="mb-4">
+        <button type="submit" class="btn btn-warning">
+            <i class="bi bi-arrow-clockwise"></i> Update jetzt starten
+        </button>
+    </form>
+    <div class="update-log mt-3">
+        {update_status}
+    </div>
+{else}
+    <div class="alert alert-success">Du verwendest bereits die neueste Version.</div>
+{endif}
+</div>
+
+
+</div></div>
+<!-- end -->

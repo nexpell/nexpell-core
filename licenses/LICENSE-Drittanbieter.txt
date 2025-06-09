@@ -1,0 +1,60 @@
+# 📦 Drittanbieter-Lizenzen
+
+Diese Datei listet alle in Webspell-RM 3.0 verwendeten Drittanbieter-Bibliotheken inklusive ihrer jeweiligen Lizenzbedingungen.
+
+---
+
+## 🏗️ Herkunft und Lizenz der Kernsoftware
+
+Diese Software basiert auf dem Open-Source-System **webSPELL v4.3.0**, das unter der [GNU GENERAL PUBLIC LICENSE (GPL)](https://www.gnu.org/licenses/gpl-3.0.html) veröffentlicht wurde.  
+Die Weiterentwicklung erfolgte über folgende Stationen:
+
+- **webSPELL v4.3.0 (GPL)**
+- → **Webspell-NOR** (inoffizieller Fork)
+- → **Webspell-RM (bis v2.1.6)**
+- → **Webspell-RM 3.0** (diese Version)
+
+Die gesamte Codebasis steht ebenfalls unter der **GPL v3.0 oder neuer**. Jegliche Weitergabe oder Modifikation muss gemäß der GPL erfolgen.
+
+---
+
+## 📚 Verwendete Bibliotheken & Frameworks
+
+### 🧱 PHP
+
+| Bibliothek                | Lizenz                         | Link                                           |
+|---------------------------|--------------------------------|------------------------------------------------|
+| PHPMailer                 | LGPL-2.1 or later              | https://github.com/PHPMailer/PHPMailer         |
+| reCAPTCHA PHP Client      | MIT                            | https://github.com/google/recaptcha            |
+| Password Compatibility    | Public Domain                  | https://github.com/ircmaxell/password_compat   |
+
+---
+
+### 🧩 JavaScript / CSS
+
+| Bibliothek                | Lizenz                         | Link                                           |
+|---------------------------|--------------------------------|------------------------------------------------|
+| Bootstrap                 | MIT                            | https://getbootstrap.com                       |
+| jQuery                    | MIT                            | https://jquery.com                             |
+| Font Awesome              | CC BY 4.0 / MIT                | https://fontawesome.com                        |
+| Bootswatch                | MIT                            | https://bootswatch.com                         |
+| Google reCAPTCHA          | Google APIs Terms of Service   | https://www.google.com/recaptcha/about/        |
+
+---
+
+### 📝 Hinweise
+
+- Alle genannten Bibliotheken sind Open-Source oder frei nutzbar und werden in Übereinstimmung mit ihren Lizenzen eingebunden.
+- Die genauen Lizenztexte befinden sich ggf. im jeweiligen Verzeichnis (`vendor/`, `assets/`, `js/`, etc.) oder in der offiziellen Dokumentation der jeweiligen Projekte.
+- Änderungen an Drittanbieter-Code wurden **nicht vorgenommen**, sofern nicht ausdrücklich im Code oder Changelog vermerkt.
+
+---
+
+## 📄 Haftungsausschluss
+
+> Die Webspell-RM-Entwickler übernehmen keine Verantwortung für die Lizenzkonformität beim Weitervertrieb der Software durch Dritte.  
+> Bitte prüfe eigenverantwortlich, ob deine Nutzung und Verteilung den Lizenzbedingungen der eingebundenen Drittanbieter-Bibliotheken entspricht.
+
+---
+
+© 2025 Webspell-RM Team – Veröffentlicht unter der **GNU GENERAL PUBLIC LICENSE (GPL v3.0+)**

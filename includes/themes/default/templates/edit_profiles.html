@@ -1,0 +1,92 @@
+<!-- edit_profiles_head -->
+<div class="head-boxes {class}">
+    <span class="head-boxes-head">{title}</span>
+    <h2 class="head-h2">
+        <span class="head-boxes-title">{title}</span>
+    </h2>
+    <p class="head-boxes-foot">{subtitle}</p>
+</div>
+<!-- END -->
+
+<!-- edit_profiles_content -->
+<div class="card">
+  <div class="card-body">
+    <div class="container my-4">
+      <h4>{edit_profile_title}</h4>
+
+      <form method="POST" enctype="multipart/form-data" class="container mt-4">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="firstname" class="form-label">{label_firstname}</label>
+            <input type="text" class="form-control" id="firstname" name="firstname" value="{firstname}">
+          </div>
+          <div class="col-md-6">
+            <label for="lastname" class="form-label">{label_lastname}</label>
+            <input type="text" class="form-control" id="lastname" name="lastname" value="{lastname}">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="location" class="form-label">{label_location}</label>
+          <input type="text" class="form-control" id="location" name="location" value="{location}">
+        </div>
+
+        <div class="mb-3">
+          <label for="about_me" class="form-label">{label_about_me}</label>
+          <textarea class="form-control" id="about_me" name="about_me" rows="4">{about_me}</textarea>
+        </div>
+
+        <div class="mb-3">
+          <label for="avatar" class="form-label">{label_avatar}</label><br>
+          <?php if (!empty($avatar_url)): ?>
+            <img src="{avatar_url}" alt="Avatar" class="mb-2 rounded" style="max-height: 100px;"><br>
+          <?php endif; ?>
+          <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*">
+        </div>
+
+        <hr>
+
+        <h5>{title_social_networks}</h5>
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label for="twitter" class="form-label">{label_twitter}</label>
+            <input type="text" class="form-control" id="twitter" name="twitter" value="{twitter}">
+          </div>
+          <div class="col-md-4">
+            <label for="facebook" class="form-label">{label_facebook}</label>
+            <input type="text" class="form-control" id="facebook" name="facebook" value="{facebook}">
+          </div>
+          <div class="col-md-4">
+            <label for="website" class="form-label">{label_website}</label>
+            <input type="text" class="form-control" id="website" name="website" value="{website}">
+          </div>
+          <div class="col-md-4">
+            <label for="github" class="form-label">{label_github}</label>
+            <input type="text" class="form-control" id="github" name="github" value="{github}">
+          </div>
+          <div class="col-md-4">
+            <label for="instagram" class="form-label">{label_instagram}</label>
+            <input type="text" class="form-control" id="instagram" name="instagram" value="{instagram}">
+          </div>
+        </div>
+
+        <hr>
+
+        <h5>{title_settings}</h5>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="dark_mode" name="dark_mode" {dark_mode_checked}>
+          <label class="form-check-label" for="dark_mode"><s>{label_dark_mode}</s></label>
+        </div>
+        <div class="form-check mb-4">
+          <input class="form-check-input" type="checkbox" id="email_notifications" name="email_notifications" {email_notifications_checked}>
+          <label class="form-check-label" for="email_notifications"><s>{label_email_notifications}</s></label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">{btn_save}</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- END -->

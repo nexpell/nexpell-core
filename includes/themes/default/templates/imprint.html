@@ -1,0 +1,82 @@
+<!-- imprint_head -->
+<div class="head-boxes {class}">
+    <span class="head-boxes-head">{title}</span>
+    <h2 class="head-h2">
+        <span class="head-boxes-title">{title}</span>
+    </h2>
+    <p class="head-boxes-foot">{subtitle}</p>
+</div>
+<!-- END -->
+<!-- imprint_content -->
+<div class="card">
+    <div class="card-body">
+        <div class="container py-5">
+            <h3 class="mb-4">{impressum_hp_name}</h3>
+
+        <p class="mb-2">
+            <span class="fw-semibold">{impressum_type_label}:</span>
+            <span>{impressum_type}</span>
+        </p>
+
+        {if company_name}
+        <p class="mb-2">
+            <span class="fw-bold">{name_label}:</span>
+            <span>{company_name}</span>
+        </p>
+        {endif}
+
+        {if association}
+        <p class="mb-2">
+            <span class="fw-bold">{association_label}:</span>
+            <span>{association}</span>
+        </p>
+        {endif}
+
+        {if represented_by}
+        <p class="mb-2">
+            <span class="fw-bold">{represented_by_label}:</span>
+            <span>{represented_by}</span>
+        </p>
+        {endif}
+
+        {if tax_id}
+        <p class="mb-2">
+            <span class="fw-semibold">{tax_id_label}:</span>
+            <span>{tax_id}</span>
+        </p>
+        {endif}
+
+        <p class="mb-2">
+            <span class="fw-semibold">{email_label}:</span>
+            <a href="mailto:{email}">{email}</a>
+        </p>
+
+        {if website}
+        <p class="mb-2">
+            <span class="fw-semibold">{website_label}:</span>
+            <a href="{website}" target="_blank">{website}</a>
+        </p>
+        {endif}
+
+        {if phone}
+        <p class="mb-2">
+            <span class="fw-semibold">{phone_label}:</span>
+            <span>{phone}</span>
+        </p>
+        {endif}
+
+        {if disclaimer}
+        <div class="mt-4">
+            <p class="fw-semibold mb-2">{disclaimer_label}:</p>
+            <div>{disclaimer}</div>
+        </div>
+        {endif}
+
+        <hr class="my-4">
+        {imprint_info}
+       
+    </div>
+</div>
+
+
+<!-- END -->

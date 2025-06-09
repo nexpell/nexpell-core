@@ -1,0 +1,28 @@
+Webspell-RM 3.0 – Next Generation 2025
+--------------------------------------
+
+Copyright (C) 2025 Webspell-RM Team
+https://www.webspell-rm.de
+
+This program is free software: you can redistribute it and/or
+modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation, either version 2 of
+the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program in the file COPYING.
+If not, see <https://www.gnu.org/licenses/>.
+
+--- 
+
+This software is a complete rework based on the original
+"Webspell Clanpackage" (2005–2011) by Michael Gruber (webspell.at),
+which was licensed under the GPL.
+
+Webspell-RM is a modern, community-driven continuation
+with major codebase and architectural changes.

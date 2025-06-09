@@ -1,0 +1,45 @@
+/* Container muss als Positionierungs-Kontext dienen */
+/* Gesamtgröße der Navbar */
+.navbar {
+  
+  min-height: 80px;
+  
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Container soll sich an Höhe anpassen */
+.navbar .container {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* Logo-Link (bleibt links oben korrekt) */
+.logo-link {
+ 
+}
+
+/* Bild innerhalb des Links */
+.logo-link img {
+  max-height: 65px; /* damit bleibt etwas Luft nach oben/unten */
+  height: auto;
+  display: block;
+}
+
+
+
+[data-bs-theme="dark"] .dropdown-menu {
+  background-color: #343a40;
+  color: #fff;
+  border: none;
+}
+
+[data-bs-theme="dark"] .dropdown-item {
+  color: #f8f9fa;
+}
+
+[data-bs-theme="dark"] .dropdown-item:hover {
+  background-color: #495057;
+  color: #fff;
+}
