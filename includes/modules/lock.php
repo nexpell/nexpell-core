@@ -70,7 +70,7 @@
     <div class="card shadow-lg p-4">
         <div class="card-body">
             <h1 class="text-danger mb-3"><i class="bi bi-cone-striped"></i> Wartungsmodus</h1>
-            <p class="reason"><?= $data_array['reason'] ?? 'Wartungsmodus aktiv.' ?></p>
+            <p class="reason text-start"><?= $data_array['reason'] ?? 'Wartungsmodus aktiv.' ?></p>
 
             <?php
             $startTime = $data_array['time'] ?? time();

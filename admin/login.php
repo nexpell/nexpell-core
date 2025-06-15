@@ -35,7 +35,7 @@ if (!isset($_SESSION['language'])) {
 
 // Objekt erstellen (ggf. $database übergeben)
 $languageService = new LanguageService($_database);
-$languageService->readModule('admincenter', true);
+$languageService->readModule('login', true);
 
 $ip = $_SERVER['REMOTE_ADDR'];
 $message = '';
@@ -156,7 +156,7 @@ if (!empty($email) && LoginSecurity::isEmailBanned($ip, $email)) {
     <div class="d-none d-md-flex col-md-4 col-lg-6 bg-image">
         <div class="logo">
             <img class="mw-100 mh-100" src="/admin/images/logo.png" alt="Logo">
-            <p class="text1">webspell <span>rm</span></p>
+            <p class="text1">ne<span>x</span>pell</p>
         </div>
     </div>
     <div class="col-md-8 col-lg-6 no-bg">

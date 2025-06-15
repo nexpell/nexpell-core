@@ -486,11 +486,11 @@ if (file_exists('classes/LanguageService.php')) {
     systeminc('../system/classes/LanguageService');
 }
 
-/*if (file_exists('classes/LanguageManager.php')) {
+if (file_exists('classes/LanguageManager.php')) {
     systeminc('classes/LanguageManager');
 } else {
     systeminc('../system/classes/LanguageManager');
-}*/
+}
 
 #if (file_exists('classes/Router.php')) {
 #    systeminc('classes/Router');

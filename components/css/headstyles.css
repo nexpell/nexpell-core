@@ -7,7 +7,7 @@
 
 .head-boxes-1 h2,
 .head-boxes-1 h2::after {
-  font-size: 28px;
+  font-size: 18px;
 }
 
 .head-boxes-1 span.head-boxes-head {
@@ -18,7 +18,7 @@
   display: inline-block;
     line-height: 1 !important;
     margin: 0 -11px -11px;
-    padding: 15px 0 12px 0;
+    padding: 15px 0 10px 0;
     text-transform: uppercase;
     border-bottom: 1px solid rgba(var(--bs-primary-rgb), 1);
     

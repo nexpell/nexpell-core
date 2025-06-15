@@ -1,24 +1,57 @@
 <?php
 
 use webspell\LanguageManager;
+use webspell\LanguageService;
+use webspell\AccessControl;
 
+// Session absichern
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Standardsprache setzen
+$_SESSION['language'] = $_SESSION['language'] ?? 'de';
+
+// Initialisieren
+global $_database, $languageService;
+$languageService = new LanguageService($_database);
+$languageService->readModule('languages', true);
+
+// Adminrechte prüfen
+AccessControl::checkAdminAccess('ac_languages');
+
+// Manager initialisieren
 $langManager = new LanguageManager($_database);
 
+// Initialwerte
+$action = $_GET['action'] ?? '';
+$editid = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$editLanguage = null;
 $message = '';
 $messageClass = '';
 
-// Aktion aus URL lesen
-$action = $_GET['action'] ?? '';
-$editid = ($action === 'edit' && isset($_GET['id'])) ? (int)$_GET['id'] : 0;
-$editLanguage = null;
 
-if ($editid > 0) {
+if ($action === 'delete' && $editid > 0) {
+    $lang = $langManager->getLanguage($editid);
+    if ($lang) {
+        $langManager->deleteLanguage($editid);
+        $message = 'Sprache erfolgreich gelöscht.';
+        $messageClass = 'alert-success';
+    } else {
+        $message = 'Sprache konnte nicht gefunden werden.';
+        $messageClass = 'alert-danger';
+    }
+    $action = '';
+}
+
+// Sprache zur Bearbeitung laden
+if ($action === 'edit' && $editid > 0) {
     $editLanguage = $langManager->getLanguage($editid);
     if (!$editLanguage) {
         $message = 'Sprache nicht gefunden.';
         $messageClass = 'alert-danger';
-        $editid = 0;
         $action = '';
+        $editid = 0;
     }
 }
 
@@ -50,8 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = 'Sprache erfolgreich aktualisiert.';
                 $messageClass = 'alert-success';
                 $editLanguage = $langManager->getLanguage((int)$_POST['id']);
-                $editid = (int)$_POST['id'];
                 $action = 'edit';
+                $editid = (int)$_POST['id'];
             } else {
                 $message = 'Fehler beim Aktualisieren der Sprache.';
                 $messageClass = 'alert-danger';
@@ -59,9 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $success = $langManager->insertLanguage($data);
             if ($success) {
-                $message = 'Sprache erfolgreich hinzugefügt.';
-                $messageClass = 'alert-success';
-                header('Location: ?');
+                header("Location: admincenter.php?site=admin_languages&success=add");
                 exit;
             } else {
                 $message = 'Fehler beim Hinzufügen der Sprache.';
@@ -72,9 +103,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-if ($action === '') {
-    $languages = $langManager->getAllLanguages();
-}
+// Alle Sprachen laden (immer für Tabelle notwendig)
+$languages = $langManager->getAllLanguages();
+
 ?>
 
 <?php if ($message): ?>
@@ -109,46 +140,45 @@ if ($action === '') {
                     <div class="mb-3">
                         <label for="iso_639_1" class="form-label">ISO 639-1 Code (2 Zeichen) *</label>
                         <input type="text" class="form-control" id="iso_639_1" name="iso_639_1" maxlength="2" required
-                            value="<?php echo htmlspecialchars($_POST['iso_639_1'] ?? $editLanguage['iso_639_1'] ?? ''); ?>" />
+                               value="<?php echo htmlspecialchars($_POST['iso_639_1'] ?? $editLanguage['iso_639_1'] ?? ''); ?>" />
                     </div>
 
                     <div class="mb-3">
                         <label for="iso_639_2" class="form-label">ISO 639-2 Code (optional)</label>
                         <input type="text" class="form-control" id="iso_639_2" name="iso_639_2" maxlength="3"
-                            value="<?php echo htmlspecialchars($_POST['iso_639_2'] ?? $editLanguage['iso_639_2'] ?? ''); ?>" />
+                               value="<?php echo htmlspecialchars($_POST['iso_639_2'] ?? $editLanguage['iso_639_2'] ?? ''); ?>" />
                     </div>
 
                     <div class="mb-3">
                         <label for="name_en" class="form-label">Englischer Name *</label>
                         <input type="text" class="form-control" id="name_en" name="name_en" required
-                            value="<?php echo htmlspecialchars($_POST['name_en'] ?? $editLanguage['name_en'] ?? ''); ?>" />
+                               value="<?php echo htmlspecialchars($_POST['name_en'] ?? $editLanguage['name_en'] ?? ''); ?>" />
                     </div>
 
                     <div class="mb-3">
                         <label for="name_native" class="form-label">Name in Muttersprache (optional)</label>
                         <input type="text" class="form-control" id="name_native" name="name_native"
-                            value="<?php echo htmlspecialchars($_POST['name_native'] ?? $editLanguage['name_native'] ?? ''); ?>" />
+                               value="<?php echo htmlspecialchars($_POST['name_native'] ?? $editLanguage['name_native'] ?? ''); ?>" />
                     </div>
 
                     <div class="mb-3">
                         <label for="name_de" class="form-label">Name auf Deutsch (optional)</label>
                         <input type="text" class="form-control" id="name_de" name="name_de"
-                            value="<?php echo htmlspecialchars($_POST['name_de'] ?? $editLanguage['name_de'] ?? ''); ?>" />
+                               value="<?php echo htmlspecialchars($_POST['name_de'] ?? $editLanguage['name_de'] ?? ''); ?>" />
                     </div>
 
                     <div class="mb-3">
                         <label for="flag" class="form-label">Pfad zur Flagge (optional)</label>
-                        <input type="text" class="form-control" id="flag" name="flag"
-                            placeholder="z. B. images/flags/de.svg"
-                            value="<?php echo htmlspecialchars($_POST['flag'] ?? $editLanguage['flag'] ?? ''); ?>" />
+                        <input type="text" class="form-control" id="flag" name="flag" placeholder="z. B. images/flags/de.svg"
+                               value="<?php echo htmlspecialchars($_POST['flag'] ?? $editLanguage['flag'] ?? ''); ?>" />
                     </div>
 
                     <div class="form-check mb-3">
                         <input type="checkbox" class="form-check-input" id="active" name="active"
-                            <?php
-                                $checked = ($_SERVER['REQUEST_METHOD'] === 'POST') ? isset($_POST['active']) : ($editLanguage['active'] ?? 1);
-                                echo $checked ? 'checked' : '';
-                            ?> />
+                               <?php
+                               $checked = ($_SERVER['REQUEST_METHOD'] === 'POST') ? isset($_POST['active']) : ($editLanguage['active'] ?? 1);
+                               echo $checked ? 'checked' : '';
+                               ?> />
                         <label class="form-check-label" for="active">Aktiv (sichtbar)</label>
                     </div>
 
@@ -201,6 +231,7 @@ if ($action === '') {
                                 </td>
                                 <td>
                                     <a href="admincenter.php?site=admin_languages&action=edit&id=<?php echo (int)$lang['id']; ?>" class="btn btn-sm btn-primary">Bearbeiten</a>
+                                    <a href="admincenter.php?site=admin_languages&action=delete&id=<?php echo (int)$lang['id']; ?>" class="btn btn-sm btn-danger ms-1" onclick="return confirm('Möchtest du diese Sprache wirklich löschen?');">Löschen</a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -209,6 +240,7 @@ if ($action === '') {
                         <?php endif; ?>
                     </tbody>
                 </table>
+
             <?php endif; ?>
         </div>
     </div>
