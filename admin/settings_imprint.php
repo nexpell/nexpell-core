@@ -320,7 +320,7 @@ function h($s) {
                 <textarea class="form-control ckeditor" name="disclaimer" id="disclaimer" rows="4"><?= $data['disclaimer'] ?? '' ?></textarea>
             </div>
 
-            <button type="submit" name="save" class="btn btn-primary">
+            <button type="submit" name="submit" class="btn btn-primary">
                 <i class="bi bi-save"></i> <?= $languageService->module['save_changes'] ?>
             </button>
         </form>
