@@ -13,22 +13,52 @@
 
 namespace webspell;
 
-class LoginSecurity {
-    // AES-Schlüssel und IV (für Pepper)
-    const AES_KEY = 'mein_geheimer_schlüssel_32_byte!!'; // 32 Zeichen (256-bit)
-    const AES_IV = 'initialivektor12'; // 16 Byte IV
+class LoginSecurity 
+{
 
-    // Entschlüsseln des Peppers
-    /*public static function decryptPepper(string $encrypted_pepper): ?string {
-        $pepper = openssl_decrypt($encrypted_pepper, 'aes-256-cbc', self::AES_KEY, 0, self::AES_IV);
-        return $pepper ?: null;
-    }*/
+
+    // Key dynamisch aus Konstante holen
+    private static function getAesKey(): string
+    {
+        if (!defined('AES_KEY') || strlen(AES_KEY) !== 32) {
+            throw new RuntimeException('AES_KEY ist nicht definiert oder hat nicht die korrekte Länge von 32 Zeichen.');
+        }
+        return AES_KEY;
+    }
+
+    public static function encryptPepper(string $plain_pepper): ?string
+    {
+        $key = self::getAesKey();
+        $iv_length = openssl_cipher_iv_length('aes-256-cbc');
+        $iv = openssl_random_pseudo_bytes($iv_length);
+        $encrypted = openssl_encrypt($plain_pepper, 'aes-256-cbc', $key, 0, $iv);
+        if ($encrypted === false) {
+            return null;
+        }
+        return base64_encode($iv . $encrypted);
+    }
+
+    public static function decryptPepper(string $encrypted_pepper): ?string
+    {
+        $key = self::getAesKey();
+        $data = base64_decode($encrypted_pepper);
+        $iv_length = openssl_cipher_iv_length('aes-256-cbc');
+        $iv = substr($data, 0, $iv_length);
+        $ciphertext = substr($data, $iv_length);
+        return openssl_decrypt($ciphertext, 'aes-256-cbc', $key, 0, $iv);
+    }
+
+
+
+
+
+
+    // AES-Schlüssel und IV (für Pepper)
+    //const AES_KEY = 'mein_geheimer_schlüssel_32_byte!!'; // 32 Zeichen (256-bit)
+    #const AES_KEY = 'v9s4L8dGf7wqKxZpM3rT1eYbN0uJ6cHa'; // genau 32 zufällige Zeichen
+    #const AES_IV = 'initialivektor12'; // 16 Byte IV
 
     /*public static function encryptPepper(string $plain_pepper): ?string {
-        $encrypted = openssl_encrypt($plain_pepper, 'aes-256-cbc', self::AES_KEY, 0, self::AES_IV);
-        return $encrypted ?: null;
-    }*/
-    public static function encryptPepper(string $plain_pepper): ?string {
         $iv_length = openssl_cipher_iv_length('aes-256-cbc');
         $iv = openssl_random_pseudo_bytes($iv_length);
         $encrypted = openssl_encrypt($plain_pepper, 'aes-256-cbc', self::AES_KEY, 0, $iv);
@@ -42,7 +72,7 @@ class LoginSecurity {
         $iv = substr($data, 0, $iv_length);
         $ciphertext = substr($data, $iv_length);
         return openssl_decrypt($ciphertext, 'aes-256-cbc', self::AES_KEY, 0, $iv);
-    }
+    }*/
 
     public static function createPasswordHash(string $password_hash, string $email, string $pepper): string {
         return password_hash($password_hash . $email . $pepper, PASSWORD_DEFAULT);
