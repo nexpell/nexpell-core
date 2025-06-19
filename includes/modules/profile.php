@@ -108,7 +108,8 @@ $rules     = getUserCount('plugins_rules', 'userID', $userID);
 $links     = getUserCount('plugins_links', 'userID', $userID);
 $partners  = getUserCount('plugins_partners', 'userID', $userID);
 $sponsors  = getUserCount('plugins_sponsors', 'userID', $userID);
-$points    = ($articles * 10) + ($comments * 2) + ($rules * 5) + ($links * 5) + ($partners * 5) + ($sponsors * 5);
+$forum     = getUserCount('plugins_forum_posts', 'userID', $userID);
+$points    = ($articles * 10) + ($comments * 2) + ($rules * 5) + ($links * 5) + ($partners * 5) + ($sponsors * 5) + ($forum * 2);
 
 $level = floor($points / 100);
 $level_percent = $points % 100;
@@ -168,6 +169,7 @@ $tables = [
     ['table' => 'plugins_partners', 'user_col' => 'userID', 'type' => 'Partners'],
     ['table' => 'plugins_sponsors', 'user_col' => 'userID', 'type' => 'Sponsoren'],
     ['table' => 'plugins_links', 'user_col' => 'userID', 'type' => 'Links'],
+    ['table' => 'plugins_forum_posts', 'user_col' => 'userID', 'type' => 'Forum'],
 ];
 
 $counts = [];

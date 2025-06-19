@@ -480,6 +480,12 @@ if (file_exists('classes/PluginUninstaller.php')) {
     systeminc('../system/classes/PluginUninstaller');
 }
 
+if (file_exists('classes/ThemeUninstaller.php')) {
+    systeminc('classes/ThemeUninstaller');
+} else {
+    systeminc('../system/classes/ThemeUninstaller');
+}
+
 if (file_exists('classes/LanguageService.php')) {
     systeminc('classes/LanguageService');
 } else {
