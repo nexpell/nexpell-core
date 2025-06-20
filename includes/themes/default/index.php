@@ -217,6 +217,9 @@ echo '<!--Widget js END-->' . PHP_EOL;
 <script defer src="./components/cookies/js/cookieconsent-init.js"></script>
 <script defer src="./components/cookies/js/app.js"></script>
 
+<script src="./components/ckeditor/ckeditor.js"></script>
+<script src="./components/ckeditor/config.js"></script>
+
 <!-- Language recognition for DataTables -->
 <script>
     const LangDataTables = '<?php echo htmlspecialchars($_language->detectLanguage(), ENT_QUOTES, 'UTF-8'); ?>';

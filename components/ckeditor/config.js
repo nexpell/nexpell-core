@@ -7,15 +7,19 @@ CKEDITOR.editorConfig = function(config) {
     config.codeSnippet_theme = 'school_book';
     config.enterMode = CKEDITOR.ENTER_BR; // <br /> bei Enter
     config.shiftEnterMode = CKEDITOR.ENTER_P; // <p> bei Shift + Enter
-    config.autoParagraph = false; // Verhindert automatische <p>-Tags
-    config.entities = false; // Verhindert HTML Entities wie &lt;br /&gt;
-    config.basicEntities = false; // Verhindert grundlegende Entitäten wie &lt; und &gt;
-    config.encodeEntities = false; // Verhindert die Kodierung von HTML-Zeichen
-    config.forceSimpleAmpersand = true; // Verhindert die Umwandlung von & zu &amp;
-    config.fillEmptyBlocks = false; // Verhindert das automatische Füllen leerer Blöcke
-    config.removePlugins = 'elementspath'; // Entfernt das unnötige "Elementspath"-Plugin
-    config.resize_enabled = false; // Deaktiviert das Größenänderungs-Feature im Editor
-    config.FormatOutput = false ;
+    config.autoParagraph = false;
+    config.entities = false;
+    config.basicEntities = false;
+    config.encodeEntities = false;
+    config.forceSimpleAmpersand = true;
+    config.fillEmptyBlocks = false;
+    config.removePlugins = 'elementspath';
+    config.resize_enabled = false;
+    config.FormatOutput = false;
+
+    // Wichtig: Erlaube alle Inhalte inkl. Klassen, Styles etc.
+    config.allowedContent = true;
 };
+
 
 //CKEDITOR.replace('message');

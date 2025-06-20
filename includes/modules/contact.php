@@ -85,10 +85,11 @@ if ($action == "send") {
 
     if (!count($fehler) && $run) {
         $message = stripslashes(
-            'Diese E-Mail wurde über das Kontaktformular auf deiner Webspell-RM Website gesendet (IP-Adresse: ' . $GLOBALS['ip'] . ').<br><br>' .
-            'Die Nachricht von ' . htmlspecialchars($name) . ' lautet:<br><br>' .
-            '<strong>Nachricht:</strong><br>' . nl2br(htmlspecialchars($text))
+            'Diese E-Mail wurde über das Kontaktformular auf deiner <strong>nexpell</strong>-Website gesendet (IP-Adresse: ' . htmlspecialchars($GLOBALS['ip']) . ').<br><br>' .
+            'Die Nachricht von <strong>' . htmlspecialchars($name) . '</strong> lautet:<br><br>' .
+            '<strong>Nachricht:</strong><br>' . nl2br(htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'))
         );
+
 
         $sendmail = \webspell\Email::sendEmail($from, 'Contact', $getemail, stripslashes($subject), $message);
 

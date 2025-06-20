@@ -42,11 +42,7 @@ function getPageTitle($url = null, $prefix = true)
 
 
 function parseWebspellURL($parameters = null)
-{
-
-    
-
-   
+{ 
 
 global $languageService;
 global $_database;

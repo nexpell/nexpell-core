@@ -1,129 +1,29 @@
 <?php
 
-/**
- *¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*
- *                  Webspell-RM      /                        /   /                                          *
- *                  -----------__---/__---__------__----__---/---/-----__---- _  _ -                         *
- *                   | /| /  /___) /   ) (_ `   /   ) /___) /   / __  /     /  /  /                          *
- *                  _|/_|/__(___ _(___/_(__)___/___/_(___ _/___/_____/_____/__/__/_                          *
- *                               Free Content / Management System                                            *
- *                                           /                                                               *
- *¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*
- * @version         webspell-rm                                                                              *
- *                                                                                                           *
- * @copyright       2018-2024 by webspell-rm.de                                                              *
- * @support         For Support, Plugins, Templates and the Full Script visit webspell-rm.de                 *
- * @website         <https://www.webspell-rm.de>                                                             *
- * @forum           <https://www.webspell-rm.de/forum.html>                                                  *
- * @wiki            <https://www.webspell-rm.de/wiki.html>                                                   *
- *                                                                                                           *
- *¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*
- * @license         Script runs under the GNU GENERAL PUBLIC LICENCE                                         *
- *                  It's NOT allowed to remove this copyright-tag                                            *
- *                  <http://www.fsf.org/licensing/licenses/gpl.html>                                         *
- *                                                                                                           *
- *¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*
- * @author          Code based on WebSPELL Clanpackage (Michael Gruber - webspell.at)                        *
- * @copyright       2005-2011 by webspell.org / webspell.info                                                *
- *                                                                                                           *
- *¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*
- */
-
 // Funktion zur Ausgabe des Seitentitels
 function get_sitetitle(): string
 {
     $pluginManager = new plugin_manager();
+    $site = $_GET['site'] ?? 'index';
 
-    $site = $_GET['site'] ?? null;
-    $updatedTitle = $site ? $pluginManager->plugin_updatetitle($site) : null;
+    // Titel gezielt für Startseite setzen
+    if ($site === 'index') {
+        return 'nexpell – Dein CMS für moderne Webprojekte';
+    }
 
-    return $updatedTitle ?: PAGETITLE;
+    $updatedTitle = $pluginManager->plugin_updatetitle($site);
+
+    // Fallback: Standardtitel (z. B. "nexpell - [news]")
+    $title = $updatedTitle ?: PAGETITLE;
+
+    // Optional: Platzhalter ersetzen
+    $replacements = [
+        '[news]' => 'Nachrichten',
+        '[home]' => 'Startseite',
+    ];
+
+    return strtr($title, $replacements);
 }
-
-// Ausgabe des Hauptinhalts
-/*function get_mainContent()
-{
-    #global $cookievalue, $userID, $date, $loggedin, $_language, $tpl, $myclanname, $hp_url, $imprint_type, $admin_email, $admin_name;
-    global $cookievalue, $userID, $date, $loggedin, $_language, $tpl, $hp_url, $imprint_type, $admin_email, $admin_name;
-    global $maxtopics, $plugin_path, $maxposts, $page, $action, $preview, $message, $topicID, $_database, $maxmessages, $new_chmod;
-    global $hp_title, $default_format_date, $default_format_time, $register_per_ip, $rewriteBase, $activate;
-
-    $settings = safe_query("SELECT * FROM `settings`");
-    if (!$settings) {
-        system_error("Fehler beim Abrufen der Einstellungen.");
-    }
-    $ds = mysqli_fetch_array($settings);
-
-    $site = isset($_GET['site']) ? htmlspecialchars($_GET['site'], ENT_QUOTES, 'UTF-8') : $ds['startpage'];
-
-    $invalide = array('\\', '/', '/\/', ':', '.');
-    $site = str_replace($invalide, ' ', $site);
-
-    $_plugin = new plugin_manager();
-    $_plugin->set_debug(DEBUG);
-
-    if (!empty($site) && $_plugin->is_plugin($site) > 0) {
-        $data = $_plugin->plugin_data($site);
-        $plugin_path = !empty($data['path']) ? $data['path'] : '';
-        $check = $_plugin->plugin_check($data, $site);
-
-        if ($check['status'] == 1) {
-            $inc = $check['data'];
-            if ($inc == "exit") {
-                $site = "404";
-            }
-            include($check['data']);
-        } else {
-            echo $check['data'];
-        }
-    } else {
-        if (!file_exists("includes/modules/" . $site . ".php")) {
-            $site = "404";
-        }
-        include("includes/modules/" . $site . ".php");
-    }
-}*/
-/*
-function get_mainContent() {
-    global $tpl;
-    
-
-    $settings = safe_query("SELECT * FROM `settings`");
-        if (!$settings) {
-            system_error("Fehler beim Abrufen der Einstellungen.");
-        }
-        $ds = mysqli_fetch_array($settings);
-
-        $site = isset($_GET['site']) ? htmlspecialchars($_GET['site'], ENT_QUOTES, 'UTF-8') : $ds['startpage'];
-
-
-    // ungültige Zeichen entfernen (optional)
-    $invalide = array('\\', '/', '/\/', ':', '.');
-    $site = str_replace($invalide, ' ', $site);
-
-    $module_dir = realpath(__DIR__ . '/../includes/modules');
-
-    $module_path = $module_dir . "/$site.php";
-
-    if (file_exists($module_path)) {
-        ob_start();
-        include $module_path;
-        return ob_get_clean();
-    } else {
-        // 404 laden
-        $error_page = $module_dir . "/404.php";
-        if (file_exists($error_page)) {
-            ob_start();
-            include $error_page;
-            return ob_get_clean();
-        } else {
-            return "<h1>404 - Seite nicht gefunden</h1>";
-        }
-    }
-
-}
-*/
-
 
 function get_mainContent() {
     global $tpl;
