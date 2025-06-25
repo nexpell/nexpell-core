@@ -16,7 +16,7 @@ $languageService->readModule('lostpassword');
 $settings_result = safe_query("SELECT * FROM `settings`");
 $settings = mysqli_fetch_assoc($settings_result);
 
-$hp_title = $settings['title'] ?? 'Webspell-RM';
+$hp_title = $settings['hptitle'] ?? 'nexpell';
 $hp_url = $settings['hpurl'] ?? 'https://' . $_SERVER['HTTP_HOST'];
 $admin_email = $settings['adminemail'] ?? 'info@' . $_SERVER['HTTP_HOST'];
 

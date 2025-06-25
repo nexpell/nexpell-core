@@ -1,32 +1,52 @@
 <?php
-/**
- *¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*
- *                  Webspell-RM      /                        /   /                                          *
- *                  -----------__---/__---__------__----__---/---/-----__---- _  _ -                         *
- *                   | /| /  /___) /   ) (_ `   /   ) /___) /   / __  /     /  /  /                          *
- *                  _|/_|/__(___ _(___/_(__)___/___/_(___ _/___/_____/_____/__/__/_                          *
- *                               Free Content / Management System                                            *
- *                                           /                                                               *
- *¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*
- * @version         webspell-rm                                                                              *
- *                                                                                                           *
- * @copyright       2018-2023 by webspell-rm.de                                                              *
- * @support         For Support, Plugins, Templates and the Full Script visit webspell-rm.de                 *
- * @website         <https://www.webspell-rm.de>                                                             *
- * @forum           <https://www.webspell-rm.de/forum.html>                                                  *
- * @wiki            <https://www.webspell-rm.de/wiki.html>                                                   *
- *                                                                                                           *
- *¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*
- * @license         Script runs under the GNU GENERAL PUBLIC LICENCE                                         *
- *                  It's NOT allowed to remove this copyright-tag                                            *
- *                  <http://www.fsf.org/licensing/licenses/gpl.html>                                         *
- *                                                                                                           *
- *¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*
- * @author          Code based on WebSPELL Clanpackage (Michael Gruber - webspell.at)                        *
- * @copyright       2005-2011 by webspell.org / webspell.info                                                *
- *                                                                                                           *
- *¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*
-*/
+
+# Datei muss noch überprüft werden!!!
+
+
+#userlist verwendiese funktion
+function getusername($userID) {
+    $erg = safe_query("SELECT username FROM users WHERE `userID` = " . (int)$userID);
+    if(mysqli_num_rows($erg) == '1') {
+        $ds = mysqli_fetch_array(safe_query("SELECT username FROM users WHERE `userID` = " . (int)$userID));
+        return $ds['username'];
+    } else {
+        $ds = mysqli_fetch_array(safe_query("SELECT username FROM user_username WHERE `userID` = " . (int)$userID));
+        return '<s>'.@$ds['username'].'</s>';
+    }
+}
+
+function getuserpic($userID)
+{
+    $ds = mysqli_fetch_array(safe_query("SELECT userpic,username FROM users WHERE `userID` = " . (int)$userID . ""));
+    if (empty($ds['userpic'])) {
+        return "svg-avatar.php?name=".@$ds['username']."G";
+    }
+
+    return $ds['userpic'];
+}
+
+function getavatar($userID)
+{
+    $ds = mysqli_fetch_array(safe_query("SELECT avatar,username FROM users WHERE `userID` = " . (int)$userID . ""));
+    if (empty($ds['avatar'])) {
+        return "svg-avatar.php?name=".@$ds['username']."G";
+    }
+
+    return $ds['avatar'];
+}
+
+
+
+/*
+
+
+
+
+
+
+
+
+
 
 function getuserid($username)
 {
@@ -39,16 +59,7 @@ function getuserid($username)
     }
 }
 
-function getusername($userID) {
-    $erg = safe_query("SELECT username FROM users WHERE `userID` = " . (int)$userID);
-    if(mysqli_num_rows($erg) == '1') {
-        $ds = mysqli_fetch_array(safe_query("SELECT username FROM users WHERE `userID` = " . (int)$userID));
-        return $ds['username'];
-    } else {
-        $ds = mysqli_fetch_array(safe_query("SELECT username FROM user_username WHERE `userID` = " . (int)$userID));
-        return '<s>'.@$ds['username'].'</s>';
-    }
-}
+
 
 function deleteduser($userID) {
     $erg = safe_query("SELECT username FROM users WHERE `userID` = " . (int)$userID);
@@ -284,24 +295,6 @@ function getallusercomments($userID)
     );
 }
 
-function isbuddy($userID, $buddy)
-{
-    return (
-        mysqli_num_rows(
-            safe_query(
-                "SELECT
-                    *
-                FROM
-                    buddys
-                WHERE
-                    `banned` = 0 AND
-                    `buddy` = " . (int)$buddy . " AND
-                    `userID` = " . (int)$userID
-            )
-        ) > 0
-    );
-}
-
 function RandPass($length, $type = 0)
 {
 
@@ -312,7 +305,7 @@ function RandPass($length, $type = 0)
     Example:
     echo RandPass(7, 1); => 0917432
     */
-    $pass = '';
+/*    $pass = '';
     for ($i = 0; $i < $length; $i++) {
         if ($type == 0) {
             $rand = rand(1, 3);
@@ -375,3 +368,4 @@ function detectUserLanguage()
     }
     return null;
 }
+*/

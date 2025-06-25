@@ -11,7 +11,7 @@ if (session_status() === PHP_SESSION_NONE) {
 $_SESSION['language'] = $_SESSION['language'] ?? 'de';
 
 // Initialisieren
-global $languageService;
+global $_database,$languageService;
 $lang = $languageService->detectLanguage();
 $languageService = new LanguageService($_database);
 
@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     while ($row = mysqli_fetch_array($category_query)) {
         // Erstelle ein neues multiLanguage-Objekt für die aktuelle Sprache
-        $translate = new multiLanguage(detectCurrentLanguage());
+        $translate = new multiLanguage($lang);
         $translate->detectLanguages($row['name']);
         
         $selected = ($row['mnavID'] == $ds['categoryID']) ? ' selected' : '';
@@ -526,21 +526,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     while ($ds = mysqli_fetch_array($ergebnis)) {
         $td = ($i % 2) ? 'td1' : 'td2';
+
         $roles = [];
 
         if (!empty($ds['access_roles'])) {
-            // Als JSON speichern: ["Clanmitglied", "Moderator"]
+            // Als JSON gespeichert, z. B. ["Clanmitglied", "Moderator"]
             $roles = json_decode($ds['access_roles'], true);
         }
 
-        $accesslevel = empty($roles) ? $languageService->get('public') : implode(', ', array_map(function($role) {
-            return $languageService->get(strtolower($role)) ?? htmlspecialchars($role);
-        }, $roles));
+        $accesslevel = empty($roles)
+            ? $languageService->get('public')
+            : implode(', ', array_map(function($role) use ($languageService) {
+                return $languageService->get(strtolower($role)) ?? htmlspecialchars($role);
+            }, $roles));
 
         $title = $ds['title'];
 
         // Mehrsprachigkeit für Titel
-        $translate = new multiLanguage(detectCurrentLanguage());
+        $translate = new multiLanguage($lang);
         $translate->detectLanguages($title);
         $title = $translate->getTextByLanguage($title);
 

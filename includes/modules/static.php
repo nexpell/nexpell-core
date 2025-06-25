@@ -18,7 +18,7 @@ $ds = mysqli_fetch_array(safe_query("SELECT * FROM `settings_static` WHERE `stat
 
 // Titel übersetzen
 $title = $ds['title'];
-$translate = new multiLanguage(detectCurrentLanguage());
+$translate = new multiLanguage($lang);
 $translate->detectLanguages($title);
 $title = $translate->getTextByLanguage($title);
 
@@ -39,9 +39,13 @@ if (!empty($ds['access_roles'])) {
     $allowedRoles = json_decode($ds['access_roles'], true);
 }
 
-// Zugriff prüfen
-if (AccessControl::hasAnyRole($allowedRoles)) {
+if (empty($allowedRoles)) {
+    $accessGranted = true; // Jeder darf sehen
+} else {
+    $accessGranted = AccessControl::hasAnyRole($allowedRoles);
+}
 
+if ($accessGranted) {
     // Inhalt übersetzen
     $content = $ds['content'];
     $translate->detectLanguages($content);
@@ -51,7 +55,6 @@ if (AccessControl::hasAnyRole($allowedRoles)) {
         'content' => $content
     ];
     echo $tpl->loadTemplate("static", "content", $data_array, 'theme');
-
 } else {
-    echo '<div class="alert alert-danger" role="alert">' . $_language->module['no_access'] . '</div>';
+    echo '<div class="alert alert-danger" role="alert">' . $languageService->get('no_access') . '</div>';
 }

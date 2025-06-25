@@ -383,11 +383,11 @@ if (file_exists('func/check_access.php')) {
 
 // -- MESSENGER INFORMATION -- //
 // Einbinden der Messenger-Funktionen
-if (file_exists('func/messenger.php')) {
+/*if (file_exists('func/messenger.php')) {
     systeminc('func/messenger');
 } else {
     systeminc('../system/func/messenger');
-}
+}*/
 
 // -- Page INFORMATION -- //
 // Einbinden der Seiten-Funktionen
@@ -399,11 +399,11 @@ if (file_exists('func/page.php')) {
 
 // -- SPAM -- //
 // Einbinden der Spam-Funktionen
-if (file_exists('func/spam.php')) {
+/*if (file_exists('func/spam.php')) {
     systeminc('func/spam');
 } else {
     systeminc('../system/func/spam');
-}
+}*/
 
 // -- Tags -- //
 // Einbinden der Tags-Funktionen
@@ -415,23 +415,23 @@ if (file_exists('func/tags.php')) {
 
 // -- Upload -- //
 // Einbinden der Upload-Funktionen
-if (file_exists('func/upload.php')) {
+/*if (file_exists('func/upload.php')) {
     systeminc('func/upload');
 } else {
     systeminc('../system/func/upload');
-}
+}*/
 
-if (file_exists('func/httpupload.php')) {
+/*if (file_exists('func/httpupload.php')) {
     systeminc('func/httpupload');
 } else {
     systeminc('../system/func/httpupload');
-}
+}*/
 
-if (file_exists('func/urlupload.php')) {
+/*if (file_exists('func/urlupload.php')) {
     systeminc('func/urlupload');
 } else {
     systeminc('../system/func/urlupload');
-}
+}*/
 
 // -- INDEX CONTENT -- //
 // Einbinden des Inhalts für die Startseite
@@ -443,11 +443,11 @@ if (file_exists('content.php')) {
 
 // -- INSTALL BASE -- //
 // Einbinden der Installations-Basisklasse
-if (file_exists('func/install_base.php')) {
+/*if (file_exists('func/install_base.php')) {
     systeminc('func/install_base');
 } else {
     systeminc('../system/func/install_base');
-}
+}*/
 
 // Für Login unf Rollen
 if (file_exists('classes/LoginSecurity.php')) {
@@ -602,11 +602,11 @@ if (stristr($_SERVER['PHP_SELF'], "/admin/") === false) {
 // =======================
 // RSS FEEDS
 // =======================
-if (file_exists('func/feeds.php')) {
+/*if (file_exists('func/feeds.php')) {
     systeminc('func/feeds');
 } else {
     systeminc('../system/func/feeds');
-}
+}*/
 
 // =======================
 // EMAIL
@@ -656,9 +656,9 @@ function httpprotokoll($string) {
 // =======================
 // FORUM GROUP CHECK
 // =======================
-function usergrpexists($fgrID) {
-    return (mysqli_num_rows(safe_query("SELECT `fgrID` FROM `plugins_forum_groups` WHERE `fgrID` = " . (int)$fgrID)) > 0);
-}
+#function usergrpexists($fgrID) {
+#    return (mysqli_num_rows(safe_query("SELECT `fgrID` FROM `plugins_forum_groups` WHERE `fgrID` = " . (int)$fgrID)) > 0);
+#}
 
 // =======================
 // TABLE EXISTENCE CHECK

@@ -35,38 +35,42 @@ function get_mainContent() {
     $ds = mysqli_fetch_array($settings);
 
     $site = isset($_GET['site']) ? htmlspecialchars($_GET['site'], ENT_QUOTES, 'UTF-8') : $ds['startpage'];
+    $site = preg_replace('/[^a-zA-Z0-9_-]/', '', $site);
 
-    // ungültige Zeichen entfernen
-    $invalide = array('\\', '/', '/\/', ':', '.');
-    $site = str_replace($invalide, ' ', $site);
-
-    // Modul- und Plugin-Verzeichnisse
     $module_dir = realpath(__DIR__ . '/../includes/modules');
     $plugin_dir = realpath(__DIR__ . '/../includes/plugins');
 
-    // Dateipfade
+    // 1. Prüfe Modul direkt
     $module_path = $module_dir . "/$site.php";
-    $plugin_path = $plugin_dir . "/$site/$site.php";
-
     if (file_exists($module_path)) {
         ob_start();
         include $module_path;
         return ob_get_clean();
-    } elseif (file_exists($plugin_path)) {
-        ob_start();
-        include $plugin_path;
-        return ob_get_clean();
-    } else {
-        // 404 laden
-        $error_page = $module_dir . "/404.php";
-        if (file_exists($error_page)) {
-            ob_start();
-            include $error_page;
-            return ob_get_clean();
-        } else {
-            return "<h1>404 - Seite nicht gefunden</h1>";
+    }
+
+    // 2. Plugin prüfen per settings_plugins (index_link + path)
+    $plugin_query = safe_query("SELECT * FROM settings_plugins WHERE activate='1'");
+    while ($row = mysqli_fetch_array($plugin_query)) {
+        $links = explode(",", $row['index_link']);
+        if (in_array($site, $links)) {
+            $plugin_file = rtrim($row['path'], '/') . '/' . $site . '.php';
+            if (file_exists($plugin_file)) {
+                ob_start();
+                include $plugin_file;
+                return ob_get_clean();
+            }
         }
     }
+
+    // 3. Fallback 404
+    $error_page = $module_dir . "/404.php";
+    if (file_exists($error_page)) {
+        ob_start();
+        include $error_page;
+        return ob_get_clean();
+    }
+
+    return "<h1>404 - Seite nicht gefunden</h1>";
 }
 
 
@@ -215,5 +219,23 @@ function get_editor()
         echo '<script src="./components/ckeditor/config.js"></script>';
     } else {
         echo '<script src="./components/ckeditor/user_config.js"></script>';
+    }
+}
+
+/*Plugins manuell einbinden 
+get_widget('modulname','widgetdatei'); 
+*/
+function get_widget($modulname, $widgetdatei)
+{
+
+    $query = safe_query("SELECT * FROM  settings_plugins WHERE modulname = '" . $modulname . "'");
+    $ds = mysqli_fetch_array($query);
+
+    if (@file_exists($ds['path'] . $widgetdatei . ".php" ?? '')) {
+        $plugin_path = $ds['path'];
+        require($ds['path'] . $widgetdatei . ".php");
+        return false;
+    } else {
+        echo '';
     }
 }

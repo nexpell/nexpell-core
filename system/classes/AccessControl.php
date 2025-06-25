@@ -71,42 +71,47 @@ class AccessControl
     }
 
     public static function hasAnyRole(array $roleNames): bool
-    {
-        if (!isset($_SESSION['userID']) || empty($roleNames)) return false;
+{
+    // Kein Zugriff, wenn keine Rollen erlaubt sind
+    if (empty($roleNames)) return false;
 
-        $userID = (int)$_SESSION['userID'];
-        global $_database;
-
-        // Erzeuge Platzhalter für Prepared Statement (?, ?, ...)
-        $placeholders = implode(',', array_fill(0, count($roleNames), '?'));
-
-        // Datentypen: i für userID, danach s für jeden Rollennamen
-        $types = 'i' . str_repeat('s', count($roleNames));
-
-        // Alle Parameter zusammenfügen
-        $params = array_merge([$types, $userID], $roleNames);
-
-        // Dynamisch vorbereiten
-        $stmt = $_database->prepare("
-            SELECT 1
-            FROM user_role_assignments a
-            JOIN user_roles r ON a.roleID = r.roleID
-            WHERE a.userID = ? AND r.role_name IN ($placeholders)
-            LIMIT 1
-        ");
-
-        if ($stmt === false) {
-            error_log("Fehler beim Prepare in hasAnyRole(): " . $_database->error);
-            return false;
-        }
-
-        // Dynamisches Binden
-        $stmt->bind_param(...self::refValues($params));
-        $stmt->execute();
-        $res = $stmt->get_result();
-
-        return $res->num_rows > 0;
+    // Gast-Zugriff prüfen, wenn kein User eingeloggt ist
+    if (!isset($_SESSION['userID']) || $_SESSION['userID'] <= 0) {
+        return in_array('gast', array_map('strtolower', $roleNames));
     }
+
+    $userID = (int)$_SESSION['userID'];
+    global $_database;
+
+    // Erzeuge Platzhalter (?, ?, ...)
+    $placeholders = implode(',', array_fill(0, count($roleNames), '?'));
+
+    // Datentypen: i für userID, danach s für jeden Rollennamen
+    $types = 'i' . str_repeat('s', count($roleNames));
+    $params = array_merge([$types, $userID], $roleNames);
+
+    // SQL vorbereiten
+    $stmt = $_database->prepare("
+        SELECT 1
+        FROM user_role_assignments a
+        JOIN user_roles r ON a.roleID = r.roleID
+        WHERE a.userID = ? AND r.role_name IN ($placeholders)
+        LIMIT 1
+    ");
+
+    if ($stmt === false) {
+        error_log("Fehler beim Prepare in hasAnyRole(): " . $_database->error);
+        return false;
+    }
+
+    // Bindung und Ausführung
+    $stmt->bind_param(...self::refValues($params));
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    return $res->num_rows > 0;
+}
+
 
     private static function refValues(array $arr)
     {

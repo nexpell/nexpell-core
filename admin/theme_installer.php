@@ -176,10 +176,10 @@ echo '
         <table class="table table-bordered table-striped bg-white shadow-sm">
             <thead class="table-light">
                 <tr>
-                    <th width="20%">' . $languageService->get('theme_name') . '</th>
-                    <th width="50%">' . $languageService->get('theme_description') . '</th>
-                    <th>' . $languageService->get('theme_version') . '</th>
-                    <th width="20%">' . $languageService->get('theme_action') . '</th>
+                    <th width="14%">' . $languageService->get('theme_name') . '</th>
+                    <th>' . $languageService->get('theme_description') . '</th>
+                    <th width="6%">' . $languageService->get('theme_version') . '</th>
+                    <th width="14%">' . $languageService->get('theme_action') . '</th>
                 </tr>
             </thead>
             <tbody>';

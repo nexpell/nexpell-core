@@ -23,7 +23,25 @@ Kein Problem. Du kannst Dein Passwort ganz einfach zurücksetzen und dir ein neu
 
     // E-Mail-Inhalte
     'email_subject' => 'Neues Passwort für %pagetitle%',
-    'email_text' => 'Dein Konto für %pagetitle%<p>ACHTUNG: Dein Passwort wurde erfolgreich zurückgesetzt!</p><p>Deine E-Mail Adresse: %email%<br>Dein neues Passwort: %new_password%</p><p>Bitte ändere dein Passwort nach dem Login in deinem Benutzerprofil.</p><p>Viel Spass auf unserer Webseite</p>%homepage_url%',
+    'email_text' => '
+<html>
+  <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; padding: 20px; background-color: #f9f9f9;">
+    <h2 style="color: #fe821d;">Dein Konto für %pagetitle%</h2>
+    <p><strong>ACHTUNG:</strong> Dein Passwort wurde erfolgreich zurückgesetzt!</p>
+    <p>
+      Deine E-Mail Adresse: <strong>%email%</strong><br>
+      Dein neues Passwort: <strong>%new_password%</strong>
+    </p>
+    <p>Bitte ändere dein Passwort nach dem Login in deinem Benutzerprofil.</p>
+    <p>Viel Spaß auf unserer Webseite!</p>
+    <p>Viele Grüße,<br>Dein %pagetitle%-Team</p>
+    <hr style="border:none; border-top:1px solid #ddd; margin: 20px 0;">
+    <p style="font-size: 0.9em; color: #777;">
+      <a href="%homepage_url%" style="color: #fe821d; text-decoration: none;">%homepage_url%</a>
+    </p>
+  </body>
+</html>
+',
 
     // Erfolg / Fehler
     'successful' => '✅ Neues Passwort erfolgreich gesendet.',

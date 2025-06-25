@@ -1,17 +1,24 @@
 <?php
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+    // LoginSecurity laden
+require_once "system/config.inc.php";
 use webspell\LoginSecurity;
 use webspell\Email;
 use webspell\LanguageService;
 
-global $_database,$languageService;
+#require_once __DIR__ . '/../../system/config.inc.php';
+
+global $_database, $languageService;
 
 $lang = $languageService->detectLanguage();
 $languageService->readModule('register');
+
+$get = mysqli_fetch_assoc(safe_query("SELECT * FROM settings"));
+$webkey = $get['webkey'];
+$seckey = $get['seckey'];
 
 $form_data = $_POST ?? [];
 
@@ -20,17 +27,18 @@ if (!isset($_SESSION['csrf_token'])) {
 }
 $csrf_token = $_SESSION['csrf_token'];
 
-$username = $_POST['username'] ?? '';
-$email = $_POST['email'] ?? '';
+$username = trim($_POST['username'] ?? '');
+$email = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
 $password_repeat = $_POST['password_repeat'] ?? '';
 $terms = isset($_POST['terms']);
 $ip_address = $_SERVER['REMOTE_ADDR'];
 
 $registrierung_erfolgreich = false;
-$isreg = false;
-$message = '';
 
+$errors = []; // Array für Fehler
+
+// Anzahl der Registrierungsversuche der IP in den letzten 30 Minuten
 $stmt = $_database->prepare("
     SELECT COUNT(*) FROM user_register_attempts 
     WHERE ip_address = ? AND attempt_time > (NOW() - INTERVAL 30 MINUTE)
@@ -41,32 +49,56 @@ $stmt->bind_result($attempt_count);
 $stmt->fetch();
 $stmt->close();
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+$max_attempts = 5;
+if ($attempt_count >= $max_attempts) {
+    $errors[] = $languageService->get('too_many_attempts');
+}
 
-    if ($_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    // CSRF prüfen
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         die("Ungültiges Formular (CSRF-Schutz).");
     }
 
-    $captcha_valid = true;
-    $errors = false;
-
+    // Formulardaten validieren
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $_SESSION['error_message'] = $languageService->get('invalid_email');
-        $errors = true;
-    } elseif (!preg_match('/^[a-zA-Z0-9_-]{3,30}$/', $username)) {
-        $_SESSION['error_message'] = $languageService->get('invalid_username');
-        $errors = true;
-    } elseif (strlen($password) < 8 || !preg_match('/[A-Z]/', $password) || !preg_match('/[0-9]/', $password)) {
-        $_SESSION['error_message'] = $languageService->get('invalid_password');
-        $errors = true;
-    } elseif ($password !== $password_repeat) {
-        $_SESSION['error_message'] = $languageService->get('password_mismatch');
-        $errors = true;
-    } elseif (!$terms) {
-        $_SESSION['error_message'] = $languageService->get('terms_required');
-        $errors = true;
+        $errors[] = $languageService->get('invalid_email');
+    }
+    $username = trim($username);
+
+    if (!preg_match('/^[a-zA-Z0-9_-]{3,30}$/', $username)) {
+        $errors[] = $languageService->get('invalid_username');
+    }
+    if (strlen($password) < 8 || !preg_match('/[A-Z]/', $password) || !preg_match('/[0-9]/', $password)) {
+        $errors[] = $languageService->get('invalid_password');
+    }
+    if ($password !== $password_repeat) {
+        $errors[] = $languageService->get('password_mismatch');
+    }
+    if (!$terms) {
+        $errors[] = $languageService->get('terms_required');
     }
 
+    // reCAPTCHA prüfen
+    if (empty($_POST['g-recaptcha-response'])) {
+        $errors[] = "reCAPTCHA fehlt";
+    } else {
+        $google_url = "https://www.google.com/recaptcha/api/siteverify";
+        $secret = $seckey;
+        $response = $_POST['g-recaptcha-response'];
+        $remoteip = $_SERVER['REMOTE_ADDR'];
+        $verify_url = $google_url . "?secret=" . urlencode($secret) . "&response=" . urlencode($response) . "&remoteip=" . urlencode($remoteip);
+
+        $curl_response = file_get_contents($verify_url);
+        $res = json_decode($curl_response, true);
+
+        if (!($res['success'] ?? false)) {
+            $errors[] = "reCAPTCHA nicht bestanden";
+        }
+    }
+
+    // Prüfen, ob Email schon existiert
     $stmt = $_database->prepare("SELECT userID FROM users WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
@@ -76,51 +108,56 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
     $stmt->close();
 
+    // Fehler vorhanden? Dann Rückgabe
     if (!empty($errors)) {
-        $_SESSION['error_message'] = implode("<br>", (array)$errors);
+        $_SESSION['error_message'] = implode("<br>", $errors);
         header("Location: index.php?site=register");
         exit;
     }
 
+    // Daten speichern
     $avatar = 'noavatar.png';
     $role = 1;
     $is_active = 0;
 
-    $stmt = $_database->prepare("INSERT INTO users (username, email, registerdate, role, is_active, avatar) VALUES (?, ?, UNIX_TIMESTAMP(), ?, ?, ?)");
+    $stmt = $_database->prepare("INSERT INTO users (username, email, registerdate, role, is_active, avatar) VALUES (?, ?, CURRENT_TIMESTAMP(), ?, ?, ?)");
     $stmt->bind_param("ssiis", $username, $email, $role, $is_active, $avatar);
     if (!$stmt->execute()) {
         die("Fehler beim Einfügen: " . $stmt->error);
     }
 
     $userID = $_database->insert_id;
-    $pepper_plain = LoginSecurity::generatePepper();
-    $pepper_encrypted = openssl_encrypt($pepper_plain, 'aes-256-cbc', LoginSecurity::AES_KEY, 0, LoginSecurity::AES_IV);
-    $password_hash = LoginSecurity::createPasswordHash($password, $email, $pepper_plain);
+
+    $pepper_plain     = LoginSecurity::generatePepper();
+    $pepper_encrypted = LoginSecurity::encryptPepper($pepper_plain);
+    $hashed_pass      = LoginSecurity::createPasswordHash($password, $email, $pepper_plain);
 
     $stmt = $_database->prepare("UPDATE users SET password_hash = ?, password_pepper = ? WHERE userID = ?");
-    $stmt->bind_param("ssi", $password_hash, $pepper_encrypted, $userID);
+    $stmt->bind_param("ssi", $hashed_pass, $pepper_encrypted, $userID);
     $stmt->execute();
 
+    // Registrierung versuchen speichern
+    $status = 'success';
+    $reason = null;
     $stmt = $_database->prepare("
         INSERT INTO user_register_attempts (ip_address, status, reason, username, email)
         VALUES (?, ?, ?, ?, ?)
     ");
-
-    if ($captcha_valid && !$errors) {
-        $status = 'success';
-        $reason = null;
-    } else {
-        $status = 'failed';
-        $reason = !$captcha_valid ? 'Captcha falsch' : 'Unbekannter Fehler';
-    }
-
     $stmt->bind_param("sssss", $ip_address, $status, $reason, $username, $email);
     $stmt->execute();
     $stmt->close();
 
+    $stmt = $_database->prepare("
+    INSERT INTO user_username (userID, username)
+    VALUES (?, ?)
+    ");
+    $stmt->bind_param("is", $userID, $username);
+    $stmt->execute();
+    $stmt->close();
+
+    // Aktivierungscode erstellen
     $activation_code = bin2hex(random_bytes(32));
     $activation_expires = time() + 86400;
-
     $stmt = $_database->prepare("UPDATE users SET activation_code = ?, activation_expires = ? WHERE userID = ?");
     $stmt->bind_param("sii", $activation_code, $activation_expires, $userID);
     $stmt->execute();
@@ -129,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $settings_result = safe_query("SELECT * FROM `settings`");
     $settings = mysqli_fetch_assoc($settings_result);
-    $hp_title = $settings['title'] ?? 'Webspell-RM';
+    $hp_title = $settings['hptitle'] ?? 'nexpell';
     $hp_url = $settings['hpurl'] ?? 'https://' . $_SERVER['HTTP_HOST'];
     $admin_email = $settings['adminemail'] ?? 'info@' . $_SERVER['HTTP_HOST'];
 
@@ -149,40 +186,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         $_SESSION['error_message'] = $languageService->get('mail_failed');
     }
-
-    $isreg = true;
 }
 
-$errormessage = '';
-$successmessage = '';
-
-if (isset($_SESSION['error_message'])) {
-    $errormessage = $_SESSION['error_message'];
-    unset($_SESSION['error_message']);
-}
-
-if (isset($_SESSION['success_message'])) {
-    $successmessage = $_SESSION['success_message'];
-    unset($_SESSION['success_message']);
-}
-
-if ($registrierung_erfolgreich) {
-    $isreg = true;
-}
-
-$values = $_SESSION['formdata'] ?? [];
-unset($_SESSION['formdata']);
+$errormessage = $_SESSION['error_message'] ?? '';
+unset($_SESSION['error_message']);
+$successmessage = $_SESSION['success_message'] ?? '';
+unset($_SESSION['success_message']);
 
 $data_array = [
+
     'csrf_token' => htmlspecialchars($csrf_token),
     'error_message' => $errormessage,
     'success_message' => $successmessage,
+    'isreg' => $registrierung_erfolgreich,
+    'username' => htmlspecialchars($username),
+    'email' => htmlspecialchars($email),
+    'password_repeat' => htmlspecialchars($password_repeat),
+
+
+    
     'message_zusatz' => '',
     'isreg' => $registrierung_erfolgreich,
-    'username' => $username,
-    'email' => $email,
-    'password_repeat' => $password_repeat,
-    'recaptcha_site_key' => 'DEIN_SITE_KEY',
+    
+    #'recaptcha_site_key' => 'DEIN_SITE_KEY',  // <-- Hier dein SITE-KEY einfügen
+    'security_code' => $languageService->module['security_code'],
+    'recaptcha_site_key' => '<div class="g-recaptcha" data-sitekey="' . htmlspecialchars($webkey) . '"></div>',
     'reg_title' => $languageService->get('reg_title'),
     'reg_info_text' =>  $languageService->get('reg_info_text'),
     'login_link' => $languageService->get('login_link'),
@@ -191,7 +219,7 @@ $data_array = [
     'username_label' => $languageService->get('username'),
     'password_label' => $languageService->get('password'),
     'password_repeat_label' => $languageService->get('password_repeat'),
-    'email_address' => $languageService->get('email_address'),
+    'email_address_label' => $languageService->get('email_address_label'),
     'enter_your_email' => $languageService->get('enter_your_email'),
     'enter_your_name' => $languageService->get('enter_your_name'),
     'enter_password' => $languageService->get('enter_password'),
@@ -205,6 +233,9 @@ $data_array = [
 echo $tpl->loadTemplate("register", "content", $data_array);
 
 ?>
+<!-- reCAPTCHA API -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
 <script>
 document.getElementById("password").addEventListener("input", function () {
     const strengthText = document.getElementById("passwordStrength");

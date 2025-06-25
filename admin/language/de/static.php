@@ -28,6 +28,23 @@ $language_array = array(
 
   'changes_successful'    => 'Änderungen erfolgreich',
   'category'    => 'Kategorie',
+
+  'admin' => 'Admin',
+    'co-admin' => 'Co-Admin',
+    'co-leader' => 'Co-Leader',
+    'designer' => 'Designer',
+    'ehrenmitglied' => 'Ehrenmitglied',
+    'gast' => 'Gast',
+    'leader' => 'Leader',
+    'member' => 'Mitglied',
+    'moderator' => 'Moderator',
+    'redakteur' => 'Redakteur',
+    'registrierter benutzer' => 'Registrierter Benutzer',
+    'squad-leader' => 'Squad-Leader',
+    'streamer' => 'Streamer',
+    'techniker' => 'Techniker',
+    'trial-member' => 'Trial-Mitglied',
+    'war-organisator' => 'War-Organisator'
 );
 
 ?>

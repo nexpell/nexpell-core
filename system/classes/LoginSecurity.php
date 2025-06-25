@@ -1,16 +1,5 @@
 <?php
 
-// Sicherheitskonstanten für AES-Verschlüsselung
-#if (!defined('AES_KEY')) {
-#    define('AES_KEY', 'mein_geheimer_schlüssel_32_byte!!'); // mind. 32 Zeichen
-#}
-
-#if (!defined('AES_IV')) {
-#    define('AES_IV', 'initialivektor12'); // genau 16 Zeichen lang
-#}
-
-
-
 namespace webspell;
 
 class LoginSecurity 
@@ -48,32 +37,6 @@ class LoginSecurity
         return openssl_decrypt($ciphertext, 'aes-256-cbc', $key, 0, $iv);
     }
 
-
-
-
-
-
-    // AES-Schlüssel und IV (für Pepper)
-    //const AES_KEY = 'mein_geheimer_schlüssel_32_byte!!'; // 32 Zeichen (256-bit)
-    #const AES_KEY = 'v9s4L8dGf7wqKxZpM3rT1eYbN0uJ6cHa'; // genau 32 zufällige Zeichen
-    #const AES_IV = 'initialivektor12'; // 16 Byte IV
-
-    /*public static function encryptPepper(string $plain_pepper): ?string {
-        $iv_length = openssl_cipher_iv_length('aes-256-cbc');
-        $iv = openssl_random_pseudo_bytes($iv_length);
-        $encrypted = openssl_encrypt($plain_pepper, 'aes-256-cbc', self::AES_KEY, 0, $iv);
-        if ($encrypted === false) return null;
-        return base64_encode($iv . $encrypted);
-    }
-
-    public static function decryptPepper(string $encrypted_pepper): ?string {
-        $data = base64_decode($encrypted_pepper);
-        $iv_length = openssl_cipher_iv_length('aes-256-cbc');
-        $iv = substr($data, 0, $iv_length);
-        $ciphertext = substr($data, $iv_length);
-        return openssl_decrypt($ciphertext, 'aes-256-cbc', self::AES_KEY, 0, $iv);
-    }*/
-
     public static function createPasswordHash(string $password_hash, string $email, string $pepper): string {
         return password_hash($password_hash . $email . $pepper, PASSWORD_DEFAULT);
     }
@@ -94,7 +57,6 @@ class LoginSecurity
 
         return $password_hash;
     }
-
     
 
     public static function verifyLogin($email, $password_hash, $ip, $is_active , $banned): array {
