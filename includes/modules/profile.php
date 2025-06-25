@@ -97,7 +97,7 @@ $last_visit = (!empty($last_visit_raw) && strtotime($last_visit_raw) !== false)
     ? date('d.m.Y H:i', strtotime($last_visit_raw))
     : 'Nie besucht';
 
-$avatar_url = !empty($user_profile['avatar']) ? '' . $user_profile['avatar'] : "/images/avatars/noavatar.png";
+$avatar = getavatar($userID);
 $location = !empty($user_profile['location']) ? htmlspecialchars($user_profile['location']) : 'Unbekannter Ort';
 $age = !empty($user_profile['age']) ? (int)$user_profile['age'] : 'Nicht angegeben';
 $sexuality = !empty($user_profile['sexuality']) ? htmlspecialchars($user_profile['sexuality']) : 'Nicht angegeben';
@@ -196,7 +196,7 @@ if ($isLocked == 1 ) {
 
 $data_array = [
     'username'        => $username,
-    'user_picture'    => $avatar_url,
+    'avatar'           => $avatar,
     'user_role'       => $role_name,
     'user_points'     => $points,
     'user_about'      => $about_me,

@@ -370,8 +370,18 @@ header('Content-Type: text/html; charset=UTF-8');
 		        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
 		            <span class="navbar-toggler-icon"></span>
 		        </button>
-		        
-		        <img id="avatar-big" style="height: 90px;margin-top: 9px;margin-bottom: 9px; -webkit-box-shadow: 2px 2px 15px 3px rgba(0,0,0,0.54);box-shadow: 2px 2px 15px 3px rgba(0,0,0,0.54);border: 3px solid #fe821d;border-radius: 25px;--bs-tooltip-bg: #fe821d;" src="/images/avatars/<?php echo $l_avatar ?>" data-toggle="tooltip" data-html="true" data-bs-placement="right" data-bs-original-title="<?php echo getusername($userID) ?>" class="rounded-circle profile_img">
+                <?php
+                $avatar_url = getavatar($userID);
+                $username = getusername($userID);
+                ?>
+                <img id="avatar-big"
+                     src="../<?php echo $avatar_url ?>"
+                     class="rounded-circle profile_img"
+                     style="height: 90px; margin-top: 9px; margin-bottom: 9px; -webkit-box-shadow: 2px 2px 15px 3px rgba(0,0,0,0.54); box-shadow: 2px 2px 15px 3px rgba(0,0,0,0.54); border: 3px solid #fe821d; border-radius: 25px; --bs-tooltip-bg: #fe821d;"
+                     data-bs-toggle="tooltip"
+                     data-bs-placement="right"
+                     title="<?php echo $username ?>"
+                     data-bs-html="true">
 		        <div class="sidebar-nav col1lapse navbar-collapse" id="navbarNavDropdown">
                     <a class="link-head" href="admincenter.php">Dashboard</a>
 		            <ul class="nav metismenu text-start navbar-nav" id="side-bar">

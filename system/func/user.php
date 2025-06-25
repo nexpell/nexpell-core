@@ -27,13 +27,30 @@ function getuserpic($userID)
 
 function getavatar($userID)
 {
-    $ds = mysqli_fetch_array(safe_query("SELECT avatar,username FROM users WHERE `userID` = " . (int)$userID . ""));
-    if (empty($ds['avatar'])) {
-        return "svg-avatar.php?name=".@$ds['username']."G";
+    $userID = (int)$userID;
+
+    $ds = mysqli_fetch_array(safe_query("
+        SELECT u.username, p.avatar
+        FROM users u
+        LEFT JOIN user_profiles p ON u.userID = p.userID
+        WHERE u.userID = $userID
+    "));
+
+    // Username für Fallback-Avatar bestimmen
+    $username = !empty($ds['username']) ? $ds['username'] : 'User';
+
+    // Wenn Avatar vorhanden → zurückgeben
+    if (!empty($ds['avatar'])) {
+        return $ds['avatar'];
     }
 
-    return $ds['avatar'];
+    // Andernfalls dynamischen SVG-Avatar zurückgeben
+    return '/images/avatars/svg-avatar.php?name=' . urlencode($username);
 }
+
+
+
+
 
 
 
