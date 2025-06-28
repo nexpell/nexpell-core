@@ -84,12 +84,6 @@ if ($action == "send") {
     }
 
     if (!count($fehler) && $run) {
-        #$message = stripslashes(
-        #    'Diese E-Mail wurde über das Kontaktformular auf deiner <strong>nexpell</strong>-Website gesendet (IP-Adresse: ' . htmlspecialchars($GLOBALS['ip']) . ').<br><br>' .
-        #    'Die Nachricht von <strong>' . htmlspecialchars($name) . '</strong> lautet:<br><br>' .
-        #    '<strong>Nachricht:</strong><br>' . nl2br(htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'))
-        #);
-
         $settings_result = safe_query("SELECT * FROM `settings`");
         $settings = mysqli_fetch_assoc($settings_result);
         $hp_title = $settings['hptitle'] ?? 'nexpell';
