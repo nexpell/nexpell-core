@@ -38,8 +38,8 @@ body, .sticky-footer-wrapper {
 
 .avatar_small {
   vertical-align: middle;
-  width: 35px;
-  height: 35px;
+  width: 32px;
+    height: 22px;
   border-radius: var(--bs-border-radius);
 
   box-shadow:0 .46875rem 2.1875rem rgba(90,97,105,0.1),0 .9375rem 1.40625rem rgba(90,97,105,.1),0 .25rem .53125rem rgba(90,97,105,.12),0 .125rem .1875rem rgba(90,97,105,.1);
@@ -132,6 +132,7 @@ background-position: center center;
     overflow: hidden;
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(0, 0, 0, 0.05);
+    vertical-align: middle; /* <- Das ist neu */
 }
 
 .flag::after {

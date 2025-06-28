@@ -92,6 +92,7 @@ if (!empty(@$db['active'] == 1) !== false) {
 
         # Creazione della tabella dinamica se non esiste
         $table_name = "plugins_" . $_POST['modulname'] . "_settings_widgets";
+        $table_name = "plugins_" . $_POST['modulname'] . "_settings_widgets";
         safe_query(
             "CREATE TABLE IF NOT EXISTS `" . $table_name . "` (
                 `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -103,8 +104,14 @@ if (!empty(@$db['active'] == 1) !== false) {
                 `activated` int(1) DEFAULT 1,
                 `sort` int(11) DEFAULT 1,
                 PRIMARY KEY (`id`)
-                ) AUTO_INCREMENT=1
-                  DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci;"
+            ) AUTO_INCREMENT=1
+              DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;"
+        );
+
+        safe_query(
+            "INSERT INTO `" . $table_name . "` (`id`, `position`, `modulname`, `themes_modulname`, `widgetname`, `widgetdatei`, `activated`, `sort`) VALUES
+            (1, 'navigation_widget', 'navigation', 'default', 'Navigation', 'widget_navigation', 1, 1),
+            (2, 'footer_widget', 'footer_easy', 'default', 'Footer Easy', 'widget_footer_easy', 1, 1);"
         );
 
         try {
@@ -122,7 +129,11 @@ if (!empty(@$db['active'] == 1) !== false) {
                     `hiddenfiles`, 
                     `version`, 
                     `path`,
-                    `plugin_display`
+                    `status_display`,
+                    `plugin_display`,
+                    `widget_display`,
+                    `delete_display`,
+                    `sidebar`
                     ) VALUES (
                     NULL, 
                     '" . $_POST['name'] . "', 
@@ -136,7 +147,11 @@ if (!empty(@$db['active'] == 1) !== false) {
                     '" . $_POST['hiddenfiles'] . "', 
                     '" . $_POST['version'] . "', 
                     '" . $_POST['path'] . "',
-                    '1'
+                    '1',
+                    '1',
+                    '1',
+                    '1',
+                    'deactivated'
                 );
             "
             );
@@ -154,50 +169,44 @@ if (!empty(@$db['active'] == 1) !== false) {
     #Erstellt eine neue Plugin-Einstellung END
 
 
-    // Inizio della cancellazione del plugin e dei suoi widget
     if (isset($_GET['action']) && $_GET['action'] == "delete_plugin" && isset($_GET['modulname'])) {
-        $modulname = $_GET['modulname']; // Non usare direttamente nella query senza escaping
+        $modulname = $_GET['modulname']; // ACHTUNG: Idealerweise per prepared statement, aber hier:
+        $modulname_safe = mysqli_real_escape_string($_database, $modulname);
 
-        // Recupera il plugin dal database
-        $plugin_name_query = safe_query("SELECT modulname FROM settings_plugins WHERE modulname = '" . $modulname . "'");
+        // Prüfe, ob Plugin existiert
+        $plugin_name_query = safe_query("SELECT modulname FROM settings_plugins WHERE modulname = '" . $modulname_safe . "'");
 
         if (mysqli_num_rows($plugin_name_query) > 0) {
             $plugin_name = mysqli_fetch_assoc($plugin_name_query)['modulname'];
 
             echo '<div class="alert alert-info"><strong><i class="bi bi-trash3"></i> ' . $languageService->get('delete_plugin') . ':</strong> ' . htmlspecialchars($plugin_name, ENT_QUOTES, 'UTF-8') . '</div>';
 
-            // 1️ Remove widgets from the general table
-            $delete_widgets = safe_query("DELETE FROM `settings_plugins_widget` WHERE `modulname` = '$plugin_name'");
+            // 1) Entferne aus globaler Widget-Tabelle
+            safe_query("DELETE FROM `settings_plugins_widget` WHERE `modulname` = '" . $plugin_name . "'");
 
-            // 2 Find and clean tables `PREFIX.plugins_*_settings_widgets`
-            $tables_query = safe_query("SHOW TABLES LIKE 'plugins\_%\_settings_widgets'");
-            while ($table = mysqli_fetch_array($tables_query)) {
-                $table_name = $table[0];
-
-                // Check if the table has a `modulname` field
-                $check_column = safe_query("SHOW COLUMNS FROM `$table_name` LIKE 'modulname'");
-                if (mysqli_num_rows($check_column) > 0) {
-                    // Remove the corresponding row
-                    safe_query("DELETE FROM `$table_name` WHERE `modulname` = '$plugin_name'");
-                }
+            // 2) Entferne genau die plugins_[modulname]_settings_widgets Tabelle
+            $table_to_drop = "plugins_" . $plugin_name . "_settings_widgets";
+            $check_table = safe_query("SHOW TABLES LIKE '" . $table_to_drop . "'");
+            if (mysqli_num_rows($check_table) > 0) {
+                safe_query("DROP TABLE `$table_to_drop`");
             }
 
-            // 3 Remove the plugin from the main table
-            $delete_plugin = safe_query("DELETE FROM `settings_plugins` WHERE `modulname` = '$plugin_name'");
+            // 3) Entferne Plugin aus settings_plugins
+            safe_query("DELETE FROM `settings_plugins` WHERE `modulname` = '" . $plugin_name . "'");
 
-            // 4 Redirects
-
-            flush(); // Forza l'output nel browser
-            echo
-            '<script>
-                setTimeout(function(){ 
-                    window.location.href = "admincenter.php?site=plugin_installer&deinstall=plugin&dir=/' . urlencode($plugin_name) . '/&modulname=' . urlencode($plugin_name) . '&redirect=true"; 
-                }, 2000);
-            </script>';
+            // 4) Redirect
+            flush();
+            echo '<script>
+                    setTimeout(function(){ 
+                        window.location.href = "admincenter.php?site=plugin_manager"; 
+                    }, 2000);
+                </script>';
         } else {
             echo '<div class="alert alert-danger"><strong><i class="bi bi-x-circle"></i> Error:</strong> Plugin <b>' . htmlspecialchars($modulname, ENT_QUOTES, 'UTF-8') . '</b> was not found in <b>settings_plugins</b>.</div>';
         }
     }
+
+
     // Fine della cancellazione del plugin e dei suoi widget
 
 
@@ -2168,12 +2177,6 @@ if (!empty(@$db['active'] == 1) !== false) {
             </div>
         </div>
   
-        <div class="mb-3 row">
-            <label class="col-sm-5 col-form-label" for="admin_file">' . $languageService->get('admin_file') . ': <br><small>(' . $languageService->get('index_file_nophp') . ')</small></label>
-            <div class="col-sm-6"><span class="text-muted small"><em>
-                <input type="name" class="form-control" name="admin_file" placeholder="admin_file"></em></span>
-            </div>
-        </div>
         <div class="mb-3 row">
             <label class="col-sm-5 col-form-label" for="author">' . $languageService->get('author') . ':</label>
             <div class="col-sm-6"><span class="text-muted small"><em>

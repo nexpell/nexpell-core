@@ -196,7 +196,7 @@ if ($isLocked == 1 ) {
 
 $data_array = [
     'username'        => $username,
-    'avatar'           => $avatar,
+    'avatar'          => $avatar,
     'user_role'       => $role_name,
     'user_points'     => $points,
     'user_about'      => $about_me,
@@ -251,9 +251,3 @@ $data_array = [
 // Ausgabe Template
 echo $tpl->loadTemplate("profile", "content", $data_array);
 
-// Neue Ausgabe-Zeile mit Fallback-Check
-#if ($tpl->templateExists("profile", "content")) {
-#    echo $tpl->loadTemplate("profile", "content", $data_array);
-#} else {
-#    echo "<div class='alert alert-warning'>Profil-Template nicht gefunden.</div>";
-#}

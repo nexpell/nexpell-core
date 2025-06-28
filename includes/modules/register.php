@@ -116,12 +116,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Daten speichern
-    $avatar = 'noavatar.png';
     $role = 1;
     $is_active = 0;
 
-    $stmt = $_database->prepare("INSERT INTO users (username, email, registerdate, role, is_active, avatar) VALUES (?, ?, CURRENT_TIMESTAMP(), ?, ?, ?)");
-    $stmt->bind_param("ssiis", $username, $email, $role, $is_active, $avatar);
+    $stmt = $_database->prepare("INSERT INTO users (username, email, registerdate, role, is_active) VALUES (?, ?, CURRENT_TIMESTAMP(), ?, ?)");
+    $stmt->bind_param("ssii", $username, $email, $role, $is_active);
     if (!$stmt->execute()) {
         die("Fehler beim Einfügen: " . $stmt->error);
     }
@@ -152,6 +151,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     VALUES (?, ?)
     ");
     $stmt->bind_param("is", $userID, $username);
+    $stmt->execute();
+    $stmt->close();
+
+
+    $roleID = 12;
+    $assignedAt = date('Y-m-d H:i:s'); // aktuelles Datum/Zeit
+
+    $stmt = $_database->prepare("
+        INSERT INTO user_role_assignments (userID, roleID, assigned_at)
+        VALUES (?, ?, ?)
+    ");
+    $stmt->bind_param("iis", $userID, $roleID, $assignedAt);
     $stmt->execute();
     $stmt->close();
 

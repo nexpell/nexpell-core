@@ -84,11 +84,33 @@ if ($action == "send") {
     }
 
     if (!count($fehler) && $run) {
-        $message = stripslashes(
-            'Diese E-Mail wurde über das Kontaktformular auf deiner <strong>nexpell</strong>-Website gesendet (IP-Adresse: ' . htmlspecialchars($GLOBALS['ip']) . ').<br><br>' .
-            'Die Nachricht von <strong>' . htmlspecialchars($name) . '</strong> lautet:<br><br>' .
-            '<strong>Nachricht:</strong><br>' . nl2br(htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'))
-        );
+        #$message = stripslashes(
+        #    'Diese E-Mail wurde über das Kontaktformular auf deiner <strong>nexpell</strong>-Website gesendet (IP-Adresse: ' . htmlspecialchars($GLOBALS['ip']) . ').<br><br>' .
+        #    'Die Nachricht von <strong>' . htmlspecialchars($name) . '</strong> lautet:<br><br>' .
+        #    '<strong>Nachricht:</strong><br>' . nl2br(htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'))
+        #);
+
+        $settings_result = safe_query("SELECT * FROM `settings`");
+        $settings = mysqli_fetch_assoc($settings_result);
+        $hp_title = $settings['hptitle'] ?? 'nexpell';
+        $hp_url = $settings['hpurl'] ?? 'https://' . $_SERVER['HTTP_HOST'];
+
+        $message = '
+            <html>
+              <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; padding: 20px; background-color: #f9f9f9;">
+                <h2 style="color: #fe821d;">Nachricht über das Kontaktformular</h2>
+                <p>Diese E-Mail wurde über das Kontaktformular auf deiner <strong>' . htmlspecialchars($hp_title) . '</strong>-Website gesendet.</p>
+                <p><strong>IP-Adresse:</strong> ' . htmlspecialchars($GLOBALS['ip']) . '</p>
+                <p><strong>Von:</strong> ' . htmlspecialchars($name) . '</p>
+                <p><strong>Nachricht:</strong></p>
+                <p style="white-space: pre-wrap;">' . nl2br(htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')) . '</p>
+                <hr style="border:none; border-top:1px solid #ddd; margin: 20px 0;">
+                <p style="font-size: 0.9em; color: #777;">
+                  <a href="' . htmlspecialchars($hp_url) . '" style="color: #fe821d; text-decoration: none;">' . htmlspecialchars($hp_url) . '</a>
+                </p>
+              </body>
+            </html>
+            ';
 
 
         $sendmail = \webspell\Email::sendEmail($from, 'Contact', $getemail, stripslashes($subject), $message);
@@ -102,7 +124,8 @@ if ($action == "send") {
                 $fehler[] = $sendmail['debug'];
                 redirect('index.php?site=contact', generateBoxFromArray($languageService->module['send_successfull'], 'alert-success', $fehler), 3);
             } else {
-                redirect('index.php?site=contact', $languageService->module['send_successfull'], 3);
+                echo '<div class="alert alert-success" role="alert">' . $languageService->module['send_successfull']. '</div>';
+                redirect('index.php?site=contact', '', 3);
             }
             unset($_POST['name'], $_POST['from'], $_POST['text'], $_POST['subject']);
         }

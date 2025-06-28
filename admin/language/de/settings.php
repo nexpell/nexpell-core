@@ -1,6 +1,6 @@
 <?php
 
-$language_array = Array(
+/*$language_array = Array(
   
   'tooltip_1'                     => 'Dies ist die URL der Seite, z.B. (https://deinedomain.de).<br>Mit http:// oder https:// am Anfang und nicht mit Slash enden!',
   'tooltip_2'                     => 'Das ist der Titel der Seite, wird auch als Browser Titel angezeigt',
@@ -77,7 +77,7 @@ $language_array = Array(
 
   
 
-/*allgemeine einstellung*/
+
     'access_denied'               => '<h3>Info</h3><div class="alert alert-danger"><span class="sr-only">Error:</span><strong>Zugriff verweigert</strong></div>',
     'info'                        => '<div class="alert alert-warning" role="alert">Hier steht dann eine Beschreibung</div>',
     'updated_successfully'        => '<div class="col-md-12"><div class="alert alert-success" role="alert">Erfolgreich aktualisiert.</div></div>',
@@ -86,8 +86,6 @@ $language_array = Array(
 
 
 
-/*===================================================================*/
-/*Einstellungen */
   'settings'                      => 'Allgemeine Einstellungen',
   'additional_options_startpage'  => 'Frontend (Website) deaktivieren und Startpage wählen',
   'page_title'                    => 'Homepage Titel',
@@ -102,7 +100,7 @@ $language_array = Array(
   'meta_keywords'                 => 'Meta Keywords',
   'meta_description'              => 'Meta Description',
 
-/*Frontend (Website) deaktivieren und Startpage wählen */
+
   'additional_options'            => 'Website deaktivieren',
   'on_pagelock'                   => 'Seite sperren',
   'off_pagelock'                  => 'Seite entsperren',
@@ -110,16 +108,21 @@ $language_array = Array(
   'no_startpage'                  => 'Keine Startpage',
   
  
-  /*Google reCaptcha */
   'reCaptcha'                     => 'Google reCaptcha',
-  'important_text'                => 'Bevor Du diese Modifikation aktivierst benötigst Du die reCaptcha APi-Keys. <br />Dazu gehe wiefolgt vor.<br /><br />1. <a href="https://www.google.com/recaptcha/intro/index.html" target="_blank">reCaptcha Account</a> anlegen. <br />2. Deine Internetadresse angeben. <br /> 3. reCAPTCHA-Typ: <b>V2</b> (Kästchen) auswählen <br /> 4. Die Zwei erhaltenen Schlüssel hier eintragen.',
+  'recaptcha_description' => 'Um Google reCAPTCHA zu verwenden, benötigst Du zwei API-Schlüssel. So gehst Du vor:<br><br>
+1. Besuche die <a href="https://www.google.com/recaptcha/intro/index.html" target="_blank">offizielle reCAPTCHA-Seite</a> und melde dich mit deinem Google-Konto an.<br>
+2. Erstelle ein neues reCAPTCHA-Projekt und gib deine Website-Adresse (Domain) an.<br>
+3. Wähle den Typ <b>reCAPTCHA v2</b> („Ich bin kein Roboter“-Kästchen).<br>
+4. Nach der Einrichtung erhältst Du einen <b>Website Key</b> und einen <b>Secret Key</b> – trage beide bitte hier ein.<br><br>
+Besucher müssen dann beim Absenden von Formularen die Sicherheitsprüfung bestätigen – das schützt dich vor Spam und Bots.',
+
   'activate'                      => 'Aktiviert',
   'web-key'                       => 'Webseiten-Schl&uuml;ssel',
   'secret-key'                    => 'Geheimer-Schl&uuml;ssel',
   'success'                       => '<div class="col-md-12"><div class="alert alert-success" role="alert">reCaptcha Account erfolgreich aktualisiert.</div></div>',
   'failed'                        => '<div class="col-md-12"><div class="alert alert-danger" role="alert">reCaptcha Account Vorgang fehlgeschlagen.</div></div>',
   
-/*captcha*/
+
   'captcha-text'                  => 'Hier handelt es sich um die alte Captcha-Abfrage. Sie ist nicht mehr so sicher gegen Bods und Co. Bitte verwendet die neue Google reCaptcha Abfrage!',
   'captcha'                       => 'Captcha',
   'captcha_autodetect'            => 'automatisch',
@@ -135,7 +138,7 @@ $language_array = Array(
   'captcha_type'                  => 'Captcha Typ',
   'captcha_style'                 => 'Captcha Stil',
 
-  /*Sonstiges */
+  
   'other'                         => 'Sonstiges',
   'format_date'                   => 'Datumsformat',
   'format_time'                   => 'Zeitformat',
@@ -154,9 +157,80 @@ $language_array = Array(
   'detect_visitor_language'       => 'Besuchersprache erkennen?',
   'max_wrong_pw'                  => 'max. falsche Passwörter',
   'forum_double'                  => 'Forum - Keine Doppelpost',
-/*===================================================================*/
-  /*social settings*/
+
   'social_settings'               => 'Social Media Einstellungen',
   'title_social_media'            => 'Einstellungen',
-  'social_sidebar_widget'         => 'Für Social-Sidebar Widget'
+  'social_sidebar_widget'         => 'Für Social-Sidebar Widget',
+
+  'site_settings' => 'Seiteneinstellungen',
+        'general_settings' => 'Allgemeine Einstellungen',
+);*/
+
+$language_array = array(
+    'settings' => 'Einstellungen',
+    'social_settings' => 'Soziale Einstellungen',
+    'updated_successfully' => 'Erfolgreich aktualisiert',
+    'transaction_invalid' => 'Ungültige Transaktion',
+    'page_url' => 'Seiten-URL',
+    'since' => 'Seit',
+    'page_title' => 'Seitentitel',
+    'meta_keywords' => 'Meta-Schlüsselwörter',
+    'meta_description' => 'Meta-Beschreibung',
+    'clan_name' => 'Clan-Name',
+    'clan_tag' => 'Clan-Tag',
+    'admin_name' => 'Admin-Name',
+    'admin_email' => 'Admin-E-Mail',
+    'additional_options' => 'Zusätzliche Optionen',
+    'no_startpage' => 'Keine Startseite',
+    'startpage' => 'Startseite',
+    'recaptcha' => 'reCaptcha',
+    'recaptcha_description' => 'Bitte bestätigen Sie, dass Sie kein Roboter sind',
+    'web_key' => 'Web-Schlüssel',
+    'secret_key' => 'Geheimschlüssel',
+    'off_pagelock' => 'Seite entsperren',
+    'on_pagelock' => 'Seite sperren',
+    'login' => 'Anmelden',
+    'logout' => 'Abmelden',
+    'register' => 'Registrieren',
+    'username' => 'Benutzername',
+    'password' => 'Passwort',
+    'email' => 'E-Mail',
+    'save' => 'Speichern',
+    'cancel' => 'Abbrechen',
+    'delete' => 'Löschen',
+    'edit' => 'Bearbeiten',
+    'search' => 'Suchen',
+    'home' => 'Startseite',
+    'profile' => 'Profil',
+    'user_settings' => 'Benutzereinstellungen',
+    'language' => 'Sprache',
+    'select_language' => 'Sprache auswählen',
+    'error' => 'Fehler',
+    'success' => 'Erfolg',
+    'warning' => 'Warnung',
+    'info' => 'Information',
+    'loading' => 'Lädt...',
+    'actions' => 'Aktionen',
+    'submit' => 'Absenden',
+    'reset' => 'Zurücksetzen',
+    'yes' => 'Ja',
+    'no' => 'Nein',
+    'confirm_delete' => 'Möchten Sie wirklich löschen?',
+    'access_denied' => 'Zugriff verweigert',
+    'page_not_found' => 'Seite nicht gefunden',
+    'server_error' => 'Serverfehler',
+    'contact' => 'Kontakt',
+    'about_us' => 'Über uns',
+    'terms_of_service' => 'Nutzungsbedingungen',
+    'privacy_policy' => 'Datenschutzrichtlinie',
+    'faq' => 'Häufig gestellte Fragen',
+    'loading_data' => 'Daten werden geladen',
+    'no_results_found' => 'Keine Ergebnisse gefunden',
+    'welcome' => 'Willkommen',
+    'dashboard' => 'Dashboard',
+    'notifications' => 'Benachrichtigungen',
+    'messages' => 'Nachrichten',
+    'new_message' => 'Neue Nachricht',
+    'settings_saved' => 'Einstellungen gespeichert',
+    'error_occurred' => 'Ein Fehler ist aufgetreten',
 );
