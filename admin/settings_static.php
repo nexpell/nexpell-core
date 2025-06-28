@@ -116,11 +116,21 @@ if (isset($_POST['save'])) {
     }
 }
 
- elseif (isset($_GET[ 'delete' ])) {
+ elseif (isset($_GET['delete'])) {
     $CAPCLASS = new \webspell\Captcha;
-    if ($CAPCLASS->checkCaptcha(0, $_GET[ 'captcha_hash' ])) {
-        \webspell\Tags::removeTags('static', $_GET[ 'staticID' ]);
-        safe_query("DELETE FROM `settings_static` WHERE staticID='" . $_GET[ 'staticID' ] . "'");
+    if ($CAPCLASS->checkCaptcha(0, $_GET['captcha_hash'])) {
+
+        $staticID = (int)$_GET['staticID'];  // Sicher casten
+
+        \webspell\Tags::removeTags('static', $staticID);
+
+        // Navigationseintrag löschen (ohne &amp;)
+        safe_query("DELETE FROM `navigation_website_sub` WHERE `url` LIKE 'index.php?site=static&amp;staticID=" . $staticID . "%'");
+
+
+        // Statischen Eintrag löschen
+        safe_query("DELETE FROM `settings_static` WHERE `staticID` = '$staticID'");
+
     } else {
         echo '<div class="alert alert-danger" role="alert">' . $languageService->get('transaction_invalid') . '</div>';
         echo '<script type="text/javascript">
@@ -130,6 +140,7 @@ if (isset($_POST['save'])) {
             </script>';
     }
 }
+
 
 if (isset($_GET['action']) && $_GET['action'] == "add") {
     // CAPTCHA-Hash generieren
@@ -555,22 +566,22 @@ document.addEventListener('DOMContentLoaded', function () {
                     <a href="admincenter.php?site=settings_static&amp;action=edit&amp;staticID=' . $ds['staticID'] . '" class="hidden-xs hidden-sm btn btn-warning btn-sm" type="button">' . $languageService->get('edit') . '</a>
 
                     <!-- Button trigger modal -->
-                    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirm-delete" data-href="admincenter.php?site=settings_static&amp;delete=true&amp;staticID=' . $ds['staticID'] . '&amp;captcha_hash=' . $hash . '">
+                    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirm-delete-' . $ds['staticID'] . '" data-href="admincenter.php?site=settings_static&amp;delete=true&amp;staticID=' . $ds['staticID'] . '&amp;captcha_hash=' . $hash . '">
                         ' . $languageService->get('delete') . '
                     </button>
 
                     <!-- Modal -->
-                    <div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal fade" id="confirm-delete-' . $ds['staticID'] . '" tabindex="-1" role="dialog" aria-labelledby="myModalLabel-' . $ds['staticID'] . '" aria-hidden="true">
                         <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="exampleModalLabel">' . $languageService->get('static_pages') . '</h5>
+                                    <h5 class="modal-title" id="myModalLabel-' . $ds['staticID'] . '">' . $languageService->get('static_pages') . '</h5>
                                     <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
                                 </div>
                                 <div class="modal-body"><p>' . $languageService->get('really_delete') . '</p></div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">' . $languageService->get('close') . '</button>
-                                    <a class="btn btn-danger btn-ok btn-sm">' . $languageService->get('delete') . '</a>
+                                    <a href="admincenter.php?site=settings_static&amp;delete=true&amp;staticID=' . $ds['staticID'] . '&amp;captcha_hash=' . $hash . '" class="btn btn-danger btn-sm">' . $languageService->get('delete') . '</a>
                                 </div>
                             </div>
                         </div>
@@ -578,6 +589,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <!-- Modal END -->
                 </td>
             </tr>';
+
         
         $i++;
     }

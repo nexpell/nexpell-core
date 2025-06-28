@@ -271,8 +271,8 @@ $last30 = strtotime('-30 days');
 $active = mysqli_fetch_array(safe_query("SELECT COUNT(*) AS count FROM users WHERE lastlogin >= $last30"))['count'];
 $inactive = $total_users - $active;
 
-$with_avatar = mysqli_fetch_array(safe_query("SELECT COUNT(*) AS count FROM users WHERE avatar != '' AND avatar IS NOT NULL"))['count'];
-$without_avatar = $total_users - $with_avatar;
+#$with_avatar = mysqli_fetch_array(safe_query("SELECT COUNT(*) AS count FROM users WHERE avatar != '' AND avatar IS NOT NULL"))['count'];
+#$without_avatar = $total_users - $with_avatar;
 
 // Benutzer nach Rollen
 $roles = safe_query("
@@ -335,8 +335,10 @@ $totalClicks = $_database->query("SELECT COUNT(*) AS total FROM link_clicks")->f
         <li class="list-group-item">📅 Letzte 30 Tage: <strong><?= $month_users ?></strong></li>
         <li class="list-group-item">🟢 Aktive Benutzer (30 Tage): <strong><?= $active ?></strong></li>
         <li class="list-group-item">⚪ Inaktive Benutzer: <strong><?= $inactive ?></strong></li>
-        <li class="list-group-item">🖼 Mit Profilbild: <strong><?= $with_avatar ?></strong></li>
-        <li class="list-group-item">🚫 Ohne Profilbild: <strong><?= $without_avatar ?></strong></li>
+        <!--<li class="list-group-item">🖼 Mit Profilbild: <strong><?= $with_avatar ?></strong></li>-->
+        <li class="list-group-item">🖼 Mit Profilbild: <strong>avatar</strong></li>
+        <!--<li class="list-group-item">🚫 Ohne Profilbild: <strong><?= $without_avatar ?></strong></li>-->
+        <li class="list-group-item">🚫 Ohne Profilbild: <strong>avatar</strong></li>
     </ul>
 </div>
 
