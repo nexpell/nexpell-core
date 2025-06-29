@@ -1,4 +1,6 @@
-<?php/**
+<?php
+
+/**
  * Führt eine Weiterleitung zu einer angegebenen URL durch.
  *
  * @param string $url Die Ziel-URL für die Weiterleitung. 
