@@ -115,7 +115,8 @@ class PluginUninstaller
 
         $folder_escaped = $_database->real_escape_string($plugin_folder);
 
-        // Suche nach allen Tabellen, die mit "plugins_pluginname" oder "plugins_pluginname_" beginnen
+        $_database->query("SET FOREIGN_KEY_CHECKS = 0"); // <- HINZUGEFÜGT
+
         $sql = "SHOW TABLES LIKE 'plugins_" . $folder_escaped . "%'";
         $result = $_database->query($sql);
 
@@ -132,5 +133,8 @@ class PluginUninstaller
         } else {
             $this->addLog('info', "Keine passenden Tabellen für 'plugins_{$plugin_folder}' gefunden.");
         }
+
+        $_database->query("SET FOREIGN_KEY_CHECKS = 1"); // <- HINZUGEFÜGT
     }
+
 }
