@@ -1,19 +1,19 @@
 <?php
 /**
  * ─────────────────────────────────────────────────────────────────────────────
- * Webspell-RM 3.0 - Modern Content & Community Management System
+ * nexpell 1.0 - Modern Content & Community Management System
  * ─────────────────────────────────────────────────────────────────────────────
  *
- * @version       3.0
+ * @version       1.0
  * @build         Stable Release
  * @release       2025
- * @copyright     © 2018–2025 Webspell-RM | https://www.webspell-rm.de
+ * @copyright     © 2025 nexpell | https://www.nexpell.de
  * 
- * @description   Webspell-RM is a modern open source CMS designed for gaming
- *                communities, esports teams, and digital projects of any kind.
+ * @description   nexpell is a modern open source CMS for gaming communities,
+ *                esports teams, and digital projects of any kind.
  * 
  * @author        Based on the original WebSPELL Clanpackage by Michael Gruber
- *                (webspell.at), further developed by the Webspell-RM Team.
+ *                (webspell.at), further developed by the nexpell Team.
  * 
  * @license       GNU General Public License (GPL)
  *                This software is distributed under the terms of the GPL.
@@ -21,14 +21,12 @@
  *                For license details, see: https://www.gnu.org/licenses/gpl.html
  * 
  * @support       Support, updates, and plugins available at:
- *                → Website: https://www.webspell-rm.de
- *                → Forum:   https://www.webspell-rm.de/forum.html
- *                → Wiki:    https://www.webspell-rm.de/wiki.html
+ *                → Website: https://www.nexpell.de
+ *                → Forum:   https://www.nexpell.de/forum
+ *                → Wiki:    https://www.nexpell.de/wiki
  * 
  * ─────────────────────────────────────────────────────────────────────────────
  */
-
-
 
 
 // Session starten, falls noch nicht gestartet
@@ -64,21 +62,6 @@ if (isset($_GET['new_lang'])) {
     header("Location: /");
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // Sprache aus Session laden oder Standard setzen
 if (isset($_SESSION['language'])) {
@@ -145,6 +128,8 @@ header('X-UA-Compatible: IE=edge');
     <title><?php echo htmlspecialchars(get_sitetitle(), ENT_QUOTES, 'UTF-8'); ?></title>
     <base href="/">
 
+    <link id="bootstrap-css" rel="stylesheet" href="./includes/themes/<?php echo htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/css/dist/<?php echo htmlspecialchars($currentTheme, ENT_QUOTES, 'UTF-8'); ?>/bootstrap.min.css"/>
+
     <link type="application/rss+xml" rel="alternate" href="tmp/rss.xml" title="<?php echo htmlspecialchars($myclanname ?? 'My Clan', ENT_QUOTES, 'UTF-8'); ?> - RSS Feed">
     <link type="text/css" rel="stylesheet" href="./components/cookies/css/cookieconsent.css" media="print" onload="this.media='all'">
     <link type="text/css" rel="stylesheet" href="./components/cookies/css/iframemanager.css" media="print" onload="this.media='all'">
@@ -161,7 +146,7 @@ header('X-UA-Compatible: IE=edge');
     echo '<!--Widget css END-->' . PHP_EOL;
     ?>
 
-    <link id="bootstrap-css" rel="stylesheet" href="./includes/themes/<?php echo htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/css/dist/<?php echo htmlspecialchars($currentTheme, ENT_QUOTES, 'UTF-8'); ?>/bootstrap.min.css"/>
+    
     <link type="text/css" rel="stylesheet" href="./includes/themes/<?php echo htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/css/stylesheet.css" />
 </head>
 

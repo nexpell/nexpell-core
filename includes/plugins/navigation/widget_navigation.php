@@ -18,7 +18,7 @@ if(isset($qs_arr['site'])) {
 $ergebnis=safe_query("SELECT * FROM settings_themes WHERE active = '1'");
 $ds=mysqli_fetch_array($ergebnis);
 
-echo'<nav class="sticky-top navbar navbar-expand-lg ' . $ds['navbar_class'] . '" data-bs-theme="' . $ds['navbar_theme'] . '">
+echo'<nav id="mainNavbar" class="sticky-top navbar navbar-expand-lg ' . $ds['navbar_class'] . '" data-bs-theme="' . $ds['navbar_theme'] . '">
     <div class="container">
         <!-- Klickbares Logo -->
     <a href="#" class="logo-link">

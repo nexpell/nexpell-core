@@ -357,9 +357,17 @@ private $_debug = DEBUG;
 
 		while ($res = mysqli_fetch_array($query)) {
 
-			#Agency Header Navigation .css wird extra geladen
 			if ($res['widgetdatei'] == 'widget_agency_header') {
-				echo '<link type="text/css" rel="stylesheet" href="./includes/plugins/carousel/css/style/agency_header.css" />';
+			    echo '<link type="text/css" rel="stylesheet" href="./includes/plugins/carousel/css/style/agency.css" />';
+			}
+			if ($res['widgetdatei'] == 'widget_carousel_crossfade') {
+			    echo '<link type="text/css" rel="stylesheet" href="./includes/plugins/carousel/css/style/carousel.css" />';
+			}
+			if ($res['widgetdatei'] == 'widget_parallax_header') {
+			    echo '<link type="text/css" rel="stylesheet" href="./includes/plugins/carousel/css/style/parallax.css" />';
+			}
+			if ($res['widgetdatei'] == 'widget_sticky_header') {
+			    echo '<link type="text/css" rel="stylesheet" href="./includes/plugins/carousel/css/style/sticky.css" />';
 			}
 
 			if (is_dir($pluginpath . $res['modulname'] . "/css/")) {
@@ -411,6 +419,21 @@ private $_debug = DEBUG;
 		}
 
 		while ($res = mysqli_fetch_array($query)) {
+
+			if ($res['widgetdatei'] == 'widget_agency_header') {
+			    echo '<script defer src="./includes/plugins/carousel/js/style/agency.js"></script>';
+			}
+			if ($res['widgetdatei'] == 'widget_carousel_crossfade') {
+			    echo '<script defer src="./includes/plugins/carousel/js/style/carousel.js"></script>';
+			}
+			if ($res['widgetdatei'] == 'widget_parallax_header') {
+			    echo '<script defer src="./includes/plugins/carousel/js/style/parallax.js"></script>';
+			}
+			if ($res['widgetdatei'] == 'widget_sticky_header') {
+			    echo '<script defer src="./includes/plugins/carousel/js/style/sticky.js"></script>';
+			}
+
+
 			if (is_dir($pluginpath . $res['modulname'] . "/css/")) {
 				$subf1 = "/js/";
 			} else {
