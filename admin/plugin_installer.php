@@ -1,26 +1,25 @@
 <?php
 
 use webspell\LanguageService;
+use webspell\AccessControl;
+use webspell\PluginUninstaller;
+use webspell\Plugininstaller;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Standard setzen, wenn nicht vorhanden
+// Standard-Sprache setzen, falls nicht gesetzt
 $_SESSION['language'] = $_SESSION['language'] ?? 'de';
 
 // Initialisieren
-global $_database,$languageService;
-$lang = $languageService->detectLanguage();
+global $_database, $languageService;
 $languageService = new LanguageService($_database);
+$lang = $languageService->detectLanguage();
 
 // Admin-Modul laden
 $languageService->readModule('plugin_installer', true);
-
-use webspell\AccessControl;
-use webspell\PluginUninstaller;
-use webspell\Plugininstaller;
 
 // Admin-Rechte prüfen
 AccessControl::checkAdminAccess('ac_plugin_installer');
@@ -35,6 +34,7 @@ if (isset($_GET['install']) || isset($_GET['update']) || isset($_GET['uninstall'
     $plugin_action = isset($_GET['install']) ? 'install' : (isset($_GET['update']) ? 'update' : 'uninstall');
     $plugin_folder = basename($_GET[$plugin_action]);
 
+    // Plugins-Info von externer JSON laden
     $plugin_info_array = @json_decode(@file_get_contents($plugin_json_url), true);
     $plugin_info = null;
 
@@ -89,7 +89,7 @@ if (isset($_GET['install']) || isset($_GET['update']) || isset($_GET['uninstall'
         include $script_path;
     }
 
-    // Plugin-Daten speichern
+    // Plugin-Daten in DB speichern
     $name = htmlspecialchars($plugin_info['name']);
     $modulname = htmlspecialchars($plugin_info['modulname']);
     $description = htmlspecialchars($plugin_info['description']);
@@ -107,7 +107,7 @@ if (isset($_GET['install']) || isset($_GET['update']) || isset($_GET['uninstall'
         echo '<script type="text/javascript">
                 setTimeout(function() {
                     window.location.href = "admincenter.php?site=plugin_installer";
-                }, 3000); // 3 Sekunden warten
+                }, 3000);
             </script>';
     } else {
         safe_query("
@@ -119,7 +119,7 @@ if (isset($_GET['install']) || isset($_GET['update']) || isset($_GET['uninstall'
         echo '<script type="text/javascript">
                 setTimeout(function() {
                     window.location.href = "admincenter.php?site=plugin_installer";
-                }, 3000); // 3 Sekunden warten
+                }, 3000);
             </script>';
     }
 }
@@ -206,22 +206,23 @@ foreach ($all_plugin_names as $name) {
 // HTML-Ausgabe
 echo '
 <div class="card">
-    <div class="card-header">'.$languageService->get('plugin_installer').'</div>
+    <div class="card-header">' . $languageService->get('plugin_installer') . '</div>
     <div class="card-body">
         <div class="container py-5">
-        <h3>'.$languageService->get('plugin_installer_headline').'</h3>
+        <h3>' . $languageService->get('plugin_installer_headline') . '</h3>
 
         <table class="table table-bordered table-striped bg-white shadow-sm">
             <thead class="table-light">
                 <tr>
-                    <th width="14%">'.$languageService->get('plugin_name').'</th>
-                    <th>'.$languageService->get('plugin_description').'</th>
-                    <th width="6%">'.$languageService->get('language').'</th>
-                    <th width="6%">'.$languageService->get('plugin_version').'</th>
-                    <th width="14%">'.$languageService->get('plugin_action').'</th>
+                    <th width="14%">' . $languageService->get('plugin_name') . '</th>
+                    <th>' . $languageService->get('plugin_description') . '</th>
+                    <th width="6%">' . $languageService->get('language') . '</th>
+                    <th width="6%">' . $languageService->get('plugin_version') . '</th>
+                    <th width="14%">' . $languageService->get('plugin_action') . '</th>
                 </tr>
             </thead>
             <tbody>';
+
 foreach ($plugins_for_template as $plugin) {
 
     $translate = new multiLanguage($lang);
@@ -239,32 +240,28 @@ foreach ($plugins_for_template as $plugin) {
     }
 
     echo '<tr>
-        <td>'.htmlspecialchars($plugin['name']).'</td>
-        <td>'.$description.'</td>
-        <td>'.$flags_html.'</td>
-        <td>'.htmlspecialchars($plugin['version']);
+        <td>' . htmlspecialchars($plugin['name']) . '</td>
+        <td>' . $description . '</td>
+        <td>' . $flags_html . '</td>
+        <td>' . htmlspecialchars($plugin['version']);
 
     if ($plugin['installed']) {
-        echo '<br><small class="text-muted">('.htmlspecialchars($plugin['installed_version']).')</small>';
+        echo '<br><small class="text-muted">(' . htmlspecialchars($plugin['installed_version']) . ')</small>';
     }
 
     echo '</td><td>';
 
     if ($plugin['installed']) {
-        echo '<button class="btn btn-success btn-sm" disabled>'.$languageService->get('installed').'</button> ';
+        echo '<button class="btn btn-success btn-sm" disabled>' . $languageService->get('installed') . '</button> ';
         if ($plugin['update']) {
-            echo '<a href="admincenter.php?site=plugin_installer&update='.urlencode($plugin['modulname']).'" class="btn btn-warning btn-sm">'
-                .$languageService->get('update').'</a> ';
+            echo '<a href="admincenter.php?site=plugin_installer&update=' . urlencode($plugin['modulname']) . '" class="btn btn-warning btn-sm">'
+                . $languageService->get('update') . '</a> ';
         }
-        echo '<a href="admincenter.php?site=plugin_installer&uninstall='.urlencode($plugin['modulname']).'" class="btn btn-danger btn-sm" onclick="return confirm(\'Wirklich deinstallieren?\');">'
-            .$languageService->get('uninstall').'</a>';
+        echo '<a href="admincenter.php?site=plugin_installer&uninstall=' . urlencode($plugin['modulname']) . '" class="btn btn-danger btn-sm" onclick="return confirm(\'Willst du dieses Plugin wirklich löschen?\')">'
+            . $languageService->get('delete') . '</a>';
     } else {
-        if (!empty($plugin['download']) && $plugin['download'] !== 'DISABLED') {
-            echo '<a href="admincenter.php?site=plugin_installer&install=' . urlencode($plugin['modulname']) . '" 
-                class="btn btn-primary btn-sm">' . $languageService->get('install') . '</a>';
-        } else {
-            echo '<span style="color: gray;">Kein Download verfügbar</span>';
-        }
+        echo '<a href="admincenter.php?site=plugin_installer&install=' . urlencode($plugin['modulname']) . '" class="btn btn-primary btn-sm">'
+            . $languageService->get('install') . '</a>';
     }
 
     echo '</td></tr>';
@@ -277,52 +274,93 @@ echo '
     </div>
 </div>';
 
+// Hilfsfunktionen
 
-/**
- * Plugin-Dateien herunterladen und entpacken
- */
-function download_plugin_files(string $plugin_folder, string $local_plugin_folder, string $plugin_path)
+function download_plugin_files(string $plugin_folder, string $local_plugin_folder, string $plugin_path): bool
 {
-    $remote_url = $plugin_path . '/' . $plugin_folder . '.zip';
-    $local_zip = $local_plugin_folder . '.zip';
+    // Vollständige URL zum Download der ZIP-Datei, z.B.:
+    // https://www.update.webspell-rm.de/plugins/download.php?plugin=mein_plugin&site=deinedomain.de
+    $url = rtrim($plugin_path, '/') . '/download.php?plugin=' . rawurlencode($plugin_folder) . '&site=' . rawurlencode($_SERVER['SERVER_NAME']);
+    
+    // Temporärer Pfad für die ZIP-Datei
+    $local_zip = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $plugin_folder . '.zip';
 
-    // ZIP-Datei herunterladen
-    $content = @file_get_contents($remote_url);
-    if ($content === false) {
-        echo '<div class="alert alert-danger">Download der Plugin-Datei fehlgeschlagen.</div>';
+    // Lokales Plugin-Verzeichnis anlegen, falls nicht existent
+    if (!is_dir($local_plugin_folder) && !mkdir($local_plugin_folder, 0755, true)) {
+        echo '<div class="alert alert-danger">Kann Verzeichnis nicht erstellen: ' . htmlspecialchars($local_plugin_folder) . '</div>';
         return false;
     }
 
-    // Lokal speichern
-    if (file_put_contents($local_zip, $content) === false) {
-        echo '<div class="alert alert-danger">Speichern der Plugin-Datei fehlgeschlagen.</div>';
+    // ZIP-Datei vom Server herunterladen
+    $zip_content = @file_get_contents($url);
+    if ($zip_content === false) {
+        echo '<div class="alert alert-danger">Download fehlgeschlagen: ' . htmlspecialchars($url) . '</div>';
         return false;
     }
 
-    // Entpacken
+    // ZIP-Inhalt in temporäre Datei speichern
+    if (file_put_contents($local_zip, $zip_content) === false) {
+        echo '<div class="alert alert-danger">Konnte ZIP-Datei nicht speichern.</div>';
+        return false;
+    }
+
+    // ZIP-Datei öffnen
     $zip = new ZipArchive();
     if ($zip->open($local_zip) === true) {
-        $zip->extractTo($local_plugin_folder);
+
+        // Vorheriges Plugin-Verzeichnis löschen, falls vorhanden
+        if (is_dir($local_plugin_folder)) {
+            deleteFolder($local_plugin_folder);
+        }
+
+        // Sicherstellen, dass Zielordner existiert
+        if (!mkdir($local_plugin_folder, 0755, true) && !is_dir($local_plugin_folder)) {
+            echo '<div class="alert alert-danger">Konnte Zielverzeichnis nicht anlegen.</div>';
+            $zip->close();
+            @unlink($local_zip);
+            return false;
+        }
+
+        // ZIP entpacken
+        if (!$zip->extractTo($local_plugin_folder)) {
+            echo '<div class="alert alert-danger">ZIP-Datei konnte nicht entpackt werden.</div>';
+            $zip->close();
+            @unlink($local_zip);
+            return false;
+        }
+
         $zip->close();
-        unlink($local_zip);
-        return true;
     } else {
-        echo '<div class="alert alert-danger">Entpacken der Plugin-Datei fehlgeschlagen.</div>';
+        echo '<div class="alert alert-danger">ZIP-Datei konnte nicht geöffnet werden.</div>';
+        @unlink($local_zip);
         return false;
     }
+
+    // Temporäre ZIP-Datei löschen
+    @unlink($local_zip);
+
+    return true;
 }
 
 /**
- * Ordner rekursiv löschen
+ * Löscht ein Verzeichnis rekursiv.
  */
-function deleteFolder($folderPath) {
-    if (!is_dir($folderPath)) return false;
-
-    $files = array_diff(scandir($folderPath), ['.', '..']);
-    foreach ($files as $file) {
-        $filePath = $folderPath . DIRECTORY_SEPARATOR . $file;
-        is_dir($filePath) ? deleteFolder($filePath) : unlink($filePath);
+function deleteFolder(string $folder): void
+{
+    if (!is_dir($folder)) {
+        return;
     }
-
-    return rmdir($folderPath);
+    $files = array_diff(scandir($folder), ['.', '..']);
+    foreach ($files as $file) {
+        $path = $folder . DIRECTORY_SEPARATOR . $file;
+        if (is_dir($path)) {
+            deleteFolder($path);
+        } else {
+            @unlink($path);
+        }
+    }
+    @rmdir($folder);
 }
+
+
+?>
