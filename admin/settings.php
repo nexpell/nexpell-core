@@ -50,10 +50,11 @@ if(isset($_POST['submit'])) {
                 seckey ='" . $_POST['seckey'] . "',
                 startpage='"  . $_POST[ 'startpage' ] . "'"
         );
-        
-        redirect("admincenter.php?site=settings", $languageService->get('updated_successfully'), 2);
+        echo '<div class="alert alert-success" role="alert">' . $languageService->get('updated_successfully') . '</div>';
+        redirect("admincenter.php?site=settings", '', 2);
     } else {
-        redirect("admincenter.php?site=settings", $languageService->get('transaction_invalid'), 3);  
+        echo '<div class="alert alert-danger" role="alert">' . $languageService->get('transaction_invalid') . '</div>';
+        redirect("admincenter.php?site=settings", '', 3);  
     }
 }
 
@@ -76,10 +77,11 @@ if (isset($_POST["saveedit"])) {
                     steam = '" . $_POST[ 'steam' ] . "',
                     discord = '" . $_POST[ 'discord' ] . "'"
             );
-
-            redirect("admincenter.php?site=settings&action=social_setting", $languageService->get('updated_successfully'), 2);
+            echo '<div class="alert alert-success" role="alert">' . $languageService->get('updated_successfully') . '</div>';
+            redirect("admincenter.php?site=settings&action=social_setting", '', 2);
         } else {
-            redirect("admincenter.php?site=settings&action=social_setting", $languageService->get('transaction_invalid'), 3);
+            echo '<div class="alert alert-danger" role="alert">' . $languageService->get('transaction_invalid') . '</div>';
+            redirect("admincenter.php?site=settings&action=social_setting", '', 3);
         }
 
 }
@@ -108,12 +110,10 @@ $CAPCLASS->createTransaction();
 $hash = $CAPCLASS->getHash();
 
 echo '
-        <div class="">
+        
             <form class="form-horizontal" method="post" id="post" name="post" action="admincenter.php?site=settings" onsubmit="return chkFormular();">
 
-                <div class="card">
-                    <div class="card-header"><i class="bi bi-gear"></i> ' . $languageService->get('settings') . '</div>
-                    <div class="card-body">
+               
                         <div class="row">
                             <div class="col-md-6">
 
@@ -298,10 +298,7 @@ echo '
                             </div>
                         </div>
 
-                    </div> <!-- card-body -->
-                </div> <!-- card -->
-
-            </form>
+                    
 
             <div class="mb-3 row">
                 <div class="col-md-12"><br>
@@ -311,7 +308,10 @@ echo '
                     </button>
                 </div>
             </div>
-        </div>
+            </form>
+
+            
+       
     </div>
 </div>
 ';

@@ -1,19 +1,18 @@
 <?php
 /**
  * ─────────────────────────────────────────────────────────────────────────────
- * Webspell-RM 3.0 - Modern Content & Community Management System
+ * nexpell 1.0 - Modern Content & Community Management System
  * ─────────────────────────────────────────────────────────────────────────────
  *
- * @version       3.0
+ * @version       1.0
  * @build         Stable Release
  * @release       2025
- * @copyright     © 2018–2025 Webspell-RM | https://www.webspell-rm.de
+ * @copyright     © 2025 nexpell | https://www.nexpell.de
  * 
- * @description   Webspell-RM is a modern open source CMS designed for gaming
+ * @description   nexpell is a modern open source CMS designed for gaming
  *                communities, esports teams, and digital projects of any kind.
  * 
- * @author        Based on the original WebSPELL Clanpackage by Michael Gruber
- *                (webspell.at), further developed by the Webspell-RM Team.
+ * @author        The nexpell Team
  * 
  * @license       GNU General Public License (GPL)
  *                This software is distributed under the terms of the GPL.
@@ -21,9 +20,9 @@
  *                For license details, see: https://www.gnu.org/licenses/gpl.html
  * 
  * @support       Support, updates, and plugins available at:
- *                → Website: https://www.webspell-rm.de
- *                → Forum:   https://www.webspell-rm.de/forum.html
- *                → Wiki:    https://www.webspell-rm.de/wiki.html
+ *                → Website: https://www.nexpell.de
+ *                → Forum:   https://www.nexpell.de/forum.html
+ *                → Wiki:    https://www.nexpell.de/wiki.html
  * 
  * ─────────────────────────────────────────────────────────────────────────────
  */

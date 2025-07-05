@@ -9,11 +9,10 @@
  * @release       2025
  * @copyright     © 2025 nexpell | https://www.nexpell.de
  * 
- * @description   nexpell is a modern open source CMS for gaming communities,
- *                esports teams, and digital projects of any kind.
+ * @description   nexpell is a modern open source CMS designed for gaming
+ *                communities, esports teams, and digital projects of any kind.
  * 
- * @author        Based on the original WebSPELL Clanpackage by Michael Gruber
- *                (webspell.at), further developed by the nexpell Team.
+ * @author        The nexpell Team
  * 
  * @license       GNU General Public License (GPL)
  *                This software is distributed under the terms of the GPL.
@@ -22,8 +21,8 @@
  * 
  * @support       Support, updates, and plugins available at:
  *                → Website: https://www.nexpell.de
- *                → Forum:   https://www.nexpell.de/forum
- *                → Wiki:    https://www.nexpell.de/wiki
+ *                → Forum:   https://www.nexpell.de/forum.html
+ *                → Wiki:    https://www.nexpell.de/wiki.html
  * 
  * ─────────────────────────────────────────────────────────────────────────────
  */
