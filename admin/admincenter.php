@@ -389,8 +389,8 @@ header('Content-Type: text/html; charset=UTF-8');
 		            </ul>
 		        </div>
 		        <div class="copy">
-		            <em>Admin Template by <a href="https://www.webspell-rm.de" target="_blank" rel="noopener">Webspell-RM</a></em>					
-		        </div>
+                    <em>Admin Template powered by <a href="https://www.nexpell.de" target="_blank" rel="noopener">nexpell</a></em>
+                </div>
 		    </div>
 		</nav>
 

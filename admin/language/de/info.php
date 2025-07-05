@@ -7,8 +7,18 @@ $language_array = Array(
   'last_login'              => 'dein letzte Anmeldung war am',
   'version'                 => 'Version',
   'webspell_version'        => 'nexpell Version',
-  'welcome'                 => 'Willkommen in deinem Management Center',
-  'welcome_message'         => '<br>Dieses Administrations System erlaubt es dir, deine Seite zu managen, benutze die Navigation links.<br>Sollten Fragen vorhanden sein, benutze bitte unseren <a href="https://www.nexpell.de" target="_blank">Support</a>.<br><br>Danke, dass du dich für nexpell entschieden hast.<br><br>Dein <a href="https://www.nexpell.de" target="_blank">nexpell Entwicklungs Team</a>',
+  'welcome'                 => '<p>Willkommen in deinem Management Center!</p>',
+  'welcome_message'         => '<p>Dieses Administrationssystem gibt dir die volle Kontrolle über deine Website. Nutze die Navigation auf der linken Seite, um Inhalte zu verwalten, Einstellungen anzupassen oder neue Funktionen zu aktivieren.</p>
+
+<p>Wenn du Fragen hast, steht dir unser Support jederzeit zur Verfügung.  
+Schau gerne auch in unsere <a href="https://www.nexpell.de/wiki" target="_blank" rel="noopener">Dokumentation</a> und unser <a href="https://www.nexpell.de/forum" target="_blank" rel="noopener">Forum</a>, um das Beste aus nexpell herauszuholen.</p>
+
+<p>Für direkte Hilfe kannst du jederzeit ein <a href="https://www.nexpell.de/support/ticket" target="_blank" rel="noopener">Support-Ticket eröffnen</a> oder unserem <a href="https://www.discord.gg/kErxPxb" target="_blank" rel="noopener">Discord-Server</a> beitreten.</p>
+
+<p>Vielen Dank, dass du dich für nexpell entschieden hast. Wir wünschen dir viel Erfolg mit deinem Projekt!</p>
+
+<p><strong>Dein nexpell Entwicklungsteam</strong></p>',
+
   'na'                      => 'Information nicht verfügbar',
   'error'                   => '<p class="text-danger"><i class="bi bi-exclamation-triangle"></i> Update-Server ist offline!</p>',
   'new_version_available'   => '<p class="text-warning"><i class="bi bi-exclamation-triangle"></i> Eine neue Webspellversion ist vorhanden!</p>Update dein System.',
