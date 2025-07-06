@@ -2,172 +2,232 @@
 
 use webspell\PluginSettings;
 
-$ergebnis = safe_query("SELECT * FROM settings_themes WHERE active= 1");
-$dx = mysqli_fetch_array($ergebnis);
+/*
+renderWidget($widget_key)
+Lädt ein Widget anhand seines Schlüssels (widget_key) aus der Datenbank, ermittelt das zugehörige Plugin und bindet die Widget-Datei ($widget_key.php) aus dem Plugin-Verzeichnis ein.
+Gibt den HTML-Ausgabe-Buffer des Widgets zurück oder eine Fehlermeldung, wenn das Widget nicht gefunden wurde.
 
-#Verhindert einen Fehler wenn kein Template aktiviert ist
-if (@$dx['active'] != '1') {
-} else {
-    $themes_modulname = $dx['modulname'];
-}
+loadWidgetHeadAssets($widget_key)
+Lädt CSS- und JS-Dateien des Plugins, zu dem das Widget gehört, nur einmal pro Plugin, um doppelte Einbindungen zu vermeiden. Die Assets liegen in /includes/plugins/[plugin]/css/ bzw. /js/.
 
-class widgets
+loadPluginHeadAssets()
+Lädt die CSS- und JS-Dateien eines Plugins, das aktuell per ?site=pluginname aufgerufen wird (z.B. für Plugin-Seiten).
+
+Hilfsfunktion loadHeadAssetIfExists(...)
+Prüft, ob CSS- oder JS-Dateien für ein Plugin existieren und fügt diese in die globalen Sammelvariablen ein.
+
+get_navigation_modul()
+Bindet das Navigations-Widget statisch ein, indem die Widget-Datei widget_navigation.php aus dem zugehörigen Plugin-Verzeichnis direkt inkludiert wird. Das Widget wird so unabhängig von einer dynamischen Widget-Registrierung angezeigt.
+
+get_footer_modul()
+Bindet das Footer-Widget statisch ein, indem die Widget-Datei widget_footer_easy.php aus dem zugehörigen Plugin-Verzeichnis direkt inkludiert wird. Auch hier erfolgt die Anzeige unabhängig von dynamischer Widget-Verwaltung.
+*/
+
+
+function renderWidget($widget_key)
 {
+    global $_database;
 
-    function safe_query($query)
-    {
-        include_once("settings.php");
-        return safe_query($query);
+    // Ergebnisarrays initialisieren
+    global $needed_widget_css, $needed_widget_js;
+    $needed_widget_css ??= [];
+    $needed_widget_js ??= [];
+
+    // Prepared Statement für mehr Sicherheit
+    $stmt = $_database->prepare("SELECT widget_key, plugin FROM widgets WHERE widget_key = ? LIMIT 1");
+    if (!$stmt) {
+        error_log("DB-Fehler in renderWidget (prepare fehlgeschlagen)");
+        return "<!-- Widget konnte nicht geladen werden (DB-Fehler) -->";
+    }
+    $stmt->bind_param("s", $widget_key);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    if (!$res || $res->num_rows === 0) {
+        $safeKey = htmlspecialchars($widget_key);
+        return "<!-- Widget $safeKey nicht gefunden -->";
     }
 
-    private string $_modulname;
-    private string $_widgetname;
+    $row = $res->fetch_assoc();
+    $plugin = $row['plugin'];
 
-    private function isComplete($plugin_folder)
-    {
-        $info = $this->getInfo($plugin_folder);
-        if ($this->infoExists("includes/plugins/$plugin_folder")) {
-            return true;
-        }
-        return false;
+    $basePath = "/includes/plugins/$plugin/";
+    $widgetFile = $_SERVER['DOCUMENT_ROOT'] . $basePath . "$widget_key.php";
+
+    $output = "";
+
+    // Widget-Datei einbinden
+    if (file_exists($widgetFile)) {
+        ob_start();
+        include $widgetFile;
+        $output .= ob_get_clean();
+    } else {
+        $safeKey = htmlspecialchars($widget_key);
+        $safePlugin = htmlspecialchars($plugin);
+        $output .= "<!-- Widget $safeKey nicht gefunden im Plugin $safePlugin -->";
+        error_log("Widget-Datei nicht gefunden: $widgetFile");
     }
 
-    public function showWidget($name, $curr_widgetname = "", $curr_modulname = "", $curr_widgetdatei = "", $curr_id = "")
-    {
-        $widgetname = $this->_widgetname;
-        $widgetdatei = $this->_widgetdatei;
-        $modulname = $this->_modulname;
-        $qs_arr = array();
-        parse_str($_SERVER['QUERY_STRING'], $qs_arr);
-
-        $getsite = 'startpage'; #Wird auf der Startseite angezeigt index.php
-        if (isset($qs_arr['site'])) {
-            $getsite = $qs_arr['site'];
-        }        
-
-        if (PluginSettings::load_widget_settings_css($getsite)) {
-
-            $query = safe_query("SELECT * FROM `settings_plugins_widget_settings` WHERE widgetname='" . $widgetname . "'");
-            $db = mysqli_fetch_array($query);
-
-            if ((array)$db) {
-                $plugin = new plugin_manager();
-                $plugin->set_debug(DEBUG);
-                echo $plugin->plugin_widget($db["id"] ?? '');
-            }
-        } elseif (@$getsite == 'forum_topic') {
-            $query = safe_query("SELECT * FROM `plugins_forum_settings_widgets` WHERE widgetname='" . $widgetname . "'");
-            $db = mysqli_fetch_array($query);
-
-            if ((array)$db) {
-                $plugin = new plugin_manager();
-                $plugin->set_debug(DEBUG);
-                echo $plugin->plugin_widget($db["id"] ?? '');
-            }
-        } else {
-            $query = safe_query("SELECT * FROM `plugins_" . $getsite . "_settings_widgets` WHERE widgetname='" . $widgetname . "'");
-            $db = mysqli_fetch_array($query);
-
-            if ((array)$db) {
-                $plugin = new plugin_manager();
-                $plugin->set_debug(DEBUG);
-                echo $plugin->plugin_widget($db["id"] ?? '');
-            }
-        }
-    }
+    return $output;
+}
 
 
-    public function registerWidget($position, $template_file = "")
-    {
-        $qs_arr = array();
-        parse_str($_SERVER['QUERY_STRING'], $qs_arr);
-        $getsite = 'startpage'; #Wird auf der Startseite angezeigt index.php
-        if (isset($qs_arr['site'])) {
-            $getsite = $qs_arr['site'];
-        }
 
-        if (PluginSettings::load_widget_settings_css($getsite)) {    
-            global $themes_modulname;
-            $select_all_widgets = "SELECT * FROM settings_plugins_widget_settings
-            WHERE position LIKE '$position'
-            AND widgetdatei IS NOT NULL 
-            AND modulname IS NOT NULL 
-            AND themes_modulname='$themes_modulname' 
-            ORDER BY sort ASC";
+// Am Anfang (global für das Script)
+$plugin_loadheadfile_widget_css = "";
+$plugin_loadheadfile_widget_js = "";
 
-            $result_all_widgets = $this->safe_query($select_all_widgets);
-            $widgets_templates = "<div class='panel-body'>No Widgets added.</div>";
-            $curr_widget_template = false;
-            if (mysqli_num_rows($result_all_widgets) > 0) {
-                $widgets_templates = "";
-                while ($widget = mysqli_fetch_array($result_all_widgets)) {
-                    $curr_id            = $widget['id'];
-                    $curr_widgetdatei   = $widget['widgetdatei'];
-                    $curr_modulname     = $widget['modulname'];
-                    $curr_widgetname    = $widget['widgetname'];
-                    $this->_widgetname = $curr_widgetname;
-                    @$this->_widgetdatei = $curr_widgetdatei;
-                    @$this->_modulname  = $curr_modulname;
-                    $curr_widget_template = $this->showWidget($curr_id, $curr_modulname, $curr_widgetdatei, $curr_widgetname);
-                }
-            } else {
-                $curr_widget_template = true;
-            }
-        } elseif (@$getsite == 'forum_topic') {
-            global $themes_modulname;
-            $select_all_widgets = "SELECT * FROM plugins_forum_settings_widgets
-            WHERE position LIKE '$position'
-            AND widgetdatei IS NOT NULL 
-            AND modulname IS NOT NULL 
-            AND themes_modulname='$themes_modulname' 
-            ORDER BY sort ASC";
+// Globales Array für bereits geladene Plugins (CSS/JS)
+$loaded_head_assets_plugins = [];
 
-            $result_all_widgets = $this->safe_query($select_all_widgets);
-            $widgets_templates = "<div class='panel-body'>No Widgets added.</div>";
-            $curr_widget_template = false;
-            if (mysqli_num_rows($result_all_widgets) > 0) {
-                $widgets_templates = "";
-                while ($widget = mysqli_fetch_array($result_all_widgets)) {
-                    $curr_id            = $widget['id'];
-                    $curr_widgetdatei   = $widget['widgetdatei'];
-                    $curr_modulname     = $widget['modulname'];
-                    $curr_widgetname    = $widget['widgetname'];
-                    $this->_widgetname = $curr_widgetname;
-                    @$this->_widgetdatei = $curr_widgetdatei;
-                    @$this->_modulname  = $curr_modulname;
-                    $curr_widget_template = $this->showWidget($curr_id, $curr_modulname, $curr_widgetdatei, $curr_widgetname);
-                }
-            } else {
-                $curr_widget_template = true;
-            }
-        } else {
+/**
+ * Hilfsfunktion
+ */
+function loadHeadAssetIfExists(string $type, string $base_path, string &$collector, string $plugin): void {
+    $filename = $type === 'css' ? "{$plugin}.css" : "{$plugin}.js";
+    $abs_path = $_SERVER['DOCUMENT_ROOT'] . "{$base_path}/{$type}/{$filename}";
 
-            global $themes_modulname;
-            $select_all_widgets = "SELECT * FROM plugins_" . $getsite . "_settings_widgets
-            WHERE position LIKE '$position'
-            AND widgetdatei IS NOT NULL 
-            AND modulname IS NOT NULL 
-            AND themes_modulname='$themes_modulname' 
-            ORDER BY sort ASC";
-
-            $result_all_widgets = $this->safe_query($select_all_widgets);
-            $widgets_templates = "<div class='panel-body'>No Widgets added.</div>";
-            $curr_widget_template = false;
-            if (mysqli_num_rows($result_all_widgets) > 0) {
-                $widgets_templates = "";
-                while ($widget = mysqli_fetch_array($result_all_widgets)) {
-                    $curr_id            = $widget['id'];
-                    $curr_widgetdatei   = $widget['widgetdatei'];
-                    $curr_modulname     = $widget['modulname'];
-                    $curr_widgetname    = $widget['widgetname'];
-                    $this->_widgetname = $curr_widgetname;
-                    @$this->_widgetdatei = $curr_widgetdatei;
-                    @$this->_modulname  = $curr_modulname;
-                    $curr_widget_template = $this->showWidget($curr_id, $curr_modulname, $curr_widgetdatei, $curr_widgetname);
-                }
-            } else {
-                $curr_widget_template = true;
-            }
+    if (file_exists($abs_path)) {
+        if ($type === 'css') {
+            $collector .= "<link type=\"text/css\" rel=\"stylesheet\" href=\"{$base_path}/{$type}/{$filename}\">\n";
+        } elseif ($type === 'js') {
+            $collector .= "<script src=\"{$base_path}/{$type}/{$filename}\"></script>\n";
         }
     }
 }
+
+/**
+ * Widget-Assets laden
+ */
+function loadWidgetHeadAssets(string $widget_key): void {
+    global $plugin_loadheadfile_widget_css, $plugin_loadheadfile_widget_js, $_database, $loaded_head_assets_plugins;
+
+    $stmt = $_database->prepare("SELECT plugin FROM widgets WHERE widget_key = ? LIMIT 1");
+    $stmt->bind_param("s", $widget_key);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    $row = $res->fetch_assoc();
+    if (!$row) {
+        return;
+    }
+
+    $plugin = $row['plugin'];
+
+    // Schon geladen?
+    if (in_array($plugin, $loaded_head_assets_plugins, true)) {
+        return;
+    }
+
+    $base_path = "/includes/plugins/{$plugin}";
+
+    loadHeadAssetIfExists('css', $base_path, $plugin_loadheadfile_widget_css, $plugin);
+    loadHeadAssetIfExists('js', $base_path, $plugin_loadheadfile_widget_js, $plugin);
+
+    $loaded_head_assets_plugins[] = $plugin;
+}
+
+/**
+ * Plugin-Assets laden (z.B. über ?site=plugin)
+ */
+function loadPluginHeadAssets(): void {
+    global $_database, $plugin_loadheadfile_widget_css, $plugin_loadheadfile_widget_js, $loaded_head_assets_plugins;
+
+    if (!isset($_GET['site'])) {
+        return;
+    }
+
+    $site = $_GET['site'];
+
+    $stmt = $_database->prepare("SELECT modulname FROM settings_plugins WHERE modulname = ? LIMIT 1");
+    $stmt->bind_param("s", $site);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    $row = $res->fetch_assoc();
+    if (!$row) {
+        return;
+    }
+
+    $plugin = $row['modulname'];
+
+    if (in_array($plugin, $loaded_head_assets_plugins, true)) {
+        return;
+    }
+
+    $base_path = "/includes/plugins/{$plugin}";
+
+    loadHeadAssetIfExists('css', $base_path, $plugin_loadheadfile_widget_css, $plugin);
+    loadHeadAssetIfExists('js', $base_path, $plugin_loadheadfile_widget_js, $plugin);
+
+    $loaded_head_assets_plugins[] = $plugin;
+}
+
+
+// Navigations Modul
+// Das Widget wird direkt geladen und angezeigt, 
+// indem die entsprechende Widget-Datei (z. B. widget_navigation.php) manuell eingebunden wird. 
+// So ist die Anzeige derNavigation unabhängig von einer dynamischen Widget-Verwaltung.
+function get_navigation_modul() {
+    global $_database;
+
+    // Plugin zum Widget-Key 'navigation' ermitteln
+    $stmt = $_database->prepare("SELECT modulname FROM settings_plugins WHERE modulname = ? LIMIT 1");
+    $key = "navigation";
+    $stmt->bind_param("s", $key);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $row = $res->fetch_assoc();
+
+    if (!$row) {
+        echo "Widget 'navigation' nicht gefunden.";
+        return;
+    }
+
+    $plugin = $row['modulname'];
+    $widget_path = $_SERVER['DOCUMENT_ROOT'] . "/includes/plugins//{$plugin}/widget_navigation.php";
+
+    if (file_exists($widget_path)) {
+        include $widget_path;
+    } else {
+        echo "Widget-Datei widget_navigation.php im Plugin {$plugin} nicht gefunden!";
+    }
+}
+
+// Footer Modul
+// Das Widget wird direkt geladen und angezeigt, 
+// indem die entsprechende Widget-Datei (z. B. widget_footer.php) manuell eingebunden wird. 
+// So ist die Anzeige des Footers unabhängig von einer dynamischen Widget-Verwaltung.
+function get_footer_modul() {
+    global $_database;
+
+    // Plugin zum Widget-Key 'navigation' ermitteln
+    $stmt = $_database->prepare("SELECT modulname FROM settings_plugins WHERE modulname = ? LIMIT 1");
+    $key = "footer_easy";
+    $stmt->bind_param("s", $key);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $row = $res->fetch_assoc();
+
+    if (!$row) {
+        echo "Widget 'footer_easy' nicht gefunden.";
+        return;
+    }
+
+    $plugin = $row['modulname'];
+    $widget_path = $_SERVER['DOCUMENT_ROOT'] . "/includes/plugins//{$plugin}/widget_footer_easy.php";
+
+    if (file_exists($widget_path)) {
+        include $widget_path;
+    } else {
+        echo "Widget-Datei widget_footer_easy.php im Plugin {$plugin} nicht gefunden!";
+    }
+}
+
+
+
+
+
+
+
+

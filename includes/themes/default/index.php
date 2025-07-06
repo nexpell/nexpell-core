@@ -86,6 +86,36 @@ $keywords = $keywords ?? 'keyword1, keyword2, keyword3';
 
 
 
+    // Verbindungs-Setup und wichtige Includes
+require_once './system/widget.php'; // Enthält renderWidget()
+
+
+// Seitenname für Widgets-Abfrage
+#$page = 'index';
+$page = isset($_GET['site']) ? $_GET['site'] : 'index';
+
+// SQL-Escape für $page
+$page_escaped = mysqli_real_escape_string($GLOBALS['_database'], $page);
+
+// Widgets Positionen aus DB holen
+$positions = [];
+$res = safe_query("SELECT * FROM widgets_positions WHERE page='" . $page_escaped . "' ORDER BY position, sort_order ASC");
+while ($row = mysqli_fetch_assoc($res)) {
+    $positions[$row['position']][] = $row['widget_key'];
+}
+
+if (!empty($positions)) {
+    foreach ($positions as $pos => $widgetKeys) {
+        foreach ($widgetKeys as $widget_key) {
+            loadWidgetHeadAssets($widget_key);
+        }
+    }
+}
+
+loadPluginHeadAssets();
+
+
+
 // Header-Kompatibilität
 header('X-UA-Compatible: IE=edge');
 ?>
@@ -127,51 +157,92 @@ header('X-UA-Compatible: IE=edge');
     <title><?php echo htmlspecialchars(get_sitetitle(), ENT_QUOTES, 'UTF-8'); ?></title>
     <base href="/">
 
-    <link id="bootstrap-css" rel="stylesheet" href="./includes/themes/<?php echo htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/css/dist/<?php echo htmlspecialchars($currentTheme, ENT_QUOTES, 'UTF-8'); ?>/bootstrap.min.css"/>
+<link id="bootstrap-css" rel="stylesheet" href="./includes/themes/<?php echo htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/css/dist/<?php echo htmlspecialchars($currentTheme, ENT_QUOTES, 'UTF-8'); ?>/bootstrap.min.css"/>
 
-    <link type="application/rss+xml" rel="alternate" href="tmp/rss.xml" title="<?php echo htmlspecialchars($myclanname ?? 'My Clan', ENT_QUOTES, 'UTF-8'); ?> - RSS Feed">
-    <link type="text/css" rel="stylesheet" href="./components/cookies/css/cookieconsent.css" media="print" onload="this.media='all'">
-    <link type="text/css" rel="stylesheet" href="./components/cookies/css/iframemanager.css" media="print" onload="this.media='all'">
+<link type="application/rss+xml" rel="alternate" href="tmp/rss.xml" title="<?php echo htmlspecialchars($myclanname ?? 'My Clan', ENT_QUOTES, 'UTF-8'); ?> - RSS Feed">
+<link type="text/css" rel="stylesheet" href="./components/cookies/css/cookieconsent.css" media="print" onload="this.media='all'">
+<link type="text/css" rel="stylesheet" href="./components/cookies/css/iframemanager.css" media="print" onload="this.media='all'">
+<link type="text/css" rel="stylesheet" href='/includes/plugins/navigation/css/navigation.css'>
 
-    <?php
-    $lang = $_language->detectLanguage();
-    echo $components_css ?? '';
-    echo $theme_css ?? '';
-    echo '<!--Plugin css-->' . PHP_EOL;
-    echo ($_pluginmanager->plugin_loadheadfile_css() ?? '');
-    echo '<!--Plugin css END-->' . PHP_EOL;
-    echo '<!--Widget css-->' . PHP_EOL;
-    echo ($_pluginmanager->plugin_loadheadfile_widget_css() ?? '');
-    echo '<!--Widget css END-->' . PHP_EOL;
-    ?>
-
-    
-    <link type="text/css" rel="stylesheet" href="./includes/themes/<?php echo htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/css/stylesheet.css" />
+<?php
+$lang = $_language->detectLanguage();
+echo $components_css ?? '';
+echo $theme_css ?? '';
+echo '<!--Plugin & Widget css-->' . PHP_EOL;
+echo $plugin_loadheadfile_widget_css ?? '';
+?>
+<link type="text/css" rel="stylesheet" href='/includes/plugins/footer_easy/css/footer_easy.css'>
+<!--Plugin & Widget css END-->
+<link type="text/css" rel="stylesheet" href="./includes/themes/<?php echo htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/css/stylesheet.css" />
 </head>
-
 <body>
+
 <div class="d-flex flex-column sticky-footer-wrapper">
-    <?php echo get_lock_modul(); ?>
-    <?php echo get_header_modul(); ?>
+
+    <!-- Top Widgets -->
+    <?php if (!empty($positions['top'])): ?>
+    
+            <?php foreach ($positions['top'] as $widget_key) {
+                echo renderWidget($widget_key);
+            } ?>
+        
+    <?php endif; ?>
+
     <?php echo get_navigation_modul(); ?>
-    <?php echo get_content_head_modul(); ?>
+
+    <!-- under Top Widgets -->
+    <?php if (!empty($positions['undertop'])): ?>
+    
+            <?php foreach ($positions['undertop'] as $widget_key) {
+                echo renderWidget($widget_key);
+            } ?>
+       
+    <?php endif; ?>
+
     <main class="flex-fill">
         <div class="container">
             <div class="row">
-                <?php echo get_left_side_modul(); ?>
+            
+                <?php if (!empty($positions['left'])): ?>
+                    <div class="col-md-3">
+                        <?php foreach ($positions['left'] as $widget_key): ?>
+                            <?php echo renderWidget($widget_key); ?>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+
                 <div class="col">
-                    <?php echo get_content_up_modul(); ?>
-                    <?php echo get_mainContent(); ?>                    
-                    <?php echo get_content_down_modul(); ?>
+                    <?php echo get_mainContent(); ?>
                 </div>
-                <?php echo get_right_side_modul(); ?>
+
+                <?php if (!empty($positions['right'])): ?>
+                    <div class="col-md-3">
+                        <?php foreach ($positions['right'] as $widget_key): ?>
+                            <?php echo renderWidget($widget_key); ?>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+
             </div>
         </div>
     </main>
-    <?php echo get_content_foot_modul(); ?>
+
+
+    <!-- Bottom Widgets -->
+    <?php if (!empty($positions['bottom'])): ?>
+    
+            <?php foreach ($positions['bottom'] as $widget_key) {
+                echo renderWidget($widget_key);
+            } ?>
+        
+    <?php endif; ?>
+
     <?php echo get_footer_modul(); ?>
+
 </div>
 
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <div class="scroll-top-wrapper">
     <span class="scroll-top-inner">
         <i class="bi bi-arrow-up-circle" style="font-size: 2rem;" aria-label="Nach oben scrollen"></i>
@@ -188,12 +259,9 @@ header('X-UA-Compatible: IE=edge');
 <?php
 echo $components_js ?? '';
 echo $theme_js ?? '';
-echo '<!--Plugin js-->' . PHP_EOL;
-echo ($_pluginmanager->plugin_loadheadfile_js() ?? '');
-echo '<!--Plugin js END-->' . PHP_EOL;
-echo '<!--Widget js-->' . PHP_EOL;
-echo ($_pluginmanager->plugin_loadheadfile_widget_js() ?? '');
-echo '<!--Widget js END-->' . PHP_EOL;
+echo '<!--Plugin & Widget js-->' . PHP_EOL;
+echo $plugin_loadheadfile_widget_js ?? '';
+echo '<!--Plugin & Widget js END-->' . PHP_EOL;
 ?>
 
 <script defer src="./components/cookies/js/iframemanager.js"></script>

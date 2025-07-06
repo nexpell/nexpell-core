@@ -243,825 +243,7 @@ if (!empty(@$db['active'] == 1) !== false) {
     #Erstellt eine neue Widget-Einstellung END
 
 
-    #edit Widget-Einstellung START
-    if (isset($_POST['edit_widget'])) {
-
-        #@$modulname = $_POST[ 'modulname' ];
-        # $themes_modulname = $_POST[ 'themes_modulname' ];
-        #echo "<pre>";
-        #print_r($_POST);
-        #echo "</pre>";
-
-        try {
-
-            $modul = safe_query("UPDATE `settings_plugins_widget` SET 
-      `modulname` = '" . $_POST['modulname'] . "',
-      `widgetname` = '" . $_POST['widgetname'] . "',       
-      `widgetdatei` = '" . $_POST['widgetdatei'] . "', 
-      `area` = '" . $_POST['area'] . "'
-
-      WHERE `id` = '" . intval($_POST['id']) . "'");
-
-            echo $languageService->get('success_edit') . "<br /><br />";
-            redirect("admincenter.php?site=plugin_manager&action=edit&id=" . $_POST['xid'] . "&do=edit", "", 1);
-            return false;
-        } catch (Exception $e) {
-            echo $languageService->get('failed_edit') . "<br /><br />" . $e->getMessage();
-            redirect("admincenter.php?site=plugin_manager&action=edit&id=" . $_POST['xid'] . "&do=edit", "", 5);
-            return false;
-        }
-        return false;
-    }
-    #edit Widget-Einstellung END
-
-    #Editiert die komplette Einstellung START
-    if (isset($_POST['saveedit'])) {
-        @$modulname = $_POST['modulname'];
-        $themes_modulname = $_POST['themes_modulname'];
-        #echo "<pre>";
-        #print_r($_POST);
-        #echo "</pre>";
-
-        try {
-
-            $ergebnis = safe_query("SELECT * FROM `settings_plugins` WHERE `pluginID`='" . $id . "' LIMIT 1");
-            $ds = mysqli_fetch_array($ergebnis);
-
-            $modul = safe_query("UPDATE `settings_plugins` SET 
-            `name` = '" . $_POST['name'] . "',
-            `info` = '" . $_POST['info'] . "',       
-            `admin_file` = '" . $_POST['admin_file'] . "', 
-            `author` = '" . $_POST['author'] . "', 
-            `website` = '" . $_POST['website'] . "', 
-            `index_link` = '" . $_POST['index'] . "',
-            `version` = '" . $_POST['version'] . "', 
-            `path` = '" . $_POST['path'] . "'
-	        
-            WHERE `pluginID` = '" . intval($_POST['pid']) . "'");
-
-            echo $languageService->get('success_edit') . "<br /><br />";
-            redirect("admincenter.php?site=plugin_manager", "", 1);
-            return false;
-        } catch (Exception $e) {
-            echo $languageService->get('failed_edit') . "<br /><br />" . $e->getMessage();
-            redirect("admincenter.php?site=plugin_manager", "", 5);
-            return false;
-        }
-        return false;
-    }
-
-    ###HEADER#################################
-    if (isset($_POST['header_deactivated'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['header_on'])) {
-                foreach ($_POST['header_on'] as $k => $v) {
-                    if ($v == "header_widget") {
-                        safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET position = 'header_widget' where widgetname = '" . $k . "'");
-                    } else if ($v == "deactivated") {
-                        safe_query("DELETE FROM plugins_" . $_POST['modulname'] . "_settings_widgets WHERE widgetname = '" . $k . "'");
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-
-    if (isset($_POST['header_activ'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['header_off_1'])) {
-                foreach ($_POST['header_off_1'] as $k => $v) {
-                    if ($v == "header_widget") {
-                        safe_query(
-                            "INSERT INTO
-                        `plugins_" . $_POST['modulname'] . "_settings_widgets` (                        
-                        `position`, 
-                        `modulname`, 
-                        `themes_modulname`,                        
-                        `widgetname`, 
-                        `widgetdatei`, 
-                        `activated`, 
-                        `sort`
-                        ) VALUES (
-                        '" . $v . "',
-                        '',
-                        '" . $_POST['themes_modulname'] . "',                        
-                        '" . $k . "', 
-                        '', 
-                        '1', 
-                        '1'
-                        )"
-                        );
-
-                        foreach ($_POST['header_off_2'] as $k => $a) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET widgetdatei = '" . $a . "' WHERE widgetname='" . $k . "' ");
-                        }
-                        foreach ($_POST['header_off_3'] as $k => $d) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET modulname = '" . $d . "' WHERE widgetname='" . $k . "' ");
-                        }
-                    } elseif ($v == "") {
-                        $name = $k;
-                        DeleteData("plugins_" . $_POST['modulname'] . "_settings_widgets", "modulname", $name);
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-    ###HEADER#################################
-
-    ###NAVIGATION#################################
-    if (isset($_POST['navigation_deactivated'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['navigation_on'])) {
-                foreach ($_POST['navigation_on'] as $k => $v) {
-                    if ($v == "navigation_widget") {
-                        safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET position = 'navigation_widget' where widgetname = '" . $k . "'");
-                    } else if ($v == "deactivated") {
-                        safe_query("DELETE FROM plugins_" . $_POST['modulname'] . "_settings_widgets WHERE widgetname = '" . $k . "'");
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-
-    if (isset($_POST['navigation_activ'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['navigation_off_1'])) {
-                foreach ($_POST['navigation_off_1'] as $k => $v) {
-                    if ($v == "navigation_widget") {
-                        safe_query(
-                            "INSERT INTO
-                        `plugins_" . $_POST['modulname'] . "_settings_widgets` (                        
-                        `position`, 
-                        `modulname`, 
-                        `themes_modulname`,                        
-                        `widgetname`, 
-                        `widgetdatei`, 
-                        `activated`, 
-                        `sort`
-                        ) VALUES (
-                        '" . $v . "',
-                        '',
-                        '" . $_POST['themes_modulname'] . "',                        
-                        '" . $k . "', 
-                        '', 
-                        '1', 
-                        '1'
-                        )"
-                        );
-
-                        foreach ($_POST['navigation_off_2'] as $k => $a) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET widgetdatei = '" . $a . "' WHERE widgetname='" . $k . "' ");
-                        }
-                        foreach ($_POST['navigation_off_3'] as $k => $d) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET modulname = '" . $d . "' WHERE widgetname='" . $k . "' ");
-                        }
-                    } elseif ($v == "") {
-                        $name = $k;
-                        DeleteData("plugins_" . $_POST['modulname'] . "_settings_widgets", "modulname", $name);
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-    ###NAVIGATION#################################
-
-    ###content_head#################################
-    if (isset($_POST['content_head_deactivated'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['content_head_on'])) {
-                foreach ($_POST['content_head_on'] as $k => $v) {
-                    if ($v == "content_head_widget") {
-                        safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET position = 'content_head_widget' where widgetname = '" . $k . "'");
-                    } else if ($v == "deactivated") {
-                        safe_query("DELETE FROM plugins_" . $_POST['modulname'] . "_settings_widgets WHERE widgetname = '" . $k . "'");
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-
-    if (isset($_POST['content_head_activ'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['content_head_off_1'])) {
-                foreach ($_POST['content_head_off_1'] as $k => $v) {
-                    if ($v == "content_head_widget") {
-                        safe_query(
-                            "INSERT INTO
-                        `plugins_" . $_POST['modulname'] . "_settings_widgets` (                        
-                        `position`, 
-                        `modulname`, 
-                        `themes_modulname`,                        
-                        `widgetname`, 
-                        `widgetdatei`, 
-                        `activated`, 
-                        `sort`
-                        ) VALUES (
-                        '" . $v . "',
-                        '',
-                        '" . $_POST['themes_modulname'] . "',                        
-                        '" . $k . "', 
-                        '', 
-                        '1', 
-                        '1'
-                        )"
-                        );
-
-                        foreach ($_POST['content_head_off_2'] as $k => $a) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET widgetdatei = '" . $a . "' WHERE widgetname='" . $k . "' ");
-                        }
-                        foreach ($_POST['content_head_off_3'] as $k => $d) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET modulname = '" . $d . "' WHERE widgetname='" . $k . "' ");
-                        }
-                    } elseif ($v == "") {
-                        $name = $k;
-                        DeleteData("plugins_" . $_POST['modulname'] . "_settings_widgets", "modulname", $name);
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-    ###content_head#################################
-
-    ###content_up#################################
-    if (isset($_POST['content_up_deactivated'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['content_up_on'])) {
-                foreach ($_POST['content_up_on'] as $k => $v) {
-                    if ($v == "content_up_widget") {
-                        safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET position = 'content_up_widget' where widgetname = '" . $k . "'");
-                    } else if ($v == "deactivated") {
-                        safe_query("DELETE FROM plugins_" . $_POST['modulname'] . "_settings_widgets WHERE widgetname = '" . $k . "'");
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-
-    if (isset($_POST['content_up_activ'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['content_up_off_1'])) {
-                foreach ($_POST['content_up_off_1'] as $k => $v) {
-                    if ($v == "content_up_widget") {
-                        safe_query(
-                            "INSERT INTO
-                        `plugins_" . $_POST['modulname'] . "_settings_widgets` (                        
-                        `position`, 
-                        `modulname`, 
-                        `themes_modulname`,                        
-                        `widgetname`, 
-                        `widgetdatei`, 
-                        `activated`, 
-                        `sort`
-                        ) VALUES (
-                        '" . $v . "',
-                        '',
-                        '" . $_POST['themes_modulname'] . "',                        
-                        '" . $k . "', 
-                        '', 
-                        '1', 
-                        '1'
-                        )"
-                        );
-
-                        foreach ($_POST['content_up_off_2'] as $k => $a) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET widgetdatei = '" . $a . "' WHERE widgetname='" . $k . "' ");
-                        }
-                        foreach ($_POST['content_up_off_3'] as $k => $d) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET modulname = '" . $d . "' WHERE widgetname='" . $k . "' ");
-                        }
-                    } elseif ($v == "") {
-                        $name = $k;
-                        DeleteData("plugins_" . $_POST['modulname'] . "_settings_widgets", "modulname", $name);
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-    ###content_up#################################
-
-    ###content_down#################################
-    if (isset($_POST['content_down_deactivated'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['content_down_on'])) {
-                foreach ($_POST['content_down_on'] as $k => $v) {
-                    if ($v == "content_down_widget") {
-                        safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET position = 'content_down_widget' where widgetname = '" . $k . "'");
-                    } else if ($v == "deactivated") {
-                        safe_query("DELETE FROM plugins_" . $_POST['modulname'] . "_settings_widgets WHERE widgetname = '" . $k . "'");
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-
-    if (isset($_POST['content_down_activ'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['content_down_off_1'])) {
-                foreach ($_POST['content_down_off_1'] as $k => $v) {
-                    if ($v == "content_down_widget") {
-                        safe_query(
-                            "INSERT INTO
-                        `plugins_" . $_POST['modulname'] . "_settings_widgets` (                        
-                        `position`, 
-                        `modulname`, 
-                        `themes_modulname`,                        
-                        `widgetname`, 
-                        `widgetdatei`, 
-                        `activated`, 
-                        `sort`
-                        ) VALUES (
-                        '" . $v . "',
-                        '',
-                        '" . $_POST['themes_modulname'] . "',                        
-                        '" . $k . "', 
-                        '', 
-                        '1', 
-                        '1'
-                        )"
-                        );
-
-                        foreach ($_POST['content_down_off_2'] as $k => $a) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET widgetdatei = '" . $a . "' WHERE widgetname='" . $k . "' ");
-                        }
-                        foreach ($_POST['content_down_off_3'] as $k => $d) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET modulname = '" . $d . "' WHERE widgetname='" . $k . "' ");
-                        }
-                    } elseif ($v == "") {
-                        $name = $k;
-                        DeleteData("plugins_" . $_POST['modulname'] . "_settings_widgets", "modulname", $name);
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-    ###content_down#################################
-
-    ###left sidebar#################################
-    if (isset($_POST['sidebar_left_deactivated'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['sidebar_left_on'])) {
-                foreach ($_POST['sidebar_left_on'] as $k => $v) {
-                    if ($v == "left_side_widget") {
-                        safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET position = 'left_side_widget' where widgetname = '" . $k . "'");
-                    } else if ($v == "deactivated") {
-                        safe_query("DELETE FROM plugins_" . $_POST['modulname'] . "_settings_widgets WHERE widgetname = '" . $k . "'");
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-
-    if (isset($_POST['sidebar_left_activ'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['sidebar_left_off_1'])) {
-                foreach ($_POST['sidebar_left_off_1'] as $k => $v) {
-                    if ($v == "left_side_widget") {
-                        safe_query(
-                            "INSERT INTO
-                        `plugins_" . $_POST['modulname'] . "_settings_widgets` (                        
-                        `position`, 
-                        `modulname`, 
-                        `themes_modulname`,                        
-                        `widgetname`, 
-                        `widgetdatei`, 
-                        `activated`, 
-                        `sort`
-                        ) VALUES (
-                        '" . $v . "',
-                        '',
-                        '" . $_POST['themes_modulname'] . "',                        
-                        '" . $k . "', 
-                        '', 
-                        '1', 
-                        '1'
-                        )"
-                        );
-
-                        foreach ($_POST['sidebar_left_off_2'] as $k => $a) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET widgetdatei = '" . $a . "' WHERE widgetname='" . $k . "' ");
-                        }
-                        foreach ($_POST['sidebar_left_off_3'] as $k => $d) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET modulname = '" . $d . "' WHERE widgetname='" . $k . "' ");
-                        }
-                    } elseif ($v == "") {
-                        $name = $k;
-                        DeleteData("plugins_" . $_POST['modulname'] . "_settings_widgets", "modulname", $name);
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-    ###left sidebar#################################
-
-    ###right sidebar#################################
-    if (isset($_POST['sidebar_right_deactivated'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['sidebar_right_on'])) {
-                foreach ($_POST['sidebar_right_on'] as $k => $v) {
-                    if ($v == "right_side_widget") {
-                        safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET position = 'right_side_widget' where widgetname = '" . $k . "'");
-                    } else if ($v == "deactivated") {
-                        safe_query("DELETE FROM plugins_" . $_POST['modulname'] . "_settings_widgets WHERE widgetname = '" . $k . "'");
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-
-    if (isset($_POST['sidebar_right_activ'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['sidebar_right_off_1'])) {
-                foreach ($_POST['sidebar_right_off_1'] as $k => $v) {
-                    if ($v == "right_side_widget") {
-                        safe_query(
-                            "INSERT INTO
-                        `plugins_" . $_POST['modulname'] . "_settings_widgets` (                        
-                        `position`, 
-                        `modulname`, 
-                        `themes_modulname`,                        
-                        `widgetname`, 
-                        `widgetdatei`, 
-                        `activated`, 
-                        `sort`
-                        ) VALUES (
-                        '" . $v . "',
-                        '',
-                        '" . $_POST['themes_modulname'] . "',                        
-                        '" . $k . "', 
-                        '', 
-                        '1', 
-                        '1'
-                        )"
-                        );
-
-                        foreach ($_POST['sidebar_right_off_2'] as $k => $a) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET widgetdatei = '" . $a . "' WHERE widgetname='" . $k . "' ");
-                        }
-                        foreach ($_POST['sidebar_right_off_3'] as $k => $d) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET modulname = '" . $d . "' WHERE widgetname='" . $k . "' ");
-                        }
-                    } elseif ($v == "") {
-                        $name = $k;
-                        DeleteData("plugins_" . $_POST['modulname'] . "_settings_widgets", "modulname", $name);
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-    ###right sidebar#################################
-
-    ###left right sidebar#################################
-    if (isset($_POST['sidebar_left_right_deactivated'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['sidebar_on'])) {
-                foreach ($_POST['sidebar_on'] as $k => $v) {
-                    if ($v == "left_side_widget") {
-                        safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET position = 'left_side_widget' where widgetname = '" . $k . "'");
-                    } else if ($v == "right_side_widget") {
-                        safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET position = 'right_side_widget' where widgetname = '" . $k . "'");
-                    } else if ($v == "deactivated") {
-                        safe_query("DELETE FROM plugins_" . $_POST['modulname'] . "_settings_widgets WHERE widgetname = '" . $k . "'");
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-
-
-
-    if (isset($_POST['sidebar_left_right_activ'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['sidebar_left_off_1'])) {
-                foreach ($_POST['sidebar_left_off_1'] as $k => $v) {
-                    if ($v == "left_side_widget") {
-                        safe_query(
-                            "INSERT INTO
-                        `plugins_" . $_POST['modulname'] . "_settings_widgets` (                        
-                        `position`, 
-                        `modulname`, 
-                        `themes_modulname`,                        
-                        `widgetname`, 
-                        `widgetdatei`, 
-                        `activated`, 
-                        `sort`
-                        ) VALUES (
-                        '" . $v . "',
-                        '',
-                        '" . $_POST['themes_modulname'] . "',                        
-                        '" . $k . "', 
-                        '', 
-                        '1', 
-                        '1'
-                        )"
-                        );
-
-                        foreach ($_POST['sidebar_left_off_2'] as $k => $a) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET widgetdatei = '" . $a . "' WHERE widgetname='" . $k . "' ");
-                        }
-                        foreach ($_POST['sidebar_left_off_3'] as $k => $d) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET modulname = '" . $d . "' WHERE widgetname='" . $k . "' ");
-                        }
-                    } elseif ($v == "") {
-                        $name = $k;
-                        DeleteData("plugins_" . $_POST['modulname'] . "_settings_widgets", "modulname", $name);
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-    ###right sidebar#################################
-
-    ###content_foot#################################
-    if (isset($_POST['content_foot_deactivated'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['content_foot_on'])) {
-                foreach ($_POST['content_foot_on'] as $k => $v) {
-                    if ($v == "content_foot_widget") {
-                        safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET position = 'content_foot_widget' where widgetname = '" . $k . "'");
-                    } else if ($v == "deactivated") {
-                        safe_query("DELETE FROM plugins_" . $_POST['modulname'] . "_settings_widgets WHERE widgetname = '" . $k . "'");
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-
-    if (isset($_POST['content_foot_activ'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['content_foot_off_1'])) {
-                foreach ($_POST['content_foot_off_1'] as $k => $v) {
-                    if ($v == "content_foot_widget") {
-                        safe_query(
-                            "INSERT INTO
-                        `plugins_" . $_POST['modulname'] . "_settings_widgets` (                        
-                        `position`, 
-                        `modulname`, 
-                        `themes_modulname`,                        
-                        `widgetname`, 
-                        `widgetdatei`, 
-                        `activated`, 
-                        `sort`
-                        ) VALUES (
-                        '" . $v . "',
-                        '',
-                        '" . $_POST['themes_modulname'] . "',                        
-                        '" . $k . "', 
-                        '', 
-                        '1', 
-                        '1'
-                        )"
-                        );
-
-                        foreach ($_POST['content_foot_off_2'] as $k => $a) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET widgetdatei = '" . $a . "' WHERE widgetname='" . $k . "' ");
-                        }
-                        foreach ($_POST['content_foot_off_3'] as $k => $d) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET modulname = '" . $d . "' WHERE widgetname='" . $k . "' ");
-                        }
-                    } elseif ($v == "") {
-                        $name = $k;
-                        DeleteData("plugins_" . $_POST['modulname'] . "_settings_widgets", "modulname", $name);
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-    ###content_foot#################################
-
-    ###FOOTER#################################
-    if (isset($_POST['footer_deactivated'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['footer_on'])) {
-                foreach ($_POST['footer_on'] as $k => $v) {
-                    if ($v == "footer_widget") {
-                        safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET position = 'footer_widget' where widgetname = '" . $k . "'");
-                    } else if ($v == "deactivated") {
-                        safe_query("DELETE FROM plugins_" . $_POST['modulname'] . "_settings_widgets WHERE widgetname = '" . $k . "'");
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
-
-    if (isset($_POST['footer_activ'])) {
-
-        $CAPCLASS = new \webspell\Captcha;
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-
-            if (isset($_POST['footer_off_1'])) {
-                foreach ($_POST['footer_off_1'] as $k => $v) {
-                    if ($v == "footer_widget") {
-                        safe_query(
-                            "INSERT INTO
-                        `plugins_" . $_POST['modulname'] . "_settings_widgets` (                        
-                        `position`, 
-                        `modulname`, 
-                        `themes_modulname`,                        
-                        `widgetname`, 
-                        `widgetdatei`, 
-                        `activated`, 
-                        `sort`
-                        ) VALUES (
-                        '" . $v . "',
-                        '',
-                        '" . $_POST['themes_modulname'] . "',                        
-                        '" . $k . "', 
-                        '', 
-                        '1', 
-                        '1'
-                        )"
-                        );
-
-                        foreach ($_POST['footer_off_2'] as $k => $a) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET widgetdatei = '" . $a . "' WHERE widgetname='" . $k . "' ");
-                        }
-                        foreach ($_POST['footer_off_3'] as $k => $d) {
-                            safe_query("UPDATE plugins_" . $_POST['modulname'] . "_settings_widgets SET modulname = '" . $d . "' WHERE widgetname='" . $k . "' ");
-                        }
-                    } elseif ($v == "") {
-                        $name = $k;
-                        DeleteData("plugins_" . $_POST['modulname'] . "_settings_widgets", "modulname", $name);
-                    }
-                }
-            } else {
-                print "alle checkbox schlafen schon.\n";
-            }
-
-            redirect("admincenter.php?site=plugin_manager&action=widget_edit&id=" . $id . "&do=edit", "", "1");
-        } else {
-            echo '' . $languageService->get('transaction_invalid') . '';
-        }
-    }
+    
     ###FOOTER#################################
     if (isset($_POST['sortieren'])) {
         $CAPCLASS = new \webspell\Captcha;
@@ -1086,7 +268,7 @@ if (!empty(@$db['active'] == 1) !== false) {
             safe_query("DELETE FROM settings_plugins_widget WHERE widgetname='" . $_GET['widgetname'] . "'");
             safe_query("DELETE FROM settings_plugins_widget_settings WHERE widgetname='" . $_GET['widgetname'] . "'");
 
-            safe_query("DELETE FROM plugins_about_us_settings_widgets WHERE widgetname='" . $_GET['widgetname'] . "'");
+            /*safe_query("DELETE FROM plugins_about_settings_widgets WHERE widgetname='" . $_GET['widgetname'] . "'");
             safe_query("DELETE FROM plugins_articles_settings_widgets WHERE widgetname='" . $_GET['widgetname'] . "'");
             safe_query("DELETE FROM plugins_blog_settings_widgets WHERE widgetname='" . $_GET['widgetname'] . "'");
             safe_query("DELETE FROM plugins_calendar_settings_widgets WHERE widgetname='" . $_GET['widgetname'] . "'");
@@ -1118,638 +300,17 @@ if (!empty(@$db['active'] == 1) !== false) {
             safe_query("DELETE FROM plugins_twitter_settings_widgets WHERE widgetname='" . $_GET['widgetname'] . "'");
             safe_query("DELETE FROM plugins_usergallery_settings_widgets WHERE widgetname='" . $_GET['widgetname'] . "'");
             safe_query("DELETE FROM plugins_userlist_settings_widgets WHERE widgetname='" . $_GET['widgetname'] . "'");
-            safe_query("DELETE FROM plugins_whoisonline_settings_widgets WHERE widgetname='" . $_GET['widgetname'] . "'");
+            safe_query("DELETE FROM plugins_whoisonline_settings_widgets WHERE widgetname='" . $_GET['widgetname'] . "'");*/
 
             echo $languageService->get('success_delete');
             redirect("admincenter.php?site=plugin_manager&action=edit&id=" . $id . "&do=edit", "", 1);
         } else {
-            echo $languageService->get('failed_delete') . "<br /><br />" . $e->getMessage();
+            echo $languageService->get('failed_delete') . "<br /><br />";
             echo $languageService->get('transaction_invalid');
         }
     }
 
-    if ($action == "widget_edit") {
-        $id = $_GET['id'];
-
-
-        $CAPCLASS = new \webspell\Captcha;
-        $CAPCLASS->createTransaction();
-        $hash = $CAPCLASS->getHash();
-
-        $CAPCLASS->createTransaction();
-        $hash_2 = $CAPCLASS->getHash();
-
-        echo '<div class="card">
-        <div class="card-header"><i class="bi bi-puzzle"></i> 
-            ' . $languageService->get('plugin_manager') . '
-        </div>
-        <nav aria-label="breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="admincenter.php?site=plugin_manager">' . $languageService->get('plugin_manager') . '</a></li>
-            <li class="breadcrumb-item active" aria-current="page">' . $languageService->get('widget_side') . '</li>
-          </ol>
-        </nav>
-        <div class="card-body">';
-
-        $thergebnis = safe_query("SELECT * FROM settings_themes WHERE active = '1'");
-        $dx = mysqli_fetch_array($thergebnis);
-
-        $thergebnis = safe_query("SELECT * FROM settings_plugins WHERE pluginID = '" . $id . "'");
-        $dw = mysqli_fetch_array($thergebnis);
-
-        $result = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND modulname='" . $dw['modulname'] . "'");
-        $ds = mysqli_fetch_array($result);
-
-        $xergebnis = safe_query("SELECT * FROM settings_plugins WHERE name= '" . $dw['name'] . "'");
-        while ($db = mysqli_fetch_array($xergebnis)) {
-
-            $plugin_ID = $db['pluginID'];
-
-            echo '<h5>' . $languageService->get('page') . ': <a href="admincenter.php?site=plugin_manager&amp;action=edit&amp;id=' . $plugin_ID . '">' . $db['name'] . '</a></h5>';
-        }
-
-        echo '<form class="form-horizontal" method="post">
-            <div class="table-responsive">
-            <table class="table table-striped table-bordered">              
-            <thead>
-                <tr>                              
-                    <th class="text-bg-secondary p-3" style="width:25%"><i class="bi bi-layout-text-sidebar-reverse"></i> ' . $languageService->get('widget_name') . '</th>
-                    <th class="text-bg-secondary p-3"><i class="bi bi-grid-3x2"></i> ' . $languageService->get('area') . '</th>
-                </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td><span class="badge border border-success text-black bg-info" style="width: 100%">' . $languageService->get('header1') . '</span><br>';
-        $header_plugins_widget = safe_query("SELECT * FROM settings_plugins_widget WHERE area = '1' ORDER BY widgetname ASC");
-        $i = 1;
-        while ($header_off = mysqli_fetch_array($header_plugins_widget)) {
-            $modul_name = $header_off['modulname'];
-            $widgetname = $header_off['widgetname'];
-            $widgetdatei = $header_off['widgetdatei'];
-            $id = $header_off['id'];
-            $yheader_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND widgetname='" . $widgetname . "' ORDER BY sort");
-            $yheader = mysqli_fetch_array($yheader_ergebnis);
-            if (@$yheader['activated'] == '1') {
-            } else {
-                echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                        <input class="form-check-input" type="checkbox" name="header_off_1[' . $widgetname . ']" id="' . $id . '[]" value="header_widget" >
-                        <input type="hidden" name="header_off_2[' . $widgetname . ']" id="' . $id . '[]" value="' . $widgetdatei . '" >
-                        <input type="hidden" name="header_off_3[' . $widgetname . ']" id="' . $id . '[]" value="' . $modul_name . '" >';
-            }
-            $i++;
-        }
-        echo '<br><button class="btn btn-success" style="font-size: 10px;margin-top:10px;" type="submit" name="header_activ"><i class="bi bi-plus-circle"></i> ' . $languageService->get('widget_off_setting') . '</button>
-                </td>
-                <td class=" text-center"  style="align-content: center;">     
-                    ' . $languageService->get('header') . '
-                    <div class="alert alert-success text-center" style="padding: 5px"><div class="border border-danger container text-center mt-3 alert alert-secondary">';
-        $xheader_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND  position='header_widget' ORDER BY sort");
-        $tmp = mysqli_fetch_assoc(safe_query("SELECT count(id) as cnt FROM plugins_" . $dw['modulname'] . "_settings_widgets"));
-        $anzheader = $tmp['cnt'];
-        $i = 1;
-        while ($xheader = mysqli_fetch_array($xheader_ergebnis)) {
-            $id = $xheader['id'];
-            $widgetname = $xheader['widgetname'];
-            $activated = $xheader['activated'];
-            $position = $xheader['position'];
-            echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                        <input class="form-check-input" type="hidden" name="header_on[' . $widgetname . ']" id="' . $id . '[]" value="deactivated"/>
-                        <input class="form-check-input test" type="checkbox" name="header_on[' . $widgetname . ']" id="' . $id . '[]" value="header_widget" ';
-            if ($activated == '1') {
-                echo 'checked';
-            }
-            echo '><select name="sort[]">';
-            for ($j = 1; $j <= $anzheader; $j++) {
-                if ($xheader['sort'] == $j) {
-                    echo '<option value="' . $xheader['id'] . '-' . $j . '" selected="selected">' . $j . '</option>';
-                } else {
-                    echo '<option value="' . $xheader['id'] . '-' . $j . '">' . $j . '</option>';
-                }
-            }
-            echo '</select>';
-            $i++;
-            echo '<br>
-                        <input type="hidden" name="captcha_hash" value="' . $hash . '">';
-        }
-        echo '<button class="btn btn-danger" style="font-size: 10px;margin-top:10px;" type="submit" name="header_deactivated"><i class="bi bi-trash3"></i> ' . $languageService->get('widget_on_setting') . '</>
-                    </div></div>
-                </td>
-            </tr>
-            <tr>
-                <td><span class="badge border border-success text-black bg-info" style="width: 100%">' . $languageService->get('navigation') . '</span><br>';
-        $navigation_plugins_widget = safe_query("SELECT * FROM settings_plugins_widget WHERE area = '2' ORDER BY widgetname ASC");
-        $i = 1;
-        while ($navigation_off = mysqli_fetch_array($navigation_plugins_widget)) {
-            $modul_name = $navigation_off['modulname'];
-            $widgetname = $navigation_off['widgetname'];
-            $widgetdatei = $navigation_off['widgetdatei'];
-            $id = $navigation_off['id'];
-            $ynavigation_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND widgetname='" . $widgetname . "'");
-            $ynavigation = mysqli_fetch_array($ynavigation_ergebnis);
-            if (@$ynavigation['activated'] == '1') {
-            } else {
-                echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                        <input class="form-check-input" type="checkbox" name="navigation_off_1[' . $widgetname . ']" id="' . $id . '[]" value="navigation_widget" >
-                        <input type="hidden" name="navigation_off_2[' . $widgetname . ']" id="' . $id . '[]" value="' . $widgetdatei . '" >
-                        <input type="hidden" name="navigation_off_3[' . $widgetname . ']" id="' . $id . '[]" value="' . $modul_name . '" >';
-            }
-            $i++;
-        }
-        echo '</br><button class="btn btn-success" style="font-size: 10px;margin-top:10px;" type="submit" name="navigation_activ"><i class="bi bi-plus-circle"></i> ' . $languageService->get('widget_off_setting') . '</button>
-                </td>
-                <td class=" text-center"  style="align-content: center;">
-                    ' . $languageService->get('navigation') . '
-                    <div class="alert alert-success text-center" style="padding: 5px"><div class="border border-danger container text-center mt-3 alert alert-secondary">';
-        $xnavigation_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND  position='navigation_widget' ORDER BY sort");
-        $tmp = mysqli_fetch_assoc(safe_query("SELECT count(id) as cnt FROM plugins_" . $dw['modulname'] . "_settings_widgets"));
-        $anznavigation = $tmp['cnt'];
-        $i = 1;
-        while ($xnavigation = mysqli_fetch_array($xnavigation_ergebnis)) {
-            $id = $xnavigation['id'];
-            $widgetname = $xnavigation['widgetname'];
-            $activated = $xnavigation['activated'];
-            $position = $xnavigation['position'];
-            echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                        <input class="form-check-input" type="hidden" name="navigation_on[' . $widgetname . ']" id="' . $id . '[]" value="deactivated"/>
-                        <input class="form-check-input test" type="checkbox" name="navigation_on[' . $widgetname . ']" id="' . $id . '[]" value="navigation_widget" ';
-            if ($activated == '1') {
-                echo 'checked';
-            }
-            echo '><select name="sort[]">';
-            for ($j = 1; $j <= $anznavigation; $j++) {
-                if ($xnavigation['sort'] == $j) {
-                    echo '<option value="' . $xnavigation['id'] . '-' . $j . '" selected="selected">' . $j . '</option>';
-                } else {
-                    echo '<option value="' . $xnavigation['id'] . '-' . $j . '">' . $j . '</option>';
-                }
-            }
-            echo '</select>';
-            $i++;
-            echo '<br>
-                        <input type="hidden" name="captcha_hash" value="' . $hash . '">';
-        }
-        echo '<button class="btn btn-danger" style="font-size: 10px;margin-top:10px;" type="submit" name="navigation_deactivated"><i class="bi bi-trash3"></i> ' . $languageService->get('widget_on_setting') . '</button>
-                    </div></div>
-                </td>
-            </tr>
-            <tr>
-                <td><span class="badge border border-success text-black bg-info" style="width: 100%">' . $languageService->get('content_head1') . '</span><br>';
-        $content_head_plugins_widget = safe_query("SELECT * FROM settings_plugins_widget WHERE area = '3' ORDER BY widgetname ASC");
-        $i = 1;
-        while ($content_head_off = mysqli_fetch_array($content_head_plugins_widget)) {
-            $modul_name = $content_head_off['modulname'];
-            $widgetname = $content_head_off['widgetname'];
-            $widgetdatei = $content_head_off['widgetdatei'];
-            $id = $content_head_off['id'];
-            $ycontent_head_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND widgetname='" . $widgetname . "'");
-            $ycontent_head = mysqli_fetch_array($ycontent_head_ergebnis);
-            if (@$ycontent_head['activated'] == '1') {
-            } else {
-                echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                        <input class="form-check-input" type="checkbox" name="content_head_off_1[' . $widgetname . ']" id="' . $id . '[]" value="content_head_widget" >
-                        <input type="hidden" name="content_head_off_2[' . $widgetname . ']" id="' . $id . '[]" value="' . $widgetdatei . '" >
-                        <input type="hidden" name="content_head_off_3[' . $widgetname . ']" id="' . $id . '[]" value="' . $modul_name . '" >';
-            }
-            $i++;
-        }
-        echo '</br><button class="btn btn-success" style="font-size: 10px;margin-top:10px;" type="submit" name="content_head_activ"><i class="bi bi-plus-circle"></i> ' . $languageService->get('widget_off_setting') . '</button>
-                </td>
-                <td class=" text-center" style="align-content: center;">
-                    ' . $languageService->get('content_head') . '
-                    <div class="alert alert-success text-center" style="padding: 5px"><div class="border border-danger container text-center mt-3 alert alert-secondary">';
-        $xcontent_head_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND  position='content_head_widget' ORDER BY sort");
-        $tmp = mysqli_fetch_assoc(safe_query("SELECT count(id) as cnt FROM plugins_" . $dw['modulname'] . "_settings_widgets"));
-        $anzcontent_head = $tmp['cnt'];
-        $i = 1;
-        while ($xcontent_head = mysqli_fetch_array($xcontent_head_ergebnis)) {
-            $id = $xcontent_head['id'];
-            $widgetname = $xcontent_head['widgetname'];
-            $activated = $xcontent_head['activated'];
-            $position = $xcontent_head['position'];
-            echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                        <input class="form-check-input" type="hidden" name="content_head_on[' . $widgetname . ']" id="' . $id . '[]" value="deactivated"/>
-                        <input class="form-check-input test" type="checkbox" name="content_head_on[' . $widgetname . ']" id="' . $id . '[]" value="content_head_widget" ';
-            if ($activated == '1') {
-                echo 'checked';
-            }
-            echo '><select name="sort[]">';
-            for ($j = 1; $j <= $anzcontent_head; $j++) {
-                if ($xcontent_head['sort'] == $j) {
-                    echo '<option value="' . $xcontent_head['id'] . '-' . $j . '" selected="selected">' . $j . '</option>';
-                } else {
-                    echo '<option value="' . $xcontent_head['id'] . '-' . $j . '">' . $j . '</option>';
-                }
-            }
-            echo '</select>';
-            $i++;
-            echo '<br>
-                        <input type="hidden" name="captcha_hash" value="' . $hash . '">';
-        }
-        echo '<button class="btn btn-danger" style="font-size: 10px;margin-top:10px;" type="submit" name="content_head_deactivated"><i class="bi bi-trash3"></i> ' . $languageService->get('widget_on_setting') . '</button></div></div>
-                </td>
-            </tr>
-			<!-- ################################### Inizio testa alta -->
-			<tr>
-                <td><span class="badge border border-success text-black bg-info" style="width: 100%">' . $languageService->get('content_up1') . '</span><br>';
-        $content_up_plugins_widget = safe_query("SELECT * FROM settings_plugins_widget WHERE area = '3' ORDER BY widgetname ASC");
-        $i = 1;
-        while ($content_up_off = mysqli_fetch_array($content_up_plugins_widget)) {
-            $modul_name = $content_up_off['modulname'];
-            $widgetname = $content_up_off['widgetname'];
-            $widgetdatei = $content_up_off['widgetdatei'];
-            $id = $content_up_off['id'];
-            $ycontent_up_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND widgetname='" . $widgetname . "'");
-            $ycontent_up = mysqli_fetch_array($ycontent_up_ergebnis);
-            if (@$ycontent_up['activated'] == '1') {
-            } else {
-                echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                        <input class="form-check-input" type="checkbox" name="content_up_off_1[' . $widgetname . ']" id="' . $id . '[]" value="content_up_widget" >
-                        <input type="hidden" name="content_up_off_2[' . $widgetname . ']" id="' . $id . '[]" value="' . $widgetdatei . '" >
-                        <input type="hidden" name="content_up_off_3[' . $widgetname . ']" id="' . $id . '[]" value="' . $modul_name . '" >';
-            }
-            $i++;
-        }
-        echo '</br><button class="btn btn-success" style="font-size: 10px;margin-top:10px;" type="submit" name="content_up_activ"><i class="bi bi-plus-circle"></i> ' . $languageService->get('widget_off_setting') . '</button>
-                </td>
-                <td class=" text-center" style="align-content: end;">
-				<div class="container text-center" style="padding-top: 10px">' . $languageService->get('content_up') . '
-    <div class="row">
-        <div class="col-3 text-start" style="padding: 5px">
-            <div class="border border-danger alert alert-success text-center" style="height: 90%; padding: 5px"></div>
-			</div>
-        <div class="col-6 text-start" style="padding: 5px">
-		<div class="border border-danger col-12 text-center border-end alert alert-secondary" style="height: 90%;">';
-
-
-
-
-
-        $xcontent_up_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND  position='content_up_widget' ORDER BY sort");
-        $tmp = mysqli_fetch_assoc(safe_query("SELECT count(id) as cnt FROM plugins_" . $dw['modulname'] . "_settings_widgets"));
-        $anzcontent_up = $tmp['cnt'];
-        $i = 1;
-        while ($xcontent_up = mysqli_fetch_array($xcontent_up_ergebnis)) {
-            $id = $xcontent_up['id'];
-            $widgetname = $xcontent_up['widgetname'];
-            $activated = $xcontent_up['activated'];
-            $position = $xcontent_up['position'];
-            echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                        <input class="form-check-input" type="hidden" name="content_up_on[' . $widgetname . ']" id="' . $id . '[]" value="deactivated"/>
-                        <input class="form-check-input test" type="checkbox" name="content_up_on[' . $widgetname . ']" id="' . $id . '[]" value="content_up_widget" ';
-            if ($activated == '1') {
-                echo 'checked';
-            }
-            echo '><select name="sort[]">';
-            for ($j = 1; $j <= $anzcontent_up; $j++) {
-                if ($xcontent_up['sort'] == $j) {
-                    echo '<option value="' . $xcontent_up['id'] . '-' . $j . '" selected="selected">' . $j . '</option>';
-                } else {
-                    echo '<option value="' . $xcontent_up['id'] . '-' . $j . '">' . $j . '</option>';
-                }
-            }
-            echo '</select>';
-            $i++;
-            echo '<br>
-                        <input type="hidden" name="captcha_hash" value="' . $hash . '">';
-        }
-        echo '<button class="btn btn-danger" style="font-size: 10px;margin-top:10px;" type="submit" name="content_up_deactivated"><i class="bi bi-trash3"></i> ' . $languageService->get('widget_on_setting') . '</button></div></div>
-        <div class="col-3 text-end" style="padding: 5px">
-            <div class="border border-danger alert alert-success text-center" style="height: 90%; padding: 5px"></div>
-        </div>
-
-                </td>
-            </tr>
-			<!-- ################################### fine testa alta -->
-            <tr>
-                <td>
-                    <span class="badge border border-success text-black bg-info" style="width: 100%">' . $languageService->get('left') . '</span><br>';
-        $sidebar_left_plugins_widget = safe_query("SELECT * FROM settings_plugins_widget WHERE area = '4' ORDER BY widgetname ASC");
-        $i = 1;
-        while ($sidebar_left_off = mysqli_fetch_array($sidebar_left_plugins_widget)) {
-            $modul_name = $sidebar_left_off['modulname'];
-            $widgetname = $sidebar_left_off['widgetname'];
-            $widgetdatei = $sidebar_left_off['widgetdatei'];
-            $id = $sidebar_left_off['id'];
-            $ysidebar_left_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND widgetname='" . $widgetname . "'");
-            $ysidebar_left = mysqli_fetch_array($ysidebar_left_ergebnis);
-            if (@$ysidebar_left['activated'] == '1') {
-            } else {
-                echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                        <input class="form-check-input" type="checkbox" name="sidebar_left_off_1[' . $widgetname . ']" id="' . $id . '[]" value="left_side_widget" >
-                        <input type="hidden" name="sidebar_left_off_2[' . $widgetname . ']" id="' . $id . '[]" value="' . $widgetdatei . '" >
-                        <input type="hidden" name="sidebar_left_off_3[' . $widgetname . ']" id="' . $id . '[]" value="' . $modul_name . '" >';
-            }
-            $i++;
-        }
-        echo '</br><button class="btn btn-success" style="font-size: 10px;margin-top:10px;" type="submit" name="sidebar_left_activ"><i class="bi bi-plus-circle"></i> ' . $languageService->get('widget_off_setting') . '</button>
-                    <hr>
-                    <span class="badge border border-success text-black bg-info" style="width: 100%">' . $languageService->get('right') . '</span><br>';
-        $sidebar_right_plugins_widget = safe_query("SELECT * FROM settings_plugins_widget WHERE area = '4' ORDER BY widgetname ASC");
-        $i = 1;
-        while ($sidebar_right_off = mysqli_fetch_array($sidebar_right_plugins_widget)) {
-            $modul_name = $sidebar_right_off['modulname'];
-            $widgetname = $sidebar_right_off['widgetname'];
-            $widgetdatei = $sidebar_right_off['widgetdatei'];
-            $id = $sidebar_right_off['id'];
-            $ysidebar_right_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND widgetname='" . $widgetname . "'");
-            $ysidebar_right = mysqli_fetch_array($ysidebar_right_ergebnis);
-            if (@$ysidebar_right['activated'] == '1') {
-                continue;
-            } else {
-                echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                        <input class="form-check-input" type="checkbox" name="sidebar_right_off_1[' . $widgetname . ']" id="' . $id . '[]" value="right_side_widget" >
-                        <input type="hidden" name="sidebar_right_off_2[' . $widgetname . ']" id="' . $id . '[]" value="' . $widgetdatei . '" >
-                        <input type="hidden" name="sidebar_right_off_3[' . $widgetname . ']" id="' . $id . '[]" value="' . $modul_name . '" >';
-            }
-            $i++;
-        }
-        echo '<br><button class="btn btn-success" style="font-size: 10px;margin-top:10px;" type="submit" name="sidebar_right_activ"><i class="bi bi-plus-circle"></i> ' . $languageService->get('widget_off_setting') . '</button>
-                </td>
-                <td>
-                    <div class="col text-center">   
-                        ' . $languageService->get('right_left_active') . '
-                    </div>
-                    <div class="container text-center" style="padding-top: 10px">
-                        <div class="row">
-                            <div class="col-3 text-start" style="padding: 5px">
-                                ' . $languageService->get('left') . '
-                                <div class="border border-danger alert alert-success text-center" style="height: 90%;padding: 5px">';
-        $xsidebar_left_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND  position='left_side_widget' ORDER BY sort");
-        $tmp = mysqli_fetch_assoc(safe_query("SELECT count(id) as cnt FROM plugins_" . $dw['modulname'] . "_settings_widgets"));
-        $anzsidebar_left = $tmp['cnt'];
-        $i = 1;
-        while ($xsidebar_left = mysqli_fetch_array($xsidebar_left_ergebnis)) {
-            $id = $xsidebar_left['id'];
-            $widgetname = $xsidebar_left['widgetname'];
-            $activated = $xsidebar_left['activated'];
-            $position = $xsidebar_left['position'];
-            echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                                    <input class="form-check-input" type="hidden" name="sidebar_left_on[' . $widgetname . ']" id="' . $id . '[]" value="deactivated"/>
-                                    <input class="form-check-input test" type="checkbox" name="sidebar_left_on[' . $widgetname . ']" id="' . $id . '[]" value="left_side_widget" ';
-            if ($activated == '1') {
-                echo 'checked';
-            }
-            echo '><select name="sort[]">';
-            for ($j = 1; $j <= $anzsidebar_left; $j++) {
-                if ($xsidebar_left['sort'] == $j) {
-                    echo '<option value="' . $xsidebar_left['id'] . '-' . $j . '" selected="selected">' . $j . '</option>';
-                } else {
-                    echo '<option value="' . $xsidebar_left['id'] . '-' . $j . '">' . $j . '</option>';
-                }
-            }
-            echo '</select>';
-            $i++;
-            echo '<br>
-                                    <input type="hidden" name="captcha_hash" value="' . $hash . '">';
-        }
-        echo '<button class="btn btn-danger mb-3" style="font-size: 10px;margin-top:10px;" type="submit" name="sidebar_left_deactivated"><i class="bi bi-trash3"></i> ' . $languageService->get('widget_on_setting') . '</button>
-                                </div>
-                            </div>
-                            <div class="col-6 text-start" style="padding: 5px">
-                                ' . $languageService->get('main_area') . '
-                                <div class="border border-danger col-12 text-center border-end alert alert-secondary" style="height: 90%;"><h5>' . $languageService->get('main_area') . '</h5></div>
-                            </div>
-                            <div class="col-3 text-end" style="padding: 5px">
-                                ' . $languageService->get('right') . '
-                                <div class="border border-danger alert alert-success text-center" style="height: 90%;padding: 5px">';
-        $xsidebar_right_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND  position='right_side_widget' ORDER BY sort");
-        $tmp = mysqli_fetch_assoc(safe_query("SELECT count(id) as cnt FROM plugins_" . $dw['modulname'] . "_settings_widgets"));
-        $anzsidebar_right = $tmp['cnt'];
-        $i = 1;
-        while ($xsidebar_right = mysqli_fetch_array($xsidebar_right_ergebnis)) {
-            $id = $xsidebar_right['id'];
-            $widgetname = $xsidebar_right['widgetname'];
-            $activated = $xsidebar_right['activated'];
-            $position = $xsidebar_right['position'];
-            echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                                    <input class="form-check-input" type="hidden" name="sidebar_right_on[' . $widgetname . ']" id="' . $id . '[]" value="deactivated"/>
-                                    <input class="form-check-input test" type="checkbox" name="sidebar_right_on[' . $widgetname . ']" id="' . $id . '[]" value="right_side_widget" ';
-            if ($activated == '1') {
-                echo 'checked';
-            }
-            echo '><select name="sort[]">';
-            for ($j = 1; $j <= $anzsidebar_right; $j++) {
-                if ($xsidebar_right['sort'] == $j) {
-                    echo '<option value="' . $xsidebar_right['id'] . '-' . $j . '" selected="selected">' . $j . '</option>';
-                } else {
-                    echo '<option value="' . $xsidebar_right['id'] . '-' . $j . '">' . $j . '</option>';
-                }
-            }
-            echo '</select>';
-            $i++;
-            echo '<br>
-                                    <input type="hidden" name="captcha_hash" value="' . $hash . '">';
-        }
-        echo '<button class="btn btn-danger mb-3" style="font-size: 10px;margin-top:10px;" type="submit" name="sidebar_right_deactivated"><i class="bi bi-trash3"></i> ' . $languageService->get('widget_on_setting') . '</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-            
-			<!-- ################################### Inizio testa bassa -->
-			<tr>
-                <td><span class="badge border border-success text-black bg-info" style="width: 100%">' . $languageService->get('content_down1') . '</span><br>';
-        $content_down_plugins_widget = safe_query("SELECT * FROM settings_plugins_widget WHERE area = '3' ORDER BY widgetname ASC");
-        $i = 1;
-        while ($content_down_off = mysqli_fetch_array($content_down_plugins_widget)) {
-            $modul_name = $content_down_off['modulname'];
-            $widgetname = $content_down_off['widgetname'];
-            $widgetdatei = $content_down_off['widgetdatei'];
-            $id = $content_down_off['id'];
-            $ycontent_down_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND widgetname='" . $widgetname . "'");
-            $ycontent_down = mysqli_fetch_array($ycontent_down_ergebnis);
-            if (@$ycontent_down['activated'] == '1') {
-            } else {
-                echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                        <input class="form-check-input" type="checkbox" name="content_down_off_1[' . $widgetname . ']" id="' . $id . '[]" value="content_down_widget" >
-                        <input type="hidden" name="content_down_off_2[' . $widgetname . ']" id="' . $id . '[]" value="' . $widgetdatei . '" >
-                        <input type="hidden" name="content_down_off_3[' . $widgetname . ']" id="' . $id . '[]" value="' . $modul_name . '" >';
-            }
-            $i++;
-        }
-        echo '</br><button class="btn btn-success" style="font-size: 10px;margin-top:10px;" type="submit" name="content_down_activ"><i class="bi bi-plus-circle"></i> ' . $languageService->get('widget_off_setting') . '</button>
-                </td>
-                <td class=" text-center">
-				<div class="container text-center" style="padding-top: 10px">' . $languageService->get('content_down') . '
-    <div class="row">
-        <div class="col-3 text-start" style="padding: 5px">
-            <div class="border border-danger alert alert-success text-center" style="height: 90%; padding: 5px"></div>
-			</div>
-        <div class="col-6 text-start" style="padding: 5px">
-		<div class="border border-danger col-12 text-center border-end alert alert-secondary" style="height: 90%;">
-				
-				
-				
-                    
-                    ';
-        $xcontent_down_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND  position='content_down_widget' ORDER BY sort");
-        $tmp = mysqli_fetch_assoc(safe_query("SELECT count(id) as cnt FROM plugins_" . $dw['modulname'] . "_settings_widgets"));
-        $anzcontent_down = $tmp['cnt'];
-        $i = 1;
-        while ($xcontent_down = mysqli_fetch_array($xcontent_down_ergebnis)) {
-            $id = $xcontent_down['id'];
-            $widgetname = $xcontent_down['widgetname'];
-            $activated = $xcontent_down['activated'];
-            $position = $xcontent_down['position'];
-            echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                        <input class="form-check-input" type="hidden" name="content_down_on[' . $widgetname . ']" id="' . $id . '[]" value="deactivated"/>
-                        <input class="form-check-input test" type="checkbox" name="content_down_on[' . $widgetname . ']" id="' . $id . '[]" value="content_down_widget" ';
-            if ($activated == '1') {
-                echo 'checked';
-            }
-            echo '><select name="sort[]">';
-            for ($j = 1; $j <= $anzcontent_down; $j++) {
-                if ($xcontent_down['sort'] == $j) {
-                    echo '<option value="' . $xcontent_down['id'] . '-' . $j . '" selected="selected">' . $j . '</option>';
-                } else {
-                    echo '<option value="' . $xcontent_down['id'] . '-' . $j . '">' . $j . '</option>';
-                }
-            }
-            echo '</select>';
-            $i++;
-            echo '<br>
-                        <input type="hidden" name="captcha_hash" value="' . $hash . '">';
-        }
-        echo '<button class="btn btn-danger" style="font-size: 10px;margin-top:10px;" type="submit" name="content_down_deactivated"><i class="bi bi-trash3"></i> ' . $languageService->get('widget_on_setting') . '</button></div></div>
-        <div class="col-3 text-end" style="padding: 5px">
-            <div class="border border-danger alert alert-success text-center" style="height: 90%; padding: 5px"></div>
-        </div>
-
-                </td>
-            </tr><tr>
-			<!-- ################################### fine testa bassa -->
-                <td><span class="badge border border-success text-black bg-info" style="width: 100%">' . $languageService->get('content_foot1') . '</span><br>';
-        $content_foot_plugins_widget = safe_query("SELECT * FROM settings_plugins_widget WHERE area = '3' ORDER BY widgetname ASC");
-        $i = 1;
-        while ($content_foot_off = mysqli_fetch_array($content_foot_plugins_widget)) {
-            $modul_name = $content_foot_off['modulname'];
-            $widgetname = $content_foot_off['widgetname'];
-            $widgetdatei = $content_foot_off['widgetdatei'];
-            $id = $content_foot_off['id'];
-            $ycontent_foot_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND widgetname='" . $widgetname . "'");
-            $ycontent_foot = mysqli_fetch_array($ycontent_foot_ergebnis);
-            if (@$ycontent_foot['activated'] == '1') {
-            } else {
-                echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                        <input class="form-check-input" type="checkbox" name="content_foot_off_1[' . $widgetname . ']" id="' . $id . '[]" value="content_foot_widget" >
-                        <input type="hidden" name="content_foot_off_2[' . $widgetname . ']" id="' . $id . '[]" value="' . $widgetdatei . '" >
-                        <input type="hidden" name="content_foot_off_3[' . $widgetname . ']" id="' . $id . '[]" value="' . $modul_name . '" >';
-            }
-            $i++;
-        }
-        echo '</br><button class="btn btn-success" style="font-size: 10px;margin-top:10px;" type="submit" name="content_foot_activ"><i class="bi bi-plus-circle"></i> ' . $languageService->get('widget_off_setting') . '</button>
-                </td>
-                <td class=" text-center"  style="align-content: center;">
-                    ' . $languageService->get('content_foot') . '
-                    <div class="alert alert-success text-center" style="padding: 5px"><div class="border border-danger container text-center mt-3 alert alert-secondary">';
-        $xcontent_foot_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND  position='content_foot_widget' ORDER BY sort");
-        $tmp = mysqli_fetch_assoc(safe_query("SELECT count(id) as cnt FROM plugins_" . $dw['modulname'] . "_settings_widgets"));
-        $anzcontent_foot = $tmp['cnt'];
-        $i = 1;
-        while ($xcontent_foot = mysqli_fetch_array($xcontent_foot_ergebnis)) {
-            $id = $xcontent_foot['id'];
-            $widgetname = $xcontent_foot['widgetname'];
-            $activated = $xcontent_foot['activated'];
-            $position = $xcontent_foot['position'];
-            echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                        <input class="form-check-input" type="hidden" name="content_foot_on[' . $widgetname . ']" id="' . $id . '[]" value="deactivated"/>
-                        <input class="form-check-input test" type="checkbox" name="content_foot_on[' . $widgetname . ']" id="' . $id . '[]" value="content_foot_widget" ';
-            if ($activated == '1') {
-                echo 'checked';
-            }
-            echo '><select name="sort[]">';
-            for ($j = 1; $j <= $anzcontent_foot; $j++) {
-                if ($xcontent_foot['sort'] == $j) {
-                    echo '<option value="' . $xcontent_foot['id'] . '-' . $j . '" selected="selected">' . $j . '</option>';
-                } else {
-                    echo '<option value="' . $xcontent_foot['id'] . '-' . $j . '">' . $j . '</option>';
-                }
-            }
-            echo '</select>';
-            $i++;
-            echo '<br>
-                        <input type="hidden" name="captcha_hash" value="' . $hash . '">';
-        }
-        echo '<button class="btn btn-danger" style="font-size: 10px;margin-top:10px;" type="submit" name="content_foot_deactivated"><i class="bi bi-trash3"></i> ' . $languageService->get('widget_on_setting') . '</button>
-                    </div></div>
-                </td>
-            </tr>
-            <tr>
-                <td><span class="badge border border-success text-black bg-info" style="width: 100%">' . $languageService->get('footer') . '</span><br>';
-        $footer_plugins_widget = safe_query("SELECT * FROM settings_plugins_widget WHERE area = '6' ORDER BY widgetname ASC");
-        $i = 1;
-        while ($footer_off = mysqli_fetch_array($footer_plugins_widget)) {
-            $modul_name = $footer_off['modulname'];
-            $widgetname = $footer_off['widgetname'];
-            $widgetdatei = $footer_off['widgetdatei'];
-            $id = $footer_off['id'];
-            $yfooter_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND widgetname='" . $widgetname . "'");
-            $yfooter = mysqli_fetch_array($yfooter_ergebnis);
-            if (@$yfooter['activated'] == '1') {
-            } else {
-                echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                        <input class="form-check-input" type="checkbox" name="footer_off_1[' . $widgetname . ']" id="' . $id . '[]" value="footer_widget" >
-                        <input type="hidden" name="footer_off_2[' . $widgetname . ']" id="' . $id . '[]" value="' . $widgetdatei . '" >
-                        <input type="hidden" name="footer_off_3[' . $widgetname . ']" id="' . $id . '[]" value="' . $modul_name . '" >';
-            }
-            $i++;
-        }
-        echo '</br><button class="btn btn-success" style="font-size: 10px;margin-top:10px;" type="submit" name="footer_activ"><i class="bi bi-plus-circle"></i> ' . $languageService->get('widget_off_setting') . '</button>
-                </td>
-                <td class=" text-center" style="align-content: center;">     
-                    ' . $languageService->get('footer') . '
-                    <div class="alert alert-success text-center" style="padding: 5px"><div class="border border-danger container text-center mt-3 alert alert-secondary">';
-        $xfooter_ergebnis = safe_query("SELECT * FROM plugins_" . $dw['modulname'] . "_settings_widgets WHERE themes_modulname= '" . $dx['modulname'] . "' AND  position='footer_widget' ORDER BY sort");
-        $tmp = mysqli_fetch_assoc(safe_query("SELECT count(id) as cnt FROM plugins_" . $dw['modulname'] . "_settings_widgets"));
-        $anzfooter = $tmp['cnt'];
-        $i = 1;
-        while ($xfooter = mysqli_fetch_array($xfooter_ergebnis)) {
-            $id = $xfooter['id'];
-            $widgetname = $xfooter['widgetname'];
-            $activated = $xfooter['activated'];
-            $position = $xfooter['position'];
-            echo '<span class="badge border border-success text-black" style="width: 150px">' . $widgetname . '</span>&nbsp;&nbsp;&nbsp;
-                        <input class="form-check-input" type="hidden" name="footer_on[' . $widgetname . ']" id="' . $id . '[]" value="deactivated"/>
-                        <input class="form-check-input" type="checkbox" name="footer_on[' . $widgetname . ']" id="' . $id . '[]" value="footer_widget" ';
-            if ($activated == '1') {
-                echo 'checked';
-            }
-            echo '><select name="sort[]">';
-            for ($j = 1; $j <= $anzfooter; $j++) {
-                if ($xfooter['sort'] == $j) {
-                    echo '<option value="' . $xfooter['id'] . '-' . $j . '" selected="selected">' . $j . '</option>';
-                } else {
-                    echo '<option value="' . $xfooter['id'] . '-' . $j . '">' . $j . '</option>';
-                }
-            }
-            echo '</select>';
-            $i++;
-            echo '<br>
-                        <input type="hidden" name="captcha_hash" value="' . $hash . '">';
-        }
-
-        echo '<button class="btn btn-danger" style="font-size: 10px;margin-top:10px;" type="submit" name="footer_deactivated"><i class="bi bi-trash3"></i> ' . $languageService->get('widget_on_setting') . '</button>
-                    </div></div>
-                </td>
-            </tr>';
-
-        echo '
-            <tr style="background-color: white!important;">
-            <td style="background-color: white!important;">            
-                <input type="hidden" name="captcha_hash" value="' . $hash . '">
-                <input type="hidden" name="themes_modulname" value="' . $dx['modulname'] . '">
-                <input type="hidden" name="modulname" value="' . $dw['modulname'] . '">
-                <input type="hidden" name="id" value="' . $_GET['id'] . '">
-                <input type="hidden" name="captcha_hash" value="' . $hash_2 . '" /><button class="btn btn-primary" type="submit" name="sortieren" /><i class="bi bi-sort-numeric-up-alt"></i> ' . $languageService->get('to_sort') . '</button>
-            </td><td style="background-color: white!important;"style="background-color: white!important;"></td></tr>
-            </tbody></table>
-            </div></form>';
-        echo '</div></div>';
-        ###############################################
-
-    } elseif ($action == "edit") {
+if ($action == "edit") {
         $id = $_GET['id'];
 
         $CAPCLASS = new \webspell\Captcha;
@@ -1791,9 +352,6 @@ if (!empty(@$db['active'] == 1) !== false) {
         } else {
         }
         echo '<form class="form-horizontal" method="post" id="post" name="post" action="admincenter.php?site=plugin_manager&id=' . $id . '&do=edit" enctype="multipart/form-data" onsubmit="return chkFormular();">';
-
-        #$themeergebnis = safe_query("SELECT * FROM settings_themes WHERE active = '1'");
-        #$db = mysqli_fetch_array($themeergebnis);
 
         echo '<b>' . $languageService->get('plugin_basic_setting') . ':</b>
         <hr>
@@ -1876,45 +434,91 @@ if (!empty(@$db['active'] == 1) !== false) {
         $widgetsergebnis = safe_query("SELECT * FROM settings_plugins_widget WHERE modulname = '" . $ds['modulname'] . "'");
         $widget = '';
         while ($df = mysqli_fetch_array($widgetsergebnis)) {
-            $modulname = $df['modulname'];
-            $widget .= '<div class="col-sm-12">
-                                <div class="mb-3 row">
-                                    <div class="col-sm-5 text-end">
-                                    <button type="button" class="btn btn-info" data-toggle="popover" data-bs-placement="left" data-img="../includes/plugins/' . $ds['modulname'] . '/images/' . $df['widgetdatei'] . '.jpg" title="Widget" ><i class="bi bi-image"></i> ' . $languageService->get('preview_widget') . '</button>
-                                    </div>                    
-                                    <div class="col-sm-4">
-                                        <div class="form-control">' . $df['widgetname'] . '</div>
-                                    </div>
-                                    <div class="col-sm-3"><a href="admincenter.php?site=plugin_manager&action=edit_widget&id=' . $id . '&widgetname=' . $df['widgetname'] . '" class="btn btn-warning" type="button"><i class="bi bi-pencil-square"></i> ' . $languageService->get('edit_widget') . '</a>
-                                   
+    $widgetdatei = $df['widgetdatei'];
+    $widgetname = $df['widgetname'];
+    $modulname = $df['modulname'];
 
-            <!-- Button trigger modal -->
-            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirm-delete" data-toggle="tooltip" data-html="true" title="' . $languageService->get('tooltip_6') . ' " data-href="admincenter.php?site=plugin_manager&amp;delete=true&amp;widgetname=' . $df['widgetname'] . '&amp;id=' . $id . '&amp;captcha_hash=' . $hash . '"><i class="bi bi-trash3"></i>  
-            ' . $languageService->get('widget_delete') . '
-            </button>
-            <!-- Button trigger modal END-->
-            <!-- Modal -->
-            <div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-              <div class="modal-dialog">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">' . $languageService->get('name') . ': ' . $df['widgetname'] . '</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
-                  </div>
-                  <div class="modal-body"><p>' . $languageService->get('really_delete') . '</p>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-square"></i> ' . $languageService->get('close') . '</button>
-                    <a class="btn btn-danger btn-ok"><i class="bi bi-trash3"></i> ' . $languageService->get('widget_delete') . '</a>
+    $widget .= '
+    <div class="col-sm-12">
+        <div class="mb-3 row">
+            <div class="col-sm-5 text-end">
+                <button type="button"
+                    class="btn btn-info"
+                    data-bs-toggle="popover"
+                    data-bs-placement="left"
+                    data-bs-html="true"
+                    data-bs-content="<img src=\'../includes/plugins/' . $modulname . '/images/' . $widgetdatei . '.jpg\' class=\'img-fluid\'>"
+                    title="Widget">
+                    <i class="bi bi-image"></i> ' . $languageService->get('preview_widget') . '
+                </button>
+            </div>
+            <div class="col-sm-4">
+                <div class="form-control">' . $widgetname . '</div>
+            </div>
+            <div class="col-sm-3">
+                <a href="admincenter.php?site=plugin_manager&action=edit_widget&id=' . $id . '&widgetname=' . urlencode($widgetname) . '"
+                   class="btn btn-warning">
+                   <i class="bi bi-pencil-square"></i> ' . $languageService->get('edit_widget') . '
+                </a>
+                <button type="button"
+                    class="btn btn-danger"
+                    data-bs-toggle="modal"
+                    data-bs-target="#confirmDeleteModal"
+                    data-href="admincenter.php?site=plugin_manager&delete=true&widgetname=' . urlencode($widgetname) . '&id=' . $id . '&captcha_hash=' . $hash . '"
+                    title="' . $languageService->get('tooltip_6') . '">
+                    <i class="bi bi-trash3"></i> ' . $languageService->get('widget_delete') . '
+                </button>
+
+                <!-- Modal -->
+                <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                    
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="confirmDeleteModalLabel">' . $languageService->get('widget_delete') . '</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
+                      </div>
+                      
+                      <div class="modal-body">
+                        ' . $languageService->get('really_delete') . '
+                      </div>
+                      
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                          <i class="bi bi-x-square"></i> ' . $languageService->get('close') . '
+                        </button>
+                        <a class="btn btn-danger btn-ok">
+                          <i class="bi bi-trash3"></i> ' . $languageService->get('widget_delete') . '
+                        </a>
+                      </div>
+                      
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-            <!-- Modal END -->
 
-                                    </div>
-                                </div>
-                            </div>';
+                <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    var confirmDeleteModal = document.getElementById("confirmDeleteModal");
+                    confirmDeleteModal.addEventListener("show.bs.modal", function(event) {
+                        var button = event.relatedTarget;
+                        var href = button.getAttribute("data-href");
+                        var confirmBtn = confirmDeleteModal.querySelector(".btn-ok");
+                        confirmBtn.setAttribute("href", href);
+                    });
+                
+                    // Bootstrap Popover initialisieren
+                    var popoverTriggerList = [].slice.call(document.querySelectorAll(\'[data-bs-toggle="popover"]\'));
+                    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+                        return new bootstrap.Popover(popoverTriggerEl);
+                    });
+                });
+                </script>
+            </div>
+        </div>
+    </div>
+';
+
+
         }
         if ($ds['modulname'] == @$modulname) {
             $xwidget = $widget;
@@ -1933,7 +537,7 @@ if (!empty(@$db['active'] == 1) !== false) {
                 <label class="col-sm- col-form-label" for="name"></label>
                 <div class="col-sm-6">
                     <input type="hidden" name="captcha_hash" value="' . $hash . '">
-                <input type="hidden" name="themes_modulname" value="' . $dx['modulname'] . '">
+                
                 <input type="hidden" name="modulname" value="' . $ds['modulname'] . '">
                 <input type="hidden" name="id" value="' . $_GET['id'] . '">
                     <button class="btn btn-warning" type="submit" name="saveedit"><i class="bi bi-save"></i> ' . $languageService->get('edit_plugin_widget') . '</button>
@@ -2277,7 +881,6 @@ if (!empty(@$db['active'] == 1) !== false) {
             <th><strong>' . $languageService->get('plugin') . ' ' . $languageService->get('description') . '</strong></th>
             <th class="text-center" width="12%"><strong>' . $languageService->get('plugin_status') . '</strong></th>
             <th class="text-center" width="12%"><strong>' . $languageService->get('plugin_setting') . '</strong></th>
-            <th class="text-center" width="12%"><strong>' . $languageService->get('widget_side_assignment') . '</strong></th>
             <th class="text-center" width="12%"><strong>' . $languageService->get('action') . '</strong></th>
 
         </thead>';
@@ -2327,17 +930,7 @@ if (!empty(@$db['active'] == 1) !== false) {
                         }
 
 
-                        if ($dx['widget_display'] == "1") {
-                            echo '<td class="text-center">
-                            <div class="d-grid gap-2">
-                            <a href="admincenter.php?site=plugin_manager&action=widget_edit&id=' . $ds['pluginID'] . '&do=edit" class="btn btn-success" data-toggle="tooltip" data-html="true" title="' . $languageService->get('tooltip_3') . '" type="button"><i class="bi bi-plus-circle"></i> ' . $languageService->get('widget_side') . '</a></div></td>';
-                        } else {
-
-                            echo '<td class="text-center">
-                            <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-danger" disabled><i class="bi bi-slash-circle"></i> ' . $languageService->get('widget_cannot_assigned') . '</button>
-                        </div></td>';
-                        }
+                        
 
 
                         if ($dx['delete_display'] != "1") {
@@ -2348,20 +941,37 @@ if (!empty(@$db['active'] == 1) !== false) {
                             </div></td>';
                         } else {
 
-                            echo '<td class="text-center">
-                            <div class="d-grid gap-2">
-                            <a href="admincenter.php?site=plugin_manager&action=delete_plugin&id=' . $ds['pluginID'] . '&modulname=' . $ds['modulname'] . '&do=delete" class="btn btn-danger" data-toggle="tooltip" data-html="true" title="' . $languageService->get('tooltip_8') . '" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-plugin="' .  $ds['modulname'] . '" title="' . $languageService->get('tooltip_6') . '"><i class="bi bi-trash3"></i> ' . $languageService->get('delete_plugin') . '</a></div></td>
+                           echo '
+                            <td class="text-center">
+                                <div class="d-grid gap-2">
+                                    <a href="#"
+                                       class="btn btn-danger"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#confirmDeleteModal"
+                                       data-plugin-id="' . $ds['pluginID'] . '"
+                                       data-plugin-name="' . $ds['modulname'] . '"
+                                       title="' . $languageService->get('tooltip_8') . '">
+                                       <i class="bi bi-trash3"></i> ' . $languageService->get('delete_plugin') . '
+                                    </a>
+                                </div>
+                            </td>
+
                             <!-- Bootstrap Modal for Confirm Delete -->
                             <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
+                                    
                                         <div class="modal-header">
-                                            <h5 class="modal-title">' . $languageService->get('modulname') . ': <span id="modalPluginTitle"></span></h5>
+                                            <h5 class="modal-title">' . $languageService->get('modulname') . ': 
+                                                <span id="modalPluginTitle"></span>
+                                            </h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
+                                        
                                         <div class="modal-body">
                                             ' . $languageService->get('really_delete_plugin') . '
                                         </div>
+                                        
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                                                 <i class="bi bi-x-square"></i> ' . $languageService->get('close') . '
@@ -2370,47 +980,40 @@ if (!empty(@$db['active'] == 1) !== false) {
                                                 <i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '
                                             </a>
                                         </div>
+                                        
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <script>
                             document.querySelectorAll("a[data-bs-target=\'#confirmDeleteModal\']").forEach(button => {
                                 button.addEventListener("click", function() {
-                                    // Prende il link corretto del pulsante "Delete"
-                                    var deleteBtn = document.getElementById("confirmDeleteBtn");
-                                    var deleteUrl = this.getAttribute("href");
-                            
-                                    // Estrai il nome del plugin dall\'URL
-                                    var urlParams = new URLSearchParams(deleteUrl.split("?")[1]);
-                                    var pluginName = urlParams.get("modulname");
-                            
-                                    // Funzione per formattare il nome del plugin
+                                    var pluginID = this.getAttribute("data-plugin-id");
+                                    var pluginName = this.getAttribute("data-plugin-name");
+
+                                    // Format plugin name
                                     function formatPluginName(name) {
-                                        // 1️⃣ Separa le parole con "_"
                                         name = name.replace(/_/g, " ");
-                            
-                                        // 2️⃣ Se il nome è in camelCase (es. "clanWar" → "Clan War")
                                         name = name.replace(/([a-z])([A-Z])/g, "$1 $2");
-                            
-                                        // 3️⃣ Rende la prima lettera di ogni parola maiuscola
-                                        return name.replace(/\b\w/g, char => char.toUpperCase());
+                                        return name.replace(/\\b\\w/g, char => char.toUpperCase());
                                     }
-                            
                                     var formattedName = formatPluginName(pluginName);
-                            
-                                    // Debug in console (solo per verifica)
-                                    console.log("Original Plugin Name:", pluginName);
-                                    console.log("Formatted Plugin Name:", formattedName);
-                            
-                                    // Aggiorna il titolo del modale con il nome corretto del plugin
+
+                                    // Set formatted name into the modal title
                                     document.getElementById("modalPluginTitle").innerText = formattedName;
-                            
-                                    // Aggiorna il pulsante "Elimina" con l\'URL corretto
-                                    deleteBtn.setAttribute("href", deleteUrl);
+
+                                    // Compose final delete URL
+                                    var deleteUrl = "admincenter.php?site=plugin_manager&action=delete_plugin&id="
+                                        + pluginID
+                                        + "&modulname=" + pluginName
+                                        + "&do=delete";
+
+                                    // Set href of confirm delete button
+                                    document.getElementById("confirmDeleteBtn").setAttribute("href", deleteUrl);
                                 });
                             });
-                            </script>';
+                            </script>
+                            ';
                         }
 
                         echo '</tr>';
