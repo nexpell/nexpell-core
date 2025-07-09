@@ -1,7 +1,7 @@
 # 📜 CHANGELOG
 
-## [3.0.0] – 2025-05-05  
-### Webspell-RM Next Generation
+## [1.0.0] – 2025-05-05  
+### nexpell
 
 > ⚠️ **Major Release**  
 > Vollständige Neuimplementierung der Plattform. Nicht abwärtskompatibel mit 2.x.
@@ -66,21 +66,34 @@
 
 ---
 
-### 📄 Lizenzhinweis
 
-> This project is a full rework based on the original  
-> **Webspell Clanpackage by Michael Gruber (webspell.at)**  
-> with major architectural and codebase changes.
+
+📄 Lizenzhinweis
+
+    nexpell ist ein freies, quelloffenes Content-Management-System
+    zur Erstellung und Verwaltung moderner Web-Communitys.
+
+    Es wird unter der GNU General Public License v3.0 (GPL) veröffentlicht.
+
+    Das System wurde von Grund auf neu entwickelt, mit dem Ziel,
+    eine sichere, erweiterbare und modulare Plattform auf Basis aktueller
+    Webtechnologien bereitzustellen.
+
+    Jeder darf den Quellcode nutzen, verändern und weiterverbreiten –
+    unter Einhaltung der Bedingungen der GPL v3.
+
+    Eine kommerzielle Nutzung ist erlaubt, solange der Quellcode offenbleibt
+    und Lizenzhinweise erhalten bleiben.
 
 ---
 
 ### 🔗 Links
 
-- [Website](https://www.webspell-rm.de)
-- [Forum](https://www.webspell-rm.de/forum.html)
-- [Dokumentation](https://www.webspell-rm.de/wiki.html)
-- [GitHub](https://github.com/Webspell-RM/)
+- [Website](https://www.nexpell.de)
+- [Forum](https://www.nexpell.de/forum.html)
+- [Dokumentation](https://www.nexpell.de/wiki.html)
+- [GitHub](https://github.com/nexpell/)
 
 ---
 
-© 2025 Webspell-RM Team – GNU General Public License (GPL)
+© 2025 nexpell Team – GNU General Public License (GPL)

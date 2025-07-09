@@ -71,7 +71,7 @@
 └── rewrite.php                      # PHP-Fallback für URL-Rewriting (z. B. bei fehlender .htaccess)
 ```
 
-
+In Arbeit:
 /system/
 ├── classes/
 │   └── Router.php          ← Die Routing-Klasse

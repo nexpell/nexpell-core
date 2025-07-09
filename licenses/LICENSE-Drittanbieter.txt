@@ -1,18 +1,15 @@
 # 📦 Drittanbieter-Lizenzen
 
-Diese Datei listet alle in Webspell-RM 3.0 verwendeten Drittanbieter-Bibliotheken inklusive ihrer jeweiligen Lizenzbedingungen.
+Diese Datei listet alle in nexpell verwendeten Drittanbieter-Bibliotheken inklusive ihrer jeweiligen Lizenzbedingungen.
+🏗️ Lizenz der Kernsoftware
 
+nexpell ist ein modernes, modulares Open-Source-Content-Management-System,
+veröffentlicht unter der GNU General Public License (GPL) v3.0 oder neuer.
 ---
 
-## 🏗️ Herkunft und Lizenz der Kernsoftware
-
-Diese Software basiert auf dem Open-Source-System **webSPELL v4.3.0**, das unter der [GNU GENERAL PUBLIC LICENSE (GPL)](https://www.gnu.org/licenses/gpl-3.0.html) veröffentlicht wurde.  
-Die Weiterentwicklung erfolgte über folgende Stationen:
-
-- **webSPELL v4.3.0 (GPL)**
-- → **Webspell-NOR** (inoffizieller Fork)
-- → **Webspell-RM (bis v2.1.6)**
-- → **Webspell-RM 3.0** (diese Version)
+Die Software wurde vollständig neu entwickelt und verwendet keinerlei proprietären oder inkompatiblen Code.
+Jegliche Weitergabe oder Modifikation muss gemäß der GPL erfolgen.
+📚 Verwendete Bibliotheken & Frameworks
 
 Die gesamte Codebasis steht ebenfalls unter der **GPL v3.0 oder neuer**. Jegliche Weitergabe oder Modifikation muss gemäß der GPL erfolgen.
 
@@ -42,19 +39,17 @@ Die gesamte Codebasis steht ebenfalls unter der **GPL v3.0 oder neuer**. Jeglich
 
 ---
 
-### 📝 Hinweise
+📝 Hinweise
 
-- Alle genannten Bibliotheken sind Open-Source oder frei nutzbar und werden in Übereinstimmung mit ihren Lizenzen eingebunden.
-- Die genauen Lizenztexte befinden sich ggf. im jeweiligen Verzeichnis (`vendor/`, `assets/`, `js/`, etc.) oder in der offiziellen Dokumentation der jeweiligen Projekte.
-- Änderungen an Drittanbieter-Code wurden **nicht vorgenommen**, sofern nicht ausdrücklich im Code oder Changelog vermerkt.
+    Alle genannten Bibliotheken sind Open-Source oder frei nutzbar und werden in Übereinstimmung mit ihren Lizenzen eingebunden.
 
----
+    Die Lizenztexte befinden sich ggf. im jeweiligen Verzeichnis (vendor/, assets/, js/, etc.) oder in der offiziellen Dokumentation der jeweiligen Projekte.
 
-## 📄 Haftungsausschluss
+    Änderungen an Drittanbieter-Code wurden nicht vorgenommen, sofern nicht ausdrücklich im Code oder Changelog dokumentiert.
 
-> Die Webspell-RM-Entwickler übernehmen keine Verantwortung für die Lizenzkonformität beim Weitervertrieb der Software durch Dritte.  
-> Bitte prüfe eigenverantwortlich, ob deine Nutzung und Verteilung den Lizenzbedingungen der eingebundenen Drittanbieter-Bibliotheken entspricht.
+📄 Haftungsausschluss
 
----
+    Die Entwickler von nexpell übernehmen keine Verantwortung für die Lizenzkonformität beim Weitervertrieb durch Dritte.
+    Bitte prüfe eigenverantwortlich, ob deine Nutzung und Verteilung den Lizenzbedingungen aller eingebundenen Drittanbieter-Bibliotheken entspricht.
 
-© 2025 Webspell-RM Team – Veröffentlicht unter der **GNU GENERAL PUBLIC LICENSE (GPL v3.0+)**
+© 2025 nexpell Team – Veröffentlicht unter der GNU GENERAL PUBLIC LICENSE (GPL v3.0+)
