@@ -57,32 +57,25 @@ $exclude_plugins = ['navigation', 'carousel', 'error_404', 'footer_easy', 'login
         <div class="col-md-3">
           <div class="p-3 border rounded bg-light">
             <label for="page"><h6>📂Seite:</h6></label>
-            <select
-              id="page"
-              class="form-select"
-              style="width:auto;display:inline-block;"
-              onchange="if(this.value) loadWidgets();"
-            >
-              <option value="">Bitte auswählen</option>
-              <?php foreach ($pages as $value => $label): ?>
-                <?php if (!in_array($value, $exclude_plugins, true)) : ?>
-                  <option value="<?= htmlspecialchars($value) ?>"><?= htmlspecialchars($label) ?></option>
-                <?php endif; ?>
-              <?php endforeach; ?>
-            </select>
+        <select id="page" name="page" class="form-select" style="width:auto;display:inline-block;">
+  <option value="">Bitte auswählen</option>
+          <?php foreach ($pages as $value => $label): ?>
+            <?php if (!in_array($value, $exclude_plugins, true)) : ?>
+              <option value="<?= htmlspecialchars($value) ?>"><?= htmlspecialchars($label) ?></option>
+            <?php endif; ?>
+          <?php endforeach; ?>
+        </select>
 
-            <h6 class="mt-3">📦 Verfügbare Widgets</h6>
-            <ul id="available" class="widget-list">
-              <?php
-              $res = safe_query("SELECT * FROM settings_widgets");
-              while($row = mysqli_fetch_assoc($res)){
-                echo "<li class='widget-item' data-id='{$row['widget_key']}'>{$row['title']}</li>";
-              }
-              ?>
-            </ul>
-          </div>
-        </div>
-
+        <h6 class="mt-3">📦 Verfügbare Widgets</h6>
+        <ul id="available" class="widget-list">
+          <?php
+          $res = safe_query("SELECT * FROM settings_widgets");
+          while($row = mysqli_fetch_assoc($res)){
+            echo "<li class='widget-item' data-id='{$row['widget_key']}'>{$row['title']}</li>";
+          }
+          ?>
+        </ul>
+</div></div>
         <!-- Rechte Seite -->
         <div class="col-md-9">
           <div class="mb-3 p-3 border rounded bg-light">
@@ -134,6 +127,23 @@ $exclude_plugins = ['navigation', 'carousel', 'error_404', 'footer_easy', 'login
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
+
+function toggleWidgetList() {
+    const select = document.getElementById('page');
+    const widgetList = document.getElementById('available');
+    if (select.value === '') {
+      widgetList.style.display = 'none'; // ausblenden
+    } else {
+      widgetList.style.display = 'block'; // einblenden
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    toggleWidgetList(); // beim Laden prüfen
+    document.getElementById('page').addEventListener('change', toggleWidgetList); // bei Änderung prüfen
+  });
+
+
 document.addEventListener("DOMContentLoaded", function() {
 
   const positions = ['left','right','top','undertop','bottom','available'];
