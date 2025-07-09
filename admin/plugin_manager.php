@@ -431,12 +431,12 @@ if ($action == "edit") {
             <label class="col-sm-5 col-form-label" for="path">Widgets: <br><small>(' . $languageService->get('widget_included_with_plugin') . ')</small></label>  
             ';
 
-        $widgetsergebnis = safe_query("SELECT * FROM settings_plugins_widget WHERE modulname = '" . $ds['modulname'] . "'");
+        $widgetsergebnis = safe_query("SELECT * FROM settings_widgets WHERE plugin = '" . $ds['modulname'] . "'");
         $widget = '';
         while ($df = mysqli_fetch_array($widgetsergebnis)) {
-    $widgetdatei = $df['widgetdatei'];
-    $widgetname = $df['widgetname'];
-    $modulname = $df['modulname'];
+    $widgetdatei = $df['widget_key'];
+    $widgetname = $df['title'];
+    $modulname = $df['plugin'];
 
     $widget .= '
     <div class="col-sm-12">

@@ -91,7 +91,7 @@ class PluginInstaller
     private static function registerPluginInDatabase(string $modulname): void
     {
         global $_database;
-        safe_query("INSERT INTO plugins_installed (modulname, installed_date) VALUES ('" . mysqli_real_escape_string($_database, $modulname) . "', NOW())");
+        safe_query("INSERT INTO settings_plugins_installed (modulname, installed_date) VALUES ('" . mysqli_real_escape_string($_database, $modulname) . "', NOW())");
         echo "Plugin <code>$modulname</code> wurde in der Datenbank registriert.<br>";
     }
 }

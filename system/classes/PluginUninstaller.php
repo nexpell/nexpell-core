@@ -45,8 +45,14 @@ class PluginUninstaller
         $folder_escaped = $_database->real_escape_string($plugin_folder);
 
         // Tabelle plugins_installed löschen (deine bisherige Löschung)
-        $sql1 = "DELETE FROM plugins_installed WHERE folder = '" . $folder_escaped . "'";
+        $sql1 = "DELETE FROM settings_plugins_installed WHERE modulname = '" . $folder_escaped . "'";
         $result1 = $_database->query($sql1);
+
+        $sql2 = "DELETE FROM settings_widgets WHERE modulname = '" . $folder_escaped . "'";
+        $result1 = $_database->query($sql2);
+
+        $sql3 = "DELETE FROM settings_widgets_positions WHERE modulname = '" . $folder_escaped . "'";
+        $result1 = $_database->query($sql3);
 
         // Tabelle plugins_news (oder entsprechend) löschen
         // Achtung: Das löscht die gesamte Tabelle! Sicherstellen, dass das erwünscht ist.
