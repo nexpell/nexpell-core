@@ -51,11 +51,11 @@ if (!$closed) {
         $CAPCLASS = new Captcha();
 
         if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-            $res_lock = safe_query("SELECT * FROM site_lock");
+            $res_lock = safe_query("SELECT * FROM settings_site_lock");
             if (mysqli_num_rows($res_lock)) {
-                safe_query("UPDATE site_lock SET reason = '" . $_POST['reason'] . "', time = '" . time() . "'");
+                safe_query("UPDATE settings_site_lock SET reason = '" . $_POST['reason'] . "', time = '" . time() . "'");
             } else {
-                safe_query("INSERT INTO site_lock (time, reason) VALUES ('" . time() . "', '" . $_POST['reason'] . "')");
+                safe_query("INSERT INTO settings_site_lock (time, reason) VALUES ('" . time() . "', '" . $_POST['reason'] . "')");
             }
 
             safe_query("UPDATE settings SET closed = '1'");
@@ -64,7 +64,7 @@ if (!$closed) {
             die('<div class="alert alert-danger">' . $languageService->get('transaction_invalid') . '</div>');
         }
     } else {
-        $res_lock = safe_query("SELECT * FROM site_lock");
+        $res_lock = safe_query("SELECT * FROM settings_site_lock");
         $ds = mysqli_fetch_assoc($res_lock);
         $reason = $ds['reason'] ?? '';
 
@@ -95,7 +95,7 @@ if (!$closed) {
             die('<div class="alert alert-danger">' . $languageService->get('transaction_invalid') . '</div>');
         }
     } else {
-        $res_lock = safe_query("SELECT * FROM site_lock");
+        $res_lock = safe_query("SELECT * FROM settings_site_lock");
         $ds = mysqli_fetch_assoc($res_lock);
         $locked_since = isset($ds['time']) ? date("d.m.Y - H:i", $ds['time']) : '-';
 

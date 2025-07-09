@@ -1,4 +1,25 @@
 <?php
+
+use webspell\LanguageService;
+
+// Session absichern
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Standard setzen, wenn nicht vorhanden
+$_SESSION['language'] = $_SESSION['language'] ?? 'de';
+
+// Initialisieren
+global $languageService;
+$languageService = new LanguageService($_database);
+
+// Admin-Modul laden
+$languageService->readModule('plugin_widgets', true);
+
+use webspell\AccessControl;
+// Den Admin-Zugriff für das Modul überprüfen
+AccessControl::checkAdminAccess('ac_plugin_widgets_setting');
  // Standardseiten
 $pages = [
     'index' => 'Startseite',
@@ -129,7 +150,7 @@ document.addEventListener("DOMContentLoaded", function() {
   window.loadWidgets = function() {
     const page = document.getElementById('page').value;
 
-    fetch('admin_widgets_save.php?mode=load&page=' + encodeURIComponent(page))
+    fetch('plugin_widgets_save.php?mode=load&page=' + encodeURIComponent(page))
       .then(response => response.json())
       .then(data => {
         // Listen leeren
@@ -171,7 +192,7 @@ document.addEventListener("DOMContentLoaded", function() {
         .map(li => li.dataset.id);
     });
 
-    fetch('admin_widgets_save.php', {
+    fetch('plugin_widgets_save.php', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({page, data})

@@ -63,7 +63,7 @@
 
     <!-- Logo oben -->
     <div class="logo text-center">
-        <img src="/images/webspell-logo-lock.png" alt="Webspell Logo" style="height: 150px;" />
+        <img src="/images/logo.png" alt="Webspell Logo" style="height: 150px;" />
     </div>
 
     <!-- Card darunter -->

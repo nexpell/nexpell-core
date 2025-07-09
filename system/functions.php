@@ -182,7 +182,7 @@ if (
     !$isLoginPage &&
     (!isset($_SESSION['userID']))
 ) {
-    $lockRes = safe_query("SELECT reason, time FROM site_lock LIMIT 1");
+    $lockRes = safe_query("SELECT reason, time FROM settings_site_lock LIMIT 1");
     $lockRow = mysqli_fetch_assoc($lockRes);
 
     $reason = $lockRow['reason'] ?? 'Wartungsmodus aktiviert.';

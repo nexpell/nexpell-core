@@ -95,4 +95,15 @@ function get_editor()
     }
 }
 
-
+#Wartungsmodus wird anezeigt
+function get_lock_modul()
+{
+    global $closed;
+    $dm = mysqli_fetch_array(safe_query("SELECT * FROM settings where closed='1'"));
+    if (@$closed != '1') {
+    } else {
+        echo '<div class="alert alert-danger" role="alert" style="margin-bottom: -5px;">
+            <center>Die Seite befindet sich im Wartungsmodus | The site is in maintenance mode | Il sito è in modalità manutenzione</center>
+        </div>';
+    }
+}

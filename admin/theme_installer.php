@@ -90,11 +90,11 @@ if (isset($_GET['install']) || isset($_GET['update']) || isset($_GET['uninstall'
     $folder = htmlspecialchars($theme_folder);
 
     if ($theme_action === 'install') {
-        safe_query("INSERT INTO themes_installed (name, modulname, description, version, author, url, folder, installed_date)
+        safe_query("INSERT INTO settings_themes_installed (name, modulname, description, version, author, url, folder, installed_date)
                     VALUES ('$name','$modulname','$description','$version','$author','$url','$folder',NOW())");
         echo '<div class="alert alert-success">Theme <strong>' . $name . '</strong> wurde installiert.</div>';
     } else {
-        safe_query("UPDATE themes_installed SET version = '$version', installed_date = NOW() WHERE modulname = '$modulname'");
+        safe_query("UPDATE settings_themes_installed SET version = '$version', installed_date = NOW() WHERE modulname = '$modulname'");
         echo '<div class="alert alert-success">Theme <strong>' . $name . '</strong> wurde aktualisiert.</div>';
     }
 
@@ -130,7 +130,7 @@ if ($remote_data) {
 
 // Installierte Themes
 $installed_themes = [];
-$res = safe_query("SELECT * FROM themes_installed");
+$res = safe_query("SELECT * FROM settings_themes_installed");
 while ($row = mysqli_fetch_assoc($res)) {
     $installed_themes[$row['name']] = $row;
 }

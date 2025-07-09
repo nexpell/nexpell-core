@@ -189,6 +189,7 @@ echo $plugin_loadheadfile_widget_css ?? '';
     <?php endif; ?>
 
     <?php echo get_navigation_modul(); ?>
+    <?php echo get_lock_modul(); ?>
 
     <!-- under Top Widgets -->
     <?php if (!empty($positions['undertop'])): ?>

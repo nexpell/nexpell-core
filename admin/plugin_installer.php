@@ -100,7 +100,7 @@ if (isset($_GET['install']) || isset($_GET['update']) || isset($_GET['uninstall'
 
     if ($plugin_action === 'install') {
         safe_query("
-            INSERT INTO plugins_installed (name, modulname, description, version, author, url, folder, installed_date)
+            INSERT INTO settings_plugins_installed (name, modulname, description, version, author, url, folder, installed_date)
             VALUES ('$name','$modulname','$description','$version','$author','$url','$folder',NOW())
         ");
         echo '<div class="alert alert-success">Plugin <strong>' . $name . '</strong> wurde installiert.</div>';
@@ -111,7 +111,7 @@ if (isset($_GET['install']) || isset($_GET['update']) || isset($_GET['uninstall'
             </script>';
     } else {
         safe_query("
-            UPDATE plugins_installed 
+            UPDATE settings_plugins_installed 
             SET version = '$version', installed_date = NOW()
             WHERE modulname = '$modulname'
         ");
@@ -156,7 +156,7 @@ if (filter_var($plugin_json_url, FILTER_VALIDATE_URL)) {
 
 // Installierte Plugins laden
 $installed_plugins = [];
-$res = safe_query("SELECT * FROM plugins_installed");
+$res = safe_query("SELECT * FROM settings_plugins_installed");
 while ($row = mysqli_fetch_assoc($res)) {
     $installed_plugins[$row['name']] = $row;
 }
