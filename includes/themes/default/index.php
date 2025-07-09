@@ -99,7 +99,7 @@ $page_escaped = mysqli_real_escape_string($GLOBALS['_database'], $page);
 
 // Widgets Positionen aus DB holen
 $positions = [];
-$res = safe_query("SELECT * FROM widgets_positions WHERE page='" . $page_escaped . "' ORDER BY position, sort_order ASC");
+$res = safe_query("SELECT * FROM settings_widgets_positions WHERE page='" . $page_escaped . "' ORDER BY position, sort_order ASC");
 while ($row = mysqli_fetch_assoc($res)) {
     $positions[$row['position']][] = $row['widget_key'];
 }
@@ -264,10 +264,68 @@ echo $plugin_loadheadfile_widget_js ?? '';
 echo '<!--Plugin & Widget js END-->' . PHP_EOL;
 ?>
 
-<script defer src="./components/cookies/js/iframemanager.js"></script>
+<!--<script defer src="./components/cookies/js/iframemanager.js"></script>
 <script defer src="./components/cookies/js/cookieconsent.js"></script>
 <script defer src="./components/cookies/js/cookieconsent-init.js"></script>
-<script defer src="./components/cookies/js/app.js"></script>
+<script defer src="./components/cookies/js/app.js"></script>-->
+
+<div id="cookie-consent-banner" class="position-fixed bottom-0 start-0 end-0 p-3 bg-dark text-white d-none" style="z-index: 9999;">
+    <div class="container d-flex justify-content-between align-items-center flex-column flex-md-row">
+        <div class="mb-2 mb-md-0">
+            Wir verwenden Cookies, um Ihre Erfahrung zu verbessern. 
+            <a href="/privacy" class="text-light text-decoration-underline">Mehr erfahren</a>
+        </div>
+        <div>
+            <button class="btn btn-sm btn-outline-light me-2" id="cookie-decline">Ablehnen</button>
+            <button class="btn btn-sm btn-primary" id="cookie-accept">Zustimmen</button>
+        </div>
+    </div>
+</div>
+<style>#cookie-consent-banner a:hover {
+    text-decoration: none;
+    color: #5fb3fb;
+}</style>
+
+<script>
+function setCookie(name, value, days) {
+    const expires = new Date(Date.now() + days*864e5).toUTCString();
+    document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
+}
+
+function getCookie(name) {
+    return document.cookie.split('; ').reduce((r, v) => {
+        const parts = v.split('=');
+        return parts[0] === name ? decodeURIComponent(parts[1]) : r
+    }, '');
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    if (!getCookie('nexpell_cookie_consent')) {
+        document.getElementById('cookie-consent-banner').classList.remove('d-none');
+    }
+
+    document.getElementById('cookie-accept').addEventListener('click', function () {
+        setCookie('nexpell_cookie_consent', 'accepted', 180);
+        document.getElementById('cookie-consent-banner').classList.add('d-none');
+        // Optional: Init externes Tracking hier
+    });
+
+    document.getElementById('cookie-decline').addEventListener('click', function () {
+        setCookie('nexpell_cookie_consent', 'declined', 180);
+        document.getElementById('cookie-consent-banner').classList.add('d-none');
+        // Optional: Tracking NICHT laden
+    });
+});
+</script>
+
+
+
+
+
+
+
+
+
 
 <script src="./components/ckeditor/ckeditor.js"></script>
 <script src="./components/ckeditor/config.js"></script>

@@ -24,104 +24,92 @@ $exclude_plugins = ['navigation', 'carousel', 'error_404', 'footer_easy', 'login
 <title>Widget-Manager</title>
 
 <style>
-  .widget-list { min-height: 100px; border:1px dashed #ccc; padding:10px; list-style:none; }
+  .widget-list { min-height: 80px; border:1px dashed #ccc; padding:5px; list-style:none; }
   .widget-item { margin:5px; padding:5px 10px; background:#f8f9fa; border:1px solid #ddd; cursor:move; user-select:none; }
 </style>
+<div class="card">
+  <div class="card-header">Widgets verwalten</div>
+  <div class="card-body">
+    <div class="container py-5">
+      <div class="row">
+        <!-- Linke Seite -->
+        <div class="col-md-3">
+          <div class="p-3 border rounded bg-light">
+            <label for="page"><h6>📂Seite:</h6></label>
+            <select
+              id="page"
+              class="form-select"
+              style="width:auto;display:inline-block;"
+              onchange="if(this.value) loadWidgets();"
+            >
+              <option value="">Bitte auswählen</option>
+              <?php foreach ($pages as $value => $label): ?>
+                <?php if (!in_array($value, $exclude_plugins, true)) : ?>
+                  <option value="<?= htmlspecialchars($value) ?>"><?= htmlspecialchars($label) ?></option>
+                <?php endif; ?>
+              <?php endforeach; ?>
+            </select>
 
-<style>
-    .drop-zone {
-      min-height: 100px;
-      border: 2px dashed #ccc;
-      padding: 10px;
-      margin-bottom: 10px;
-    }
-    .drop-zone.dragover {
-      border-color: #007bff;
-      background-color: #e9f5ff;
-    }
-    .plugin {
-      cursor: move;
-      padding: 10px;
-      background-color: #f8f9fa;
-      border: 1px solid #ccc;
-      margin-bottom: 5px;
-    }
-  </style>
+            <h6 class="mt-3">📦 Verfügbare Widgets</h6>
+            <ul id="available" class="widget-list">
+              <?php
+              $res = safe_query("SELECT * FROM settings_widgets");
+              while($row = mysqli_fetch_assoc($res)){
+                echo "<li class='widget-item' data-id='{$row['widget_key']}'>{$row['title']}</li>";
+              }
+              ?>
+            </ul>
+          </div>
+        </div>
 
-<div class="container py-4">
-  <h1>Widgets verwalten</h1>
+        <!-- Rechte Seite -->
+        <div class="col-md-9">
+          <div class="mb-3 p-3 border rounded bg-light">
+            <h6>🧭 Header</h6>
+            <ul id="top" class="widget-list"></ul>
+          </div>
 
-  <div class="mb-3">
-    <label for="page">Seite:</label>
-    <select id="page" class="form-select" style="width:auto;display:inline-block;">
-      <?php foreach ($pages as $value => $label): ?>
-        <?php if (!in_array($value, $exclude_plugins, true)) : ?>
-          <option value="<?= htmlspecialchars($value) ?>"><?= htmlspecialchars($label) ?></option>
-        <?php endif; ?>
-      <?php endforeach; ?>
-    </select>
-    <button class="btn btn-secondary btn-sm" onclick="loadWidgets()">Laden</button>
-  </div>
+          <div class="mb-3 p-3 border rounded bg-light">
+            <h6>📍 Navigation</h6>
+          </div>
 
-  <!-- Dein gewünschtes Layout, nur diese Container mit IDs -->
-  <!-- Top Zone -->
-  <div class="mb-3 p-3 border rounded bg-light">
-    <h5>🧭 Header</h5>
-    <ul id="top" class="widget-list"></ul>
-  </div>
+          <div class="mb-3 p-3 border rounded bg-light">
+            <h6>📍 Under Top</h6>
+            <ul id="undertop" class="widget-list"></ul>
+          </div>
 
-  <div class="mb-3 p-3 border rounded bg-light">
-    <h5>📍 Navigation</h5>    
-  </div>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="p-3 border rounded bg-light">
+                <h6>📥 Leftbar</h6>
+                <ul id="left" class="widget-list"></ul>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 border rounded bg-light">
+                <h6>📝 Main Content</h6>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 border rounded bg-light">
+                <h6>📤 Rightbar</h6>
+                <ul id="right" class="widget-list"></ul>
+              </div>
+            </div>
+          </div>
 
-  <div class="mb-3 p-3 border rounded bg-light">
-    <h5>📍 Under Top</h5>
-    <ul id="undertop" class="widget-list"></ul>
-  </div>
+          <div class="mt-3 p-3 border rounded bg-light">
+            <h6>🔚 Footer</h6>
+            <ul id="bottom" class="widget-list"></ul>
+          </div>
 
-  <!-- Row mit Left, Main Content und Right -->
-  <div class="row">
-    <div class="col-md-3">
-      <div class="p-3 border rounded bg-light">
-        <h5>📥 Leftbar</h5>
-        <ul id="left" class="widget-list"></ul>
+          <button class="btn btn-primary mt-4" onclick="saveWidgets()">Speichern</button>
+        </div>
       </div>
     </div>
-
-    <div class="col-md-6">
-      <div class="p-3 border rounded bg-light">
-        <h5>📝 Main Content</h5>
-        <!-- Optional <ul id="main-content" class="widget-list"></ul> -->
-      </div>
-    </div>
-
-    <div class="col-md-3">
-      <div class="p-3 border rounded bg-light">
-        <h5>📤 Rightbar</h5>
-        <ul id="right" class="widget-list"></ul>
-      </div>
-    </div>
   </div>
-
-  <!-- Bottom Zone -->
-  <div class="mt-3 p-3 border rounded bg-light">
-    <h5>🔚 Footer</h5>
-    <ul id="bottom" class="widget-list"></ul>
-  </div>
-
-  <button class="btn btn-primary mt-4" onclick="saveWidgets()">Speichern</button>
-
-  <h5 class="mt-5">Verfügbare Widgets</h5>
-  <ul id="available" class="widget-list">
-    <?php
-    $res = safe_query("SELECT * FROM widgets");
-    while($row = mysqli_fetch_assoc($res)){
-      echo "<li class='widget-item' data-id='{$row['widget_key']}'>{$row['title']}</li>";
-    }
-    ?>
-  </ul>
 </div>
-</div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>

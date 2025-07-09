@@ -34,7 +34,7 @@ function renderWidget($widget_key)
     $needed_widget_js ??= [];
 
     // Prepared Statement für mehr Sicherheit
-    $stmt = $_database->prepare("SELECT widget_key, plugin FROM widgets WHERE widget_key = ? LIMIT 1");
+    $stmt = $_database->prepare("SELECT widget_key, plugin FROM settings_widgets WHERE widget_key = ? LIMIT 1");
     if (!$stmt) {
         error_log("DB-Fehler in renderWidget (prepare fehlgeschlagen)");
         return "<!-- Widget konnte nicht geladen werden (DB-Fehler) -->";
@@ -102,7 +102,7 @@ function loadHeadAssetIfExists(string $type, string $base_path, string &$collect
 function loadWidgetHeadAssets(string $widget_key): void {
     global $plugin_loadheadfile_widget_css, $plugin_loadheadfile_widget_js, $_database, $loaded_head_assets_plugins;
 
-    $stmt = $_database->prepare("SELECT plugin FROM widgets WHERE widget_key = ? LIMIT 1");
+    $stmt = $_database->prepare("SELECT plugin FROM settings_widgets WHERE widget_key = ? LIMIT 1");
     $stmt->bind_param("s", $widget_key);
     $stmt->execute();
     $res = $stmt->get_result();

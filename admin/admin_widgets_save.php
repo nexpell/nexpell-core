@@ -29,7 +29,7 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'load') {
     $page = isset($_GET['page']) ? escape($_GET['page']) : '';
 
     // 1. Alle Widgets aus Datenbank holen
-    $allWidgetsRes = safe_query("SELECT widget_key, title FROM widgets");
+    $allWidgetsRes = safe_query("SELECT widget_key, title FROM settings_widgets");
     $allWidgets = [];
     while ($row = $allWidgetsRes->fetch_assoc()) {
         $allWidgets[$row['widget_key']] = $row;
@@ -38,8 +38,8 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'load') {
     // 2. Zugewiesene Widgets für Seite laden
     $assignedRes = safe_query(
         "SELECT wp.widget_key, wp.position, wp.sort_order, w.title
-         FROM widgets_positions wp
-         JOIN widgets w ON w.widget_key = wp.widget_key
+         FROM settings_widgets_positions wp
+         JOIN settings_widgets w ON w.widget_key = wp.widget_key
          WHERE wp.page = '$page'
          ORDER BY wp.position, wp.sort_order ASC"
     );
@@ -87,7 +87,7 @@ if (!$data || !isset($data['page'], $data['data'])) {
 $page = escape($data['page']);
 
 // Alte Einträge löschen (für diese Seite)
-safe_query("DELETE FROM widgets_positions WHERE page='$page'");
+safe_query("DELETE FROM settings_widgets_positions WHERE page='$page'");
 
 // Neu speichern für Positionen left, right, top, bottom
 foreach (['left', 'right', 'top', 'undertop', 'bottom'] as $pos) {
@@ -96,7 +96,7 @@ foreach (['left', 'right', 'top', 'undertop', 'bottom'] as $pos) {
         foreach ($data['data'][$pos] as $wkey) {
             $wkeyEsc = escape($wkey);
             safe_query(
-                "INSERT INTO widgets_positions (widget_key, position, page, sort_order)
+                "INSERT INTO settings_widgets_positions (widget_key, position, page, sort_order)
                  VALUES ('$wkeyEsc', '$pos', '$page', $order)"
             );
             $order++;
