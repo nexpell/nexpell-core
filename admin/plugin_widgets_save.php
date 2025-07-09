@@ -1,14 +1,4 @@
 <?php
-// Session starten
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
-
-use webspell\AccessControl;
-// Den Admin-Zugriff für das Modul überprüfen
-AccessControl::checkAdminAccess('ac_plugin_widgets_save');
-
-
 // Konfigurationsdatei laden
 $configPath = __DIR__ . '/../system/config.inc.php';
 if (!file_exists($configPath)) {
