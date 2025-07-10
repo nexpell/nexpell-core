@@ -107,3 +107,8 @@ function get_lock_modul()
         </div>';
     }
 }
+
+function escape(string $string): string
+{
+    return htmlspecialchars($string, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+}
