@@ -213,7 +213,24 @@ echo $plugin_loadheadfile_widget_css ?? '';
                 <?php endif; ?>
 
                 <div class="col">
+
+                    <?php if (!empty($positions['maintop'])): ?>
+                        <div class="col">
+                            <?php foreach ($positions['maintop'] as $widget_key): ?>
+                                <?php echo renderWidget($widget_key); ?>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+
                     <?php echo get_mainContent(); ?>
+
+                    <?php if (!empty($positions['mainbottom'])): ?>
+                        <div class="col">
+                            <?php foreach ($positions['mainbottom'] as $widget_key): ?>
+                                <?php echo renderWidget($widget_key); ?>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <?php if (!empty($positions['right'])): ?>

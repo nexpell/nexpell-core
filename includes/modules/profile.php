@@ -102,18 +102,6 @@ $location = !empty($user_profile['location']) ? htmlspecialchars($user_profile['
 $age = !empty($user_profile['age']) ? (int)$user_profile['age'] : 'Nicht angegeben';
 $sexuality = !empty($user_profile['sexuality']) ? htmlspecialchars($user_profile['sexuality']) : 'Nicht angegeben';
 
-$articles  = getUserCount('plugins_articles', 'userID', $userID);
-$comments  = getUserCount('comments', 'userID', $userID);
-$rules     = getUserCount('plugins_rules', 'userID', $userID);
-$links     = getUserCount('plugins_links', 'userID', $userID);
-$partners  = getUserCount('plugins_partners', 'userID', $userID);
-$sponsors  = getUserCount('plugins_sponsors', 'userID', $userID);
-$forum     = getUserCount('plugins_forum_posts', 'userID', $userID);
-$points    = ($articles * 10) + ($comments * 2) + ($rules * 5) + ($links * 5) + ($partners * 5) + ($sponsors * 5) + ($forum * 2);
-
-$level = floor($points / 100);
-$level_percent = $points % 100;
-
 $facebook_url  = !empty($user_socials['facebook']) ? htmlspecialchars($user_socials['facebook']) : '#';
 $twitter_url   = !empty($user_socials['twitter']) ? htmlspecialchars($user_socials['twitter']) : '#';
 $instagram_url = !empty($user_socials['instagram']) ? htmlspecialchars($user_socials['instagram']) : '#';
@@ -145,6 +133,22 @@ $stmt->fetch();
 $stmt->close();
 $logins = $logins_count > 0 ? $logins_count : 0;
 
+
+$articles  = getUserCount('plugins_articles', 'userID', $userID);
+$comments  = getUserCount('comments', 'userID', $userID);
+$rules     = getUserCount('plugins_rules', 'userID', $userID);
+$links     = getUserCount('plugins_links', 'userID', $userID);
+$partners  = getUserCount('plugins_partners', 'userID', $userID);
+$sponsors  = getUserCount('plugins_sponsors', 'userID', $userID);
+$forum     = getUserCount('plugins_forum_posts', 'userID', $userID);
+$download  = getUserCount('plugins_downloads_logs', 'userID', $userID);
+$points    = ($articles * 10) + ($comments * 2) + ($rules * 5) + ($links * 5) + ($partners * 5) + ($sponsors * 5) + ($forum * 2) + ($download * 2) + ($logins * 2);;
+
+$level = floor($points / 100);
+$level_percent = $points % 100;
+
+
+
 function getUserCount($table, $col, $userID) {
     global $_database;
     if (!tableExists($table)) {
@@ -170,9 +174,8 @@ $tables = [
     ['table' => 'plugins_sponsors', 'user_col' => 'userID', 'type' => 'Sponsoren'],
     ['table' => 'plugins_links', 'user_col' => 'userID', 'type' => 'Links'],
     ['table' => 'plugins_forum_posts', 'user_col' => 'userID', 'type' => 'Forum'],
+    ['table' => 'plugins_downloads_logs', 'user_col' => 'userID', 'type' => 'Downloads'],
 ];
-
-$counts = [];
 
 foreach ($tables as $table) {
     $tableName = $table['table'];
@@ -184,8 +187,11 @@ foreach ($tables as $table) {
     }
 }
 
+#foreach ($counts as $type => $count) {
+#    $post_type .= "<p>$type: $count</p>";
+#}
 foreach ($counts as $type => $count) {
-    $post_type .= "<p>$type: $count</p>";
+    $post_type .= '<tr><td>' . htmlspecialchars($type) . '</td><td>' . (int)$count . '</td></tr>';
 }
 
 if ($isLocked == 1 ) {
@@ -207,7 +213,7 @@ $data_array = [
     'user_location'   => $location,
     'user_sexuality'  => $sexuality,
     'register_date'   => $register_date, 
-    'user_activity'   => '<p>Zuletzt online: ' . $last_visit . '</p><p>Online-Zeit: ' . $online_time . '</p><p>Logins: ' . $logins . '</p>',
+    'user_activity'   => '<tr><td>Zuletzt online:</td><td>' . $last_visit . '</td></tr><tr><td>Online-Zeit:</td><td>' . $online_time . '</td></tr><tr><td>Logins:</td><td>' . $logins . '</td></tr>',
     'github_url'      => $github_url,
     'twitter_url'     => $twitter_url,
     'facebook_url'    => $facebook_url,

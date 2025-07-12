@@ -251,17 +251,21 @@ foreach ($plugins_for_template as $plugin) {
 
     echo '</td><td>';
 
-    if ($plugin['installed']) {
-        echo '<button class="btn btn-success btn-sm" disabled>' . $languageService->get('installed') . '</button> ';
-        if ($plugin['update']) {
-            echo '<a href="admincenter.php?site=plugin_installer&update=' . urlencode($plugin['modulname']) . '" class="btn btn-warning btn-sm">'
-                . $languageService->get('update') . '</a> ';
-        }
-        echo '<a href="admincenter.php?site=plugin_installer&uninstall=' . urlencode($plugin['modulname']) . '" class="btn btn-danger btn-sm" onclick="return confirm(\'Willst du dieses Plugin wirklich löschen?\')">'
-            . $languageService->get('delete') . '</a>';
+    if (isset($plugin['download']) && $plugin['download'] === 'DISABLED') {
+        echo '<span class="text-muted fst-italic">Download deaktiviert</span>';
     } else {
-        echo '<a href="admincenter.php?site=plugin_installer&install=' . urlencode($plugin['modulname']) . '" class="btn btn-primary btn-sm">'
-            . $languageService->get('install') . '</a>';
+        if ($plugin['installed']) {
+            echo '<button class="btn btn-success btn-sm" disabled>' . $languageService->get('installed') . '</button> ';
+            if ($plugin['update']) {
+                echo '<a href="admincenter.php?site=plugin_installer&update=' . urlencode($plugin['modulname']) . '" class="btn btn-warning btn-sm">'
+                    . $languageService->get('update') . '</a> ';
+            }
+            echo '<a href="admincenter.php?site=plugin_installer&uninstall=' . urlencode($plugin['modulname']) . '" class="btn btn-danger btn-sm" onclick="return confirm(\'Willst du dieses Plugin wirklich löschen?\')">'
+                . $languageService->get('delete') . '</a>';
+        } else {
+            echo '<a href="admincenter.php?site=plugin_installer&install=' . urlencode($plugin['modulname']) . '" class="btn btn-primary btn-sm">'
+                . $languageService->get('install') . '</a>';
+        }
     }
 
     echo '</td></tr>';

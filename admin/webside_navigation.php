@@ -78,7 +78,7 @@ if (isset($_GET[ 'delete' ])) {
             '" . $_POST[ 'mnavID' ] . "',
             '" . $_POST[ 'name' ] . "',
             '" . $url . "',
-            '" . $themes_modulname . "',
+            'default',
             '1'
             )"
         );
@@ -649,4 +649,15 @@ $CAPCLASS = new \webspell\Captcha;
 
 ';
 }
-
+?>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const confirmModal = document.getElementById('confirm-delete');
+    confirmModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const href = button.getAttribute('data-href');
+        const confirmBtn = confirmModal.querySelector('.btn-ok');
+        confirmBtn.setAttribute('href', href);
+    });
+});
+</script>

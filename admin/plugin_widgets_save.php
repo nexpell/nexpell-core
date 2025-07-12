@@ -92,7 +92,7 @@ while ($row = $res->fetch_assoc()) {
     $modulMap[$row['widget_key']] = $row['modulname'];
 }
 
-foreach (['left', 'right', 'top', 'undertop', 'bottom'] as $pos) {
+foreach (['top', 'undertop', 'left', 'maintop', 'mainbutton', 'right', 'bottom'] as $pos) {
     if (!empty($data['data'][$pos]) && is_array($data['data'][$pos])) {
         $order = 1;
         foreach ($data['data'][$pos] as $wkey) {

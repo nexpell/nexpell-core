@@ -22,9 +22,7 @@ use webspell\AccessControl;
 AccessControl::checkAdminAccess('ac_plugin_widgets_setting');
  // Standardseiten
 $pages = [
-    'index' => 'Startseite',
-    'forum' => 'Forum',
-    'gallery' => 'Galerie'
+    'index' => 'Startseite'
 ];
 
 // Plugins aus DB holen
@@ -37,7 +35,7 @@ while ($row = $res->fetch_assoc()) {
     $pages[$row['modulname']] = $row['name'];
 }
 
-$exclude_plugins = ['navigation', 'carousel', 'error_404', 'footer_easy', 'login', 'register', 'lostpassword', 'profile', 'edit_profile', 'lastlogin']; // Plugins, die nicht angezeigt werden sollen
+$exclude_plugins = ['navigation', 'carousel', 'error_404', 'footer_easy', 'login', 'register', 'lostpassword', 'profile', 'edit_profile', 'lastlogin', 'startpage']; // Plugins, die nicht angezeigt werden sollen
 ?>
 
 
@@ -45,7 +43,7 @@ $exclude_plugins = ['navigation', 'carousel', 'error_404', 'footer_easy', 'login
 <title>Widget-Manager</title>
 
 <style>
-  .widget-list { min-height: 80px; border:1px dashed #ccc; padding:5px; list-style:none; }
+  .widget-list { min-height: 40px; border:1px dashed #ccc; padding:5px; list-style:none; }
   .widget-item { margin:5px; padding:5px 10px; background:#f8f9fa; border:1px solid #ddd; cursor:move; user-select:none; }
 </style>
 <div class="card">
@@ -55,70 +53,105 @@ $exclude_plugins = ['navigation', 'carousel', 'error_404', 'footer_easy', 'login
       <div class="row">
         <!-- Linke Seite -->
         <div class="col-md-3">
-          <div class="p-3 border rounded bg-light">
-            <label for="page"><h6>📂Seite:</h6></label>
-        <select id="page" name="page" class="form-select" style="width:auto;display:inline-block;">
-  <option value="">Bitte auswählen</option>
-          <?php foreach ($pages as $value => $label): ?>
-            <?php if (!in_array($value, $exclude_plugins, true)) : ?>
-              <option value="<?= htmlspecialchars($value) ?>"><?= htmlspecialchars($label) ?></option>
-            <?php endif; ?>
-          <?php endforeach; ?>
-        </select>
+          <div class="p-3 border rounded bg-secondary-subtle">
+            <!-- Seitenauswahl -->
+            <label for="page" class="form-label">
+              <h6><i class="bi bi-folder2-open"></i> Page:</h6>
+            </label>
+            <select id="page" name="page" class="form-select mb-3" style="width:auto; display:inline-block;">
+              <option value="">Please select</option>
+              <?php foreach ($pages as $value => $label): ?>
+                <?php if (!in_array($value, $exclude_plugins, true)) : ?>
+                  <option value="<?= htmlspecialchars($value) ?>"><?= htmlspecialchars($label) ?></option>
+                <?php endif; ?>
+              <?php endforeach; ?>
+            </select>
 
-        <h6 class="mt-3">📦 Verfügbare Widgets</h6>
-        <ul id="available" class="widget-list">
-          <?php
-          $res = safe_query("SELECT * FROM settings_widgets");
-          while($row = mysqli_fetch_assoc($res)){
-            echo "<li class='widget-item' data-id='{$row['widget_key']}'>{$row['title']}</li>";
-          }
-          ?>
-        </ul>
-</div></div>
-        <!-- Rechte Seite -->
+            <!-- Verfügbare Widgets -->
+            <h6 class="mt-4"><i class="bi bi-box-seam"></i> Available Widgets</h6>
+            <ul id="available" class="widget-list">
+              <?php
+              $res = safe_query("SELECT * FROM settings_widgets");
+              while ($row = mysqli_fetch_assoc($res)) {
+                echo "<li class='widget-item' data-id='{$row['widget_key']}'>" . htmlspecialchars($row['title']) . "</li>";
+              }
+              ?>
+            </ul>
+          </div>
+        </div>
+
+                <!-- Rechte Seite -->
+                
+
+
+
         <div class="col-md-9">
-          <div class="mb-3 p-3 border rounded bg-light">
-            <h6>🧭 Header</h6>
+          <!-- Header Area -->
+          <div class="mb-3 p-3 border rounded bg-primary-subtle">
+            <h6><i class="bi bi-compass"></i> Header</h6>
             <ul id="top" class="widget-list"></ul>
           </div>
 
-          <div class="mb-3 p-3 border rounded bg-light">
-            <h6>📍 Navigation</h6>
+          <!-- Navigation Area -->
+          <div class="mb-3 p-3 border rounded bg-secondary-subtle">
+            <h6><i class="bi bi-list"></i> Navigation</h6>
           </div>
 
-          <div class="mb-3 p-3 border rounded bg-light">
-            <h6>📍 Under Top</h6>
+          <!-- Content Header -->
+          <div class="mb-3 p-3 border rounded bg-info-subtle">
+            <h6><i class="bi bi-layout-three-columns"></i> Content Header</h6>
             <ul id="undertop" class="widget-list"></ul>
           </div>
 
           <div class="row">
-            <div class="col-md-4">
-              <div class="p-3 border rounded bg-light">
-                <h6>📥 Leftbar</h6>
+            <!-- Left Sidebar -->
+            <div class="col-md-3">
+              <div class="p-3 border rounded bg-warning-subtle">
+                <h6><i class="bi bi-arrow-bar-left"></i> Left Sidebar</h6>
                 <ul id="left" class="widget-list"></ul>
               </div>
             </div>
-            <div class="col-md-4">
-              <div class="p-3 border rounded bg-light">
-                <h6>📝 Main Content</h6>
+
+            <!-- Main Content -->
+            <div class="col-md-6">
+              <div class="mb-3 p-3 border rounded bg-success-subtle">
+                <h6><i class="bi bi-arrow-bar-up"></i> Main Content Top</h6>
+                <ul id="maintop" class="widget-list"></ul>
+              </div>
+
+              <div class="mb-3 p-3 border rounded bg-light">
+                <h6><i class="bi bi-file-text"></i> Main Content</h6>
+              </div>
+
+              <div class="mb-3 p-3 border rounded bg-success-subtle">
+                <h6><i class="bi bi-arrow-bar-down"></i> Main Content Bottom</h6>
+                <ul id="mainbutton" class="widget-list"></ul>
               </div>
             </div>
-            <div class="col-md-4">
-              <div class="p-3 border rounded bg-light">
-                <h6>📤 Rightbar</h6>
+
+            <!-- Right Sidebar -->
+            <div class="col-md-3">
+              <div class="p-3 border rounded bg-warning-subtle">
+                <h6><i class="bi bi-arrow-bar-right"></i> Right Sidebar</h6>
                 <ul id="right" class="widget-list"></ul>
               </div>
             </div>
           </div>
 
-          <div class="mt-3 p-3 border rounded bg-light">
-            <h6>🔚 Footer</h6>
+          <!-- Content Footer -->
+          <div class="mt-3 p-3 border rounded bg-danger-subtle">
+            <h6><i class="bi bi-box-arrow-down"></i> Content Footer</h6>
             <ul id="bottom" class="widget-list"></ul>
           </div>
 
-          <button class="btn btn-primary mt-4" onclick="saveWidgets()">Speichern</button>
+          <!-- Save Button -->
+          <button class="btn btn-primary mt-4" onclick="saveWidgets()">
+            <i class="bi bi-save"></i> Save
+          </button>
         </div>
+
+
+
       </div>
     </div>
   </div>
@@ -139,14 +172,21 @@ function toggleWidgetList() {
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    toggleWidgetList(); // beim Laden prüfen
-    document.getElementById('page').addEventListener('change', toggleWidgetList); // bei Änderung prüfen
+  toggleWidgetList(); // beim Laden prüfen
+
+  const pageSelect = document.getElementById('page');
+
+  pageSelect.addEventListener('change', () => {
+    toggleWidgetList(); // Sichtbarkeit der verfügbaren Widgets
+    loadWidgets();      // 🔥 Widgets aus DB laden
   });
+});
 
 
 document.addEventListener("DOMContentLoaded", function() {
 
-  const positions = ['left','right','top','undertop','bottom','available'];
+  const positions = ['top','undertop','left','maintop','mainbutton','right','bottom','available'];
+
 
   // Sortable initialisieren
   positions.forEach(pos => {

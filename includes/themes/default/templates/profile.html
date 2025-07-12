@@ -92,13 +92,31 @@
             <!-- Beiträge -->
             <div class="tab-pane fade" id="posts" role="tabpanel">
               <h5>{lang_latest_posts}</h5>
-              {user_posts}
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Typ</th><th>Anzahl</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {user_posts}
+                </tbody>
+              </table>
             </div>
 
             <!-- Aktivität -->
             <div class="tab-pane fade" id="activity" role="tabpanel">
               <h5>{lang_latest_activity}</h5>
-              {user_activity}
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Typ</th><th>Aktivität</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {user_activity}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
