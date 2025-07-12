@@ -125,7 +125,7 @@ $exclude_plugins = ['navigation', 'carousel', 'error_404', 'footer_easy', 'login
 
               <div class="mb-3 p-3 border rounded bg-success-subtle">
                 <h6><i class="bi bi-arrow-bar-down"></i> Main Content Bottom</h6>
-                <ul id="mainbutton" class="widget-list"></ul>
+                <ul id="mainbottom" class="widget-list"></ul>
               </div>
             </div>
 
@@ -185,7 +185,7 @@ function toggleWidgetList() {
 
 document.addEventListener("DOMContentLoaded", function() {
 
-  const positions = ['top','undertop','left','maintop','mainbutton','right','bottom','available'];
+  const positions = ['top','undertop','left','maintop','mainbottom','right','bottom','available'];
 
 
   // Sortable initialisieren
