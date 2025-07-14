@@ -31,9 +31,31 @@
           <input type="text" class="form-control" id="location" name="location" value="{location}">
         </div>
 
+        
+
+        <div class="mb-3">
+          <label for="birthday" class="form-label">{label_birthday}</label>
+          <input type="date" class="form-control" id="birthday" name="birthday" value="{birthday}">
+        </div>
+
+        <div class="mb-3">
+          <label for="gender" class="form-label">{label_gender}</label>
+          <select name="gender" class="form-select">
+  <option value="" {gender_select_empty}>{select_gender}</option>
+  <option value="male" {gender_select_male}>{gender_male}</option>
+  <option value="female" {gender_select_female}>{gender_female}</option>
+  <option value="other" {gender_select_other}>{gender_other}</option>
+</select>
+        </div>
+
         <div class="mb-3">
           <label for="about_me" class="form-label">{label_about_me}</label>
           <textarea class="form-control" id="about_me" name="about_me" rows="4">{about_me}</textarea>
+        </div>
+
+        <div class="mb-3">
+          <label for="signatur" class="form-label">{label_signature}</label>
+          <textarea class="form-control" id="signatur" name="signatur" rows="2">{signatur}</textarea>
         </div>
 
         <div class="mb-3">
@@ -43,6 +65,7 @@
           <?php endif; ?>
           <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*">
         </div>
+
 
         <hr>
 

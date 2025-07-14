@@ -44,7 +44,11 @@ $language_array = array(
     'about_lastname' => 'Nachname',
     'about_age' => 'Alter',
     'about_location' => 'Ort',
-    'about_sexuality' => 'Sexualität',
+    'about_birthday' => 'Geburtstag',
+    'about_gender' => 'Geschlecht',
+    'about_gender_male' => 'Männlich',
+    'about_gender_female' => 'Weiblich',
+    'about_gender_other' => 'Divers',
     'about_text' => 'Über mich',
     'about_signature' => 'Signatur',
 

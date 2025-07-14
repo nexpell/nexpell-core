@@ -98,15 +98,46 @@ $last_visit = (!empty($last_visit_raw) && strtotime($last_visit_raw) !== false)
     : 'Nie besucht';
 
 $avatar = getavatar($userID);
-$location = !empty($user_profile['location']) ? htmlspecialchars($user_profile['location']) : 'Unbekannter Ort';
-$age = !empty($user_profile['age']) ? (int)$user_profile['age'] : 'Nicht angegeben';
-$sexuality = !empty($user_profile['sexuality']) ? htmlspecialchars($user_profile['sexuality']) : 'Nicht angegeben';
 
-$facebook_url  = !empty($user_socials['facebook']) ? htmlspecialchars($user_socials['facebook']) : '#';
-$twitter_url   = !empty($user_socials['twitter']) ? htmlspecialchars($user_socials['twitter']) : '#';
+$location = !empty($user_profile['location']) ? htmlspecialchars($user_profile['location']) : 'Unbekannter Ort';
+
+$raw_birthday = $user_profile['birthday'] ?? '';
+$birthday = '';
+
+if (!empty($raw_birthday) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw_birthday)) {
+    $date = DateTime::createFromFormat('Y-m-d', $raw_birthday);
+    $birthday = $date->format('d.m.Y'); // deutsches Format
+}
+
+// Altersberechnung (nur wenn Geburtstag vorhanden und gültig)
+// Altersberechnung (nur wenn $raw_birthday im ISO-Format vorliegt)
+$age = '';
+if (!empty($raw_birthday) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw_birthday)) {
+    $birthDate = date_create($raw_birthday);
+    $today = date_create('today');
+    $age = date_diff($birthDate, $today)->y;
+}
+
+$gender_raw = $user_profile['gender'] ?? '';
+
+$gender_map = [
+    'male'   => $languageService->get('about_gender_male'),
+    'female' => $languageService->get('about_gender_female'),
+    'other'  => $languageService->get('about_gender_other'),
+    ''       => '-'
+];
+
+$gender_display = $gender_map[$gender_raw] ?? '-';
+
+$signatur = $user_profile['signatur'] ??'„Keep coding & carry on.“';
+
+// Social Media Links
+$facebook_url  = !empty($user_socials['facebook'])  ? htmlspecialchars($user_socials['facebook'])  : '#';
+$twitter_url   = !empty($user_socials['twitter'])   ? htmlspecialchars($user_socials['twitter'])   : '#';
 $instagram_url = !empty($user_socials['instagram']) ? htmlspecialchars($user_socials['instagram']) : '#';
-$website_url   = !empty($user_socials['website']) ? htmlspecialchars($user_socials['website']) : '#';
-$github_url    = !empty($user_socials['github']) ? htmlspecialchars($user_socials['github']) : '#';
+$website_url   = !empty($user_socials['website'])   ? htmlspecialchars($user_socials['website'])   : '#';
+$github_url    = !empty($user_socials['github'])    ? htmlspecialchars($user_socials['github'])    : '#';
+
 
 $is_own_profile = ($_SESSION['userID'] ?? 0) === $userID;
 $edit_button = $is_own_profile ? '<a href="/edit_profile" class="btn btn-outline-primary mt-3"><i class="fas fa-user-edit"></i>' . $languageService->get('edit_profile_button') . '</a>' : '';
@@ -142,7 +173,7 @@ $partners  = getUserCount('plugins_partners', 'userID', $userID);
 $sponsors  = getUserCount('plugins_sponsors', 'userID', $userID);
 $forum     = getUserCount('plugins_forum_posts', 'userID', $userID);
 $download  = getUserCount('plugins_downloads_logs', 'userID', $userID);
-$points    = ($articles * 10) + ($comments * 2) + ($rules * 5) + ($links * 5) + ($partners * 5) + ($sponsors * 5) + ($forum * 2) + ($download * 2) + ($logins * 2);;
+$points    = ($articles * 10) + ($comments * 2) + ($rules * 5) + ($links * 5) + ($partners * 5) + ($sponsors * 5) + ($forum * 2) + ($download * 2) + ($logins * 2);
 
 $level = floor($points / 100);
 $level_percent = $points % 100;
@@ -200,18 +231,24 @@ if ($isLocked == 1 ) {
     </div>';
 }
 
+
+
 $data_array = [
+    'user_gender' => $gender_display,
     'username'        => $username,
     'avatar'          => $avatar,
     'user_role'       => $role_name,
     'user_points'     => $points,
     'user_about'      => $about_me,
-    'user_signature'  => $user_profile['signature'] ?? '„Keep coding & carry on.“',
+    'user_birthday' => $birthday,
+    'user_age'        => $age,
+    
+
+    'user_signature'  => $signatur,
     'user_name'       => $firstname,
     'user_surname'    => $lastname,
-    'user_age'        => $age,
+    
     'user_location'   => $location,
-    'user_sexuality'  => $sexuality,
     'register_date'   => $register_date, 
     'user_activity'   => '<tr><td>Zuletzt online:</td><td>' . $last_visit . '</td></tr><tr><td>Online-Zeit:</td><td>' . $online_time . '</td></tr><tr><td>Logins:</td><td>' . $logins . '</td></tr>',
     'github_url'      => $github_url,
@@ -242,15 +279,23 @@ $data_array = [
     'lang_about_title'         => $languageService->get('about_title'),
     'lang_about_firstname'     => $languageService->get('about_firstname'),
     'lang_about_lastname'      => $languageService->get('about_lastname'),
+    'lang_about_birthday'      => $languageService->get('about_birthday'),
     'lang_about_age'           => $languageService->get('about_age'),
     'lang_about_location'      => $languageService->get('about_location'),
-    'lang_about_sexuality'     => $languageService->get('about_sexuality'),
+    'lang_about_gender'        => $languageService->get('about_gender'),
+    'male'        => $languageService->get('about_gender_male'),
+    'gender_female'        => $languageService->get('about_gender_female'),
+    'gender_other'        => $languageService->get('about_gender_other'),
+
+
     'lang_registered_since'    => $languageService->get('registered_since'),
     'lang_about_text'          => $languageService->get('about_text'),
     'lang_about_signature'     => $languageService->get('about_signature'),
 
     'lang_latest_posts'        => $languageService->get('latest_posts'),
     'lang_latest_activity'     => $languageService->get('latest_activity'),
+
+    
 ];
 
 

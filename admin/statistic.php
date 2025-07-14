@@ -283,7 +283,8 @@ $roles = safe_query("
 ");
 
 // Letzte Logins
-$logins = safe_query("SELECT username, FROM_UNIXTIME(lastlogin) AS login_time FROM users ORDER BY lastlogin DESC LIMIT 10");
+#$logins = safe_query("SELECT username, FROM_UNIXTIME(lastlogin) AS login_time FROM users ORDER BY lastlogin DESC LIMIT 10");
+
 
 // Klickstatistik vorbereiten
 $startDate = date('Y-m-d', strtotime('-30 days'));
@@ -305,15 +306,6 @@ $topUrlsRes = $_database->query("
     LIMIT 10
 ");
 
-$topReferrersRes = $_database->query("
-    SELECT referrer, COUNT(*) AS clicks
-    FROM link_clicks
-    WHERE referrer != ''
-    GROUP BY referrer
-    ORDER BY clicks DESC
-    LIMIT 5
-");
-
 $topIpsRes = $_database->query("
     SELECT ip_address, COUNT(*) AS clicks
     FROM link_clicks
@@ -323,121 +315,30 @@ $topIpsRes = $_database->query("
 ");
 
 $totalClicks = $_database->query("SELECT COUNT(*) AS total FROM link_clicks")->fetch_assoc()['total'];
-?>
 
-<!-- Benutzerstatistiken -->
-<div class="card p-4 mb-4">
-    <h3 class="mb-4">👤 Benutzerstatistiken</h3>
-    <ul class="list-group">
-        <li class="list-group-item">👥 Gesamtanzahl Benutzer: <strong><?= $total_users ?></strong></li>
-        <li class="list-group-item">🆕 Heute registriert: <strong><?= $today_users ?></strong></li>
-        <li class="list-group-item">📈 Letzte 7 Tage: <strong><?= $week_users ?></strong></li>
-        <li class="list-group-item">📅 Letzte 30 Tage: <strong><?= $month_users ?></strong></li>
-        <li class="list-group-item">🟢 Aktive Benutzer (30 Tage): <strong><?= $active ?></strong></li>
-        <li class="list-group-item">⚪ Inaktive Benutzer: <strong><?= $inactive ?></strong></li>
-        <!--<li class="list-group-item">🖼 Mit Profilbild: <strong><?= $with_avatar ?></strong></li>-->
-        <li class="list-group-item">🖼 Mit Profilbild: <strong>avatar</strong></li>
-        <!--<li class="list-group-item">🚫 Ohne Profilbild: <strong><?= $without_avatar ?></strong></li>-->
-        <li class="list-group-item">🚫 Ohne Profilbild: <strong>avatar</strong></li>
-    </ul>
-</div>
+// Benutzer mit Avatar
+$with_avatar_result = safe_query("
+  SELECT COUNT(*) AS count
+  FROM users u
+  INNER JOIN user_profiles p ON u.userID = p.userID
+  WHERE p.avatar IS NOT NULL AND p.avatar != ''
+");
+$row = mysqli_fetch_assoc($with_avatar_result);
+$with_avatar = (int)$row['count'];
 
-<!-- Benutzerrollen -->
-<div class="card p-4 mb-4">
-    <h4>👤 Benutzer nach Rollen</h4>
-    <ul class="list-group">
-        <?php while ($row = mysqli_fetch_array($roles)): ?>
-            <li class="list-group-item"><?= htmlspecialchars($row['role_name']) ?>: <strong><?= $row['count'] ?></strong></li>
-        <?php endwhile; ?>
-    </ul>
-</div>
+// Benutzer ohne Avatar
+$without_avatar_result = safe_query("
+  SELECT COUNT(*) AS count
+  FROM users u
+  LEFT JOIN user_profiles p ON u.userID = p.userID
+  WHERE p.avatar IS NULL OR p.avatar = ''
+");
+$row2 = mysqli_fetch_assoc($without_avatar_result);
+$without_avatar = (int)$row2['count'];
 
-<!-- Letzte Logins -->
-<div class="card p-4 mb-4">
-    <h4>⏱ Letzte Logins</h4>
-    <ul class="list-group">
-        <?php while ($row = mysqli_fetch_array($logins)): ?>
-            <li class="list-group-item"><?= htmlspecialchars($row['username']) ?> – <small><?= $row['login_time'] ?>login_time fehlt noch </small></li>
-        <?php endwhile; ?>
-    </ul>
-</div>
-
-<!-- Klickstatistiken -->
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5><i class="bi bi-bar-chart-line"></i> Link-Klick-Auswertung (letzte 30 Tage)</h5>
-        <span class="badge bg-secondary">Gesamt: <?= $totalClicks ?></span>
-    </div>
-    <div class="card-body">
-
-        <h6><i class="bi bi-calendar-week"></i> Klicks pro Tag</h6>
-        <table class="table table-striped table-sm">
-            <thead class="table-light">
-                <tr><th>Datum</th><th>Klicks</th></tr>
-            </thead>
-            <tbody>
-                <?php while ($row = $clicksPerDayRes->fetch_assoc()): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($row['day']) ?></td>
-                        <td><?= $row['clicks'] ?></td>
-                    </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
-
-        <h6 class="mt-4"><i class="bi bi-link-45deg"></i> Top 10 URLs</h6>
-        <table class="table table-striped table-sm">
-            <thead class="table-light">
-                <tr><th>URL</th><th>Klicks</th></tr>
-            </thead>
-            <tbody>
-                <?php while ($row = $topUrlsRes->fetch_assoc()): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($row['url']) ?></td>
-                        <td><?= $row['clicks'] ?></td>
-                    </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
-
-        <h6 class="mt-4"><i class="bi bi-share"></i> Top Referrer</h6>
-        <ul class="list-group list-group-sm">
-            <?php while ($row = $topReferrersRes->fetch_assoc()): ?>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <?= htmlspecialchars($row['referrer']) ?>
-                    <span class="badge bg-primary rounded-pill"><?= $row['clicks'] ?></span>
-                </li>
-            <?php endwhile; ?>
-        </ul>
-
-        <h6 class="mt-4"><i class="bi bi-pc-display"></i> Top IP-Adressen</h6>
-        <ul class="list-group list-group-sm">
-            <?php while ($row = $topIpsRes->fetch_assoc()): ?>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <?= htmlspecialchars($row['ip_address']) ?>
-                    <span class="badge bg-dark rounded-pill"><?= $row['clicks'] ?></span>
-                </li>
-            <?php endwhile; ?>
-        </ul>
-
-    </div>
-</div>
-
-
-
-<?php
-// session_start etc.
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-global $_database;
-
-// DB-Verbindung vorbereiten, falls noch nicht geschehen
-// z.B. require_once für config und DB
 
 // Filter nur für 'sponsors'
-$plugin = 'sponsors';
+#$plugin = 'sponsors';
 
 // Pagination (optional)
 $limit = 50;
@@ -445,57 +346,179 @@ $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] :
 $offset = ($page - 1) * $limit;
 
 // Anzahl Klicks zählen
-$countResult = $_database->query("SELECT COUNT(*) as count FROM link_clicks WHERE plugin = '$plugin'");
+$countResult = $_database->query("SELECT COUNT(*) as count FROM link_clicks");
 $countRow = $countResult->fetch_assoc();
 $totalClicks = $countRow['count'];
 
 // Klicks holen mit Limit & Offset
-$sql = "SELECT * FROM link_clicks WHERE plugin = '$plugin' ORDER BY clicked_at DESC LIMIT $limit OFFSET $offset";
+$sql = "SELECT * FROM link_clicks";
 $result = $_database->query($sql);
-
 ?>
 
+<!-- Benutzerstatistiken -->
+<!-- Benutzerstatistiken -->
+<div class="row">
+  <!-- Benutzerstatistiken -->
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h3 class="mb-0">👤 Benutzerstatistiken</h3>
+      </div>
+      <div class="card-body">
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">👥 Gesamtanzahl Benutzer: <strong><?= $total_users ?></strong></li>
+          <li class="list-group-item">🆕 Heute registriert: <strong><?= $today_users ?></strong></li>
+          <li class="list-group-item">📈 Letzte 7 Tage: <strong><?= $week_users ?></strong></li>
+          <li class="list-group-item">📅 Letzte 30 Tage: <strong><?= $month_users ?></strong></li>
+          <li class="list-group-item">🟢 Aktive Benutzer (30 Tage): <strong><?= $active ?></strong></li>
+          <li class="list-group-item">⚪ Inaktive Benutzer: <strong><?= $inactive ?></strong></li>
+          <li class="list-group-item">🖼 Mit Profilbild: <strong><?= $with_avatar ?></strong></li>
+          <li class="list-group-item">🚫 Ohne Profilbild: <strong><?= $without_avatar ?></strong></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Benutzer nach Rollen -->
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h4 class="mb-0">👤 Benutzer nach Rollen</h4>
+      </div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          <?php while ($row = mysqli_fetch_array($roles)): ?>
+            <li class="list-group-item d-flex justify-content-between">
+              <?= htmlspecialchars($row['role_name']) ?>
+              <span class="badge bg-primary rounded-pill"><?= $row['count'] ?></span>
+            </li>
+          <?php endwhile; ?>
+        </ul>
+      </div>
+    </div>
+  </div>
 
 
-    <h1 class="mb-4">Sponsor-Klicks Verwaltung</h1>
+<!-- Letzte Logins -->
+<div class="col-md-4">
+<div class="card mb-4">
+  <div class="card-header">
+    <h4 class="mb-0">⏱ Letzte Logins</h4>
+  </div>
+  <div class="card-body p-0">
+    <ul class="list-group">
+      <?php 
+      $logins = safe_query("SELECT username, FROM_UNIXTIME(lastlogin) AS login_time FROM users ORDER BY lastlogin DESC LIMIT 10");
+      while ($row = mysqli_fetch_assoc($logins)): 
+          $login_time = $row['login_time'] ?? '';
+      ?>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <?= htmlspecialchars($row['username']) ?>
+          <small class="text-muted" style="color: red; font-weight: bold;">
+            <?= htmlspecialchars($login_time) ?>
+          </small>
+        </li>
+      <?php endwhile; ?>
+    </ul>
+  </div>
+</div>
+</div>
+</div>
+<!-- Klickstatistiken -->
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0"><i class="bi bi-bar-chart-line"></i> Link-Klick-Auswertung (letzte 30 Tage)</h5>
+    <span class="badge bg-secondary">Gesamt: <?= $totalClicks ?></span>
+  </div>
+  <div class="card-body">
 
-    <table class="table table-striped table-bordered table-hover">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Sponsor ID</th>
-                <th>Klick URL</th>
-                <th>Klickzeit</th>
-                <th>IP-Adresse</th>
-                <th>User-Agent</th>
-                <th>Referrer</th>
-                <th>Aktion</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if ($result && $result->num_rows > 0): ?>
-                <?php while ($row = $result->fetch_assoc()): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($row['id']) ?></td>
-                        <td><?= htmlspecialchars($row['itemID']) ?></td>
-                        <td><a href="<?= htmlspecialchars($row['url']) ?>" target="_blank" rel="nofollow"><?= htmlspecialchars($row['url']) ?></a></td>
-                        <td><?= htmlspecialchars($row['clicked_at']) ?></td>
-                        <td><?= htmlspecialchars($row['ip_address']) ?></td>
-                        <td><?= htmlspecialchars($row['user_agent']) ?></td>
-                        <td><?= htmlspecialchars($row['referrer']) ?></td>
-                        <td>
-                            <form method="post" onsubmit="return confirm('Wirklich löschen?');">
-                                <input type="hidden" name="delete_id" value="<?= (int)$row['id'] ?>">
-                                <button type="submit" class="btn btn-sm btn-danger">Löschen</button>
-                            </form>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
-            <?php else: ?>
-                <tr><td colspan="8" class="text-center">Keine Klicks gefunden.</td></tr>
-            <?php endif; ?>
-        </tbody>
+    <h6><i class="bi bi-calendar-week"></i> Klicks pro Tag</h6>
+    <table class="table table-striped table-sm mb-4">
+      <thead class="table-light">
+        <tr><th>Datum</th><th>Klicks</th></tr>
+      </thead>
+      <tbody>
+        <?php while ($row = $clicksPerDayRes->fetch_assoc()): ?>
+          <tr>
+            <td><?= htmlspecialchars($row['day']) ?></td>
+            <td><?= $row['clicks'] ?></td>
+          </tr>
+        <?php endwhile; ?>
+      </tbody>
     </table>
+
+    <h6><i class="bi bi-link-45deg"></i> Top 10 URLs</h6>
+    <table class="table table-striped table-sm mb-4">
+      <thead class="table-light">
+        <tr><th>URL</th><th>Klicks</th></tr>
+      </thead>
+      <tbody>
+        <?php while ($row = $topUrlsRes->fetch_assoc()): ?>
+          <tr>
+            <td><?= htmlspecialchars($row['url']) ?></td>
+            <td><?= $row['clicks'] ?></td>
+          </tr>
+        <?php endwhile; ?>
+      </tbody>
+    </table>
+
+    <h6><i class="bi bi-pc-display"></i> Top IP-Adressen</h6>
+    <ul class="list-group list-group-flush">
+      <?php while ($row = $topIpsRes->fetch_assoc()): ?>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <?= htmlspecialchars($row['ip_address']) ?>
+          <span class="badge bg-dark rounded-pill"><?= $row['clicks'] ?></span>
+        </li>
+      <?php endwhile; ?>
+    </ul>
+
+  </div>
+</div>
+
+
+<!-- Klicks Verwaltung -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h3 class="mb-0">Klicks Verwaltung</h3>
+  </div>
+  <div class="card-body">
+    <table class="table table-striped table-sm mb-4">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Plugin</th>
+          <th>Klick URL</th>
+          <th>Klickzeit</th>
+          <th>IP-Adresse</th>
+          <th>User-Agent</th>
+          <th>Aktion</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php if ($result && $result->num_rows > 0): ?>
+          <?php while ($row = $result->fetch_assoc()): ?>
+            <tr>
+              <td><?= htmlspecialchars($row['id']) ?></td>
+              <td><?= htmlspecialchars($row['plugin']) ?></td>
+              <td><a href="<?= htmlspecialchars($row['url']) ?>" target="_blank" rel="nofollow"><?= htmlspecialchars($row['url']) ?></a></td>
+              <td><?= htmlspecialchars($row['clicked_at']) ?></td>
+              <td><?= htmlspecialchars($row['ip_address']) ?></td>
+              <td><?= htmlspecialchars($row['user_agent']) ?></td>
+              <td>
+                <form method="post" onsubmit="return confirm('Wirklich löschen?');" class="m-0">
+                  <input type="hidden" name="delete_id" value="<?= (int)$row['id'] ?>">
+                  <button type="submit" class="btn btn-sm btn-danger">Löschen</button>
+                </form>
+              </td>
+            </tr>
+          <?php endwhile; ?>
+        <?php else: ?>
+          <tr><td colspan="8" class="text-center">Keine Klicks gefunden.</td></tr>
+        <?php endif; ?>
+      </tbody>
+    </table>
+  </div>
+</div>
 
     <!-- Pagination -->
     <?php

@@ -59,6 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $lastname = $_POST['lastname'] ?? '';
     $location = $_POST['location'] ?? '';
     $about_me = $_POST['about_me'] ?? '';
+    $birthday = $_POST['birthday'] ?? '';
+    $gender = $_POST['gender'] ?? '';
+    $signatur = $_POST['signatur'] ?? '';
 
     $twitter = $_POST['twitter'] ?? '';
     $facebook = $_POST['facebook'] ?? '';
@@ -95,26 +98,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $result = $_database->query("SELECT userID FROM user_profiles WHERE userID = $userID");
-    if ($result->num_rows > 0) {
-        $query = "UPDATE user_profiles SET 
-            firstname = '$firstname',
-            lastname = '$lastname',
-            location = '$location',
-            about_me = '$about_me'";
-        if ($avatar_url) {
-            $query .= ", avatar = '$avatar_url'";
-        }
-        $query .= " WHERE userID = $userID";
-    } else {
-        $columns = "userID, firstname, lastname, location, about_me";
-        $values = "$userID, '$firstname', '$lastname', '$location', '$about_me'";
-        if ($avatar_url) {
-            $columns .= ", avatar";
-            $values .= ", '$avatar_url'";
-        }
-        $query = "INSERT INTO user_profiles ($columns) VALUES ($values)";
+
+if ($result->num_rows > 0) {
+    $query = "UPDATE user_profiles SET 
+        firstname = '$firstname',
+        lastname = '$lastname',
+        location = '$location',
+        about_me = '$about_me',
+        birthday = '$birthday',
+        gender = '$gender',
+        signatur = '$signatur'";
+    
+    if ($avatar_url) {
+        $query .= ", avatar = '$avatar_url'";
     }
-    $_database->query($query);
+
+    $query .= " WHERE userID = $userID";
+} else {
+    $columns = "userID, firstname, lastname, location, about_me, birthday, gender, signatur";
+    $values  = "$userID, '$firstname', '$lastname', '$location', '$about_me', '$birthday', '$gender', '$signatur'";
+    
+    if ($avatar_url) {
+        $columns .= ", avatar";
+        $values  .= ", '$avatar_url'";
+    }
+
+    $query = "INSERT INTO user_profiles ($columns) VALUES ($values)";
+}
+
+$_database->query($query);
+
 
     $result = $_database->query("SELECT userID FROM user_socials WHERE userID = $userID");
     if ($result->num_rows > 0) {
@@ -145,11 +158,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-$firstname = $lastname = $location = $about_me = $avatar = '';
+$firstname = $lastname = $location = $about_me = $avatar = $birthday = $gender = $signatur = '';
 $twitter = $facebook = $website = $github = $instagram = '';
 $dark_mode = $email_notifications = 0;
 
-$result = $_database->query("SELECT firstname, lastname, location, about_me, avatar FROM user_profiles WHERE userID = $userID");
+$result = $_database->query("SELECT firstname, lastname, location, about_me, avatar, birthday, gender, signatur FROM user_profiles WHERE userID = $userID");
 if ($row = $result->fetch_assoc()) {
     extract($row);
 }
@@ -163,14 +176,38 @@ $result = $_database->query("SELECT dark_mode, email_notifications FROM user_set
 if ($row = $result->fetch_assoc()) {
     extract($row);
 }
+$gender = trim($gender ?? '');
+
+$gender_options = [
+    'gender'             => $gender,
+    'gender_selected_male'   => $gender === 'male' ? 'selected' : '',
+    'gender_selected_female' => $gender === 'female' ? 'selected' : '',
+    'gender_selected_other'  => $gender === 'other' ? 'selected' : '',
+    'gender_selected_empty'  => $gender === '' ? 'selected' : '',
+];
 
 $data_array = [
+
+  
     // Userdaten mit htmlspecialchars zur Sicherheit
     'userID' => htmlspecialchars($userID ?? ''),
     'firstname' => htmlspecialchars($firstname ?? ($user['firstname'] ?? '')),
     'lastname' => htmlspecialchars($lastname ?? ($user['lastname'] ?? '')),
     'location' => htmlspecialchars($location ?? ($user['location'] ?? '')),
     'about_me' => htmlspecialchars($about_me ?? ($user['about_me'] ?? '')),
+    'birthday' => htmlspecialchars($birthday ?? ($user['birthday'] ?? '')),
+    'age'      => isset($user['birthday']) ? (date_diff(date_create($user['birthday']), date_create('today'))->y) : '',
+    
+
+    'gender' => $gender,
+    'gender_select_empty'  => $gender_options['gender_selected_empty'],
+    'gender_select_male'   => $gender_options['gender_selected_male'],
+    'gender_select_female' => $gender_options['gender_selected_female'],
+    'gender_select_other'  => $gender_options['gender_selected_other'],
+
+
+
+    'signatur' => htmlspecialchars($signatur ?? ($user['signatur'] ?? '')),
     
     // Avatar-URL: wenn $avatar gesetzt, sonst aus $user['avatar']
     'avatar_url' => !empty($avatar) ? $avatar : (!empty($user['avatar']) ? '/path/to/avatars/' . htmlspecialchars($user['avatar']) : ''),
@@ -192,6 +229,7 @@ $data_array = [
     'label_lastname' => $languageService->get('label_lastname'),
     'label_location' => $languageService->get('label_location'),
     'label_about_me' => $languageService->get('label_about_me'),
+    'label_signature' => $languageService->get('label_signature'),
     'label_avatar' => $languageService->get('label_avatar'),
     'title_social_networks' => $languageService->get('title_social_networks'),
     'label_twitter' => $languageService->get('label_twitter'),
@@ -203,6 +241,12 @@ $data_array = [
     'label_dark_mode' => $languageService->get('label_dark_mode'),
     'label_email_notifications' => $languageService->get('label_email_notifications'),
     'btn_save' => $languageService->get('btn_save'),
+    'label_birthday'    => $languageService->get('label_birthday'),
+    'label_gender'      => $languageService->get('label_gender'),
+    'select_gender'     => $languageService->get('select_gender'),
+    'gender_male'       => $languageService->get('gender_male'),
+    'gender_female'     => $languageService->get('gender_female'),
+    'gender_other'      => $languageService->get('gender_other'),
 ];
 
 

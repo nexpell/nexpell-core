@@ -19,5 +19,13 @@ $language_array = array(
     'label_dark_mode' => 'Dark Mode aktivieren',
     'label_email_notifications' => 'E-Mail-Benachrichtigungen erhalten',
     'btn_save' => 'Speichern',
+
+    'label_birthday' => 'Geburtstag',
+    'label_gender' => 'Geschlecht',
+    'select_gender' => '-- Bitte wählen --',
+    'gender_male' => 'Männlich',
+    'gender_female' => 'Weiblich',
+    'gender_other' => 'Divers',
+    'label_signature' => 'Signatur',
 );
 
