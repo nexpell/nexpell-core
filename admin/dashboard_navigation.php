@@ -87,7 +87,7 @@ if (isset($_POST['saveedit'])) {
             ON DUPLICATE KEY UPDATE accessID = VALUES(accessID)
         ";
         $stmt_access = $_database->prepare($access_query);
-        $stmt_access->bind_param("isss", $roleID, $type, $modulname, $catID);
+        $stmt_access->bind_param("isss", $roleID, $type, $modulname, $linkID);
 
         if ($stmt_access->execute()) {
             echo '<div class="alert alert-success" role="alert">Link und Zugriffsrechte erfolgreich aktualisiert!</div>';
@@ -105,7 +105,6 @@ if (isset($_POST['saveedit'])) {
 
     $stmt->close();
 }
-
 
 
 if (isset($_POST[ 'save' ])) {
