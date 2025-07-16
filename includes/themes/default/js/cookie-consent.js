@@ -11,7 +11,10 @@ function getCookie(name) {
 }
 
 function loadTwitchEmbeds(mainChannel, extraChannels) {
+    if (document.getElementById('twitch-embed-script')) return; // Schon geladen
+
     const script = document.createElement('script');
+    script.id = 'twitch-embed-script';
     script.src = "https://embed.twitch.tv/embed/v1.js";
     script.onload = () => {
         new Twitch.Embed("main-stream", {
@@ -40,21 +43,46 @@ function loadTwitchEmbeds(mainChannel, extraChannels) {
     document.body.appendChild(script);
 }
 
+
+function loadDiscordWidget(serverID) {
+      console.log("loadDiscordWidget aufgerufen mit:", serverID);
+
+      const discordCard = document.getElementById("discord-card");
+      const discordWidget = document.getElementById("discord-widget");
+      if (!discordCard || !discordWidget) {
+          console.warn("discordCard oder discordWidget nicht gefunden!");
+          return;
+      }
+
+      discordWidget.innerHTML = `
+          <iframe
+              src="https://discord.com/widget?id=${serverID}&theme=dark"
+              width="100%" height="500"
+              allowtransparency="true"
+              frameborder="0"
+              class="w-100 border-0 bg-dark"
+              sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts">
+          </iframe>
+      `;
+      discordCard.style.display = 'block';
+  }
+
 document.addEventListener("DOMContentLoaded", function () {
     const cookieBanner = document.getElementById('cookie-consent-banner');
     const settingsIcon = document.getElementById('cookie-settings-icon');
     const overlay = document.getElementById('cookie-overlay');
+    const streamWrapper = document.getElementById('stream-wrapper');
     const fallback = document.getElementById('fallback-message');
 
     function showBanner() {
         if (cookieBanner) cookieBanner.classList.remove('d-none');
-        if (overlay) overlay.classList.add('visible');
+        if (overlay) overlay.style.display = 'block';
         if (fallback) fallback.style.display = 'block';
     }
 
     function hideBanner() {
         if (cookieBanner) cookieBanner.classList.add('d-none');
-        if (overlay) overlay.classList.remove('visible');
+        if (overlay) overlay.style.display = 'none';
         if (fallback) fallback.style.display = 'none';
     }
 
@@ -86,12 +114,20 @@ document.addEventListener("DOMContentLoaded", function () {
         showBanner();
         bindBannerButtons();
     } else if (consent === 'accepted') {
-        hideBanner();
-        const main = TWITCH_CONFIG.main;
-        const extra = TWITCH_CONFIG.extra.split(',').map(c => c.trim()).filter(Boolean);
-        loadTwitchEmbeds(main, extra);
+        if (streamWrapper) streamWrapper.style.display = 'block';
+        if (fallback) fallback.style.display = 'none';
+
+        if (typeof TWITCH_CONFIG !== 'undefined') {
+            const main = TWITCH_CONFIG.main;
+            const extra = TWITCH_CONFIG.extra.split(',').map(c => c.trim()).filter(Boolean);
+            loadTwitchEmbeds(main, extra);
+        }
+        if (typeof DISCORD_CONFIG !== 'undefined' && DISCORD_CONFIG.serverID) {
+            loadDiscordWidget(DISCORD_CONFIG.serverID);
+        }
+
     } else if (consent === 'declined') {
-        hideBanner();
+        if (streamWrapper) streamWrapper.style.display = 'none';
         if (fallback) fallback.style.display = 'block';
     }
 });
