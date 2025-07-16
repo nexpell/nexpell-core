@@ -132,11 +132,11 @@ $gender_display = $gender_map[$gender_raw] ?? '-';
 $signatur = $user_profile['signatur'] ??'„Keep coding & carry on.“';
 
 // Social Media Links
-$facebook_url  = !empty($user_socials['facebook'])  ? htmlspecialchars($user_socials['facebook'])  : '#';
-$twitter_url   = !empty($user_socials['twitter'])   ? htmlspecialchars($user_socials['twitter'])   : '#';
-$instagram_url = !empty($user_socials['instagram']) ? htmlspecialchars($user_socials['instagram']) : '#';
-$website_url   = !empty($user_socials['website'])   ? htmlspecialchars($user_socials['website'])   : '#';
-$github_url    = !empty($user_socials['github'])    ? htmlspecialchars($user_socials['github'])    : '#';
+$facebook_url  = !empty($user_socials['facebook'])  ? htmlspecialchars($user_socials['facebook'])  : '';
+$twitter_url   = !empty($user_socials['twitter'])   ? htmlspecialchars($user_socials['twitter'])   : '';
+$instagram_url = !empty($user_socials['instagram']) ? htmlspecialchars($user_socials['instagram']) : '';
+$website_url   = !empty($user_socials['website'])   ? htmlspecialchars($user_socials['website'])   : '';
+$github_url    = !empty($user_socials['github'])    ? htmlspecialchars($user_socials['github'])    : '';
 
 
 $is_own_profile = ($_SESSION['userID'] ?? 0) === $userID;
