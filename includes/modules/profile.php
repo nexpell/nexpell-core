@@ -88,7 +88,7 @@ if ($result && $row = $result->fetch_assoc()) {
 
 $firstname    = htmlspecialchars($user_profile['firstname'] ?? 'Nicht angegeben');
 $lastname     = htmlspecialchars($user_profile['lastname'] ?? 'Nicht angegeben');
-$about_me     = !empty($user_profile['about_me']) ? htmlspecialchars($user_profile['about_me']) : 'Keine Informationen über mich.';
+$about_me     = !empty($user_profile['about_me']) ? htmlspecialchars($user_profile['about_me']) : '<p class="text-muted fst-italic">„Keine Informationen über mich.“</p>';
 $register_date = (!empty($register_date_raw) && strtotime($register_date_raw) !== false)
     ? date('d.m.Y', strtotime($register_date_raw))
     : 'Unbekannt';
@@ -129,7 +129,7 @@ $gender_map = [
 
 $gender_display = $gender_map[$gender_raw] ?? '-';
 
-$signatur = $user_profile['signatur'] ??'„Keep coding & carry on.“';
+$signatur     = !empty($user_profile['signatur']) ? htmlspecialchars($user_profile['signatur']) : '<p class="text-muted fst-italic">„Keep coding & carry on.“</p>';
 
 // Social Media Links
 $facebook_url  = !empty($user_socials['facebook'])  ? htmlspecialchars($user_socials['facebook'])  : '';
@@ -240,7 +240,7 @@ $data_array = [
     'user_role'       => $role_name,
     'user_points'     => $points,
     'user_about'      => $about_me,
-    'user_birthday' => $birthday,
+    'user_birthday'   => $birthday,
     'user_age'        => $age,
     
 
@@ -283,9 +283,9 @@ $data_array = [
     'lang_about_age'           => $languageService->get('about_age'),
     'lang_about_location'      => $languageService->get('about_location'),
     'lang_about_gender'        => $languageService->get('about_gender'),
-    'male'        => $languageService->get('about_gender_male'),
-    'gender_female'        => $languageService->get('about_gender_female'),
-    'gender_other'        => $languageService->get('about_gender_other'),
+    'male'                     => $languageService->get('about_gender_male'),
+    'gender_female'            => $languageService->get('about_gender_female'),
+    'gender_other'             => $languageService->get('about_gender_other'),
 
 
     'lang_registered_since'    => $languageService->get('registered_since'),
