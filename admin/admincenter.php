@@ -80,7 +80,6 @@ include('system/settings.php');
 include('system/functions.php');
 include('system/plugin.php');
 include('system/widget.php');
-include('system/version.php');
 include('system/multi_language.php');
 include('system/classes/Template.php');
 include('system/classes/TextFormatter.php');

@@ -24,6 +24,8 @@ use webspell\AccessControl;
 // Den Admin-Zugriff für das Modul überprüfen
 AccessControl::checkAdminAccess('ac_overview');
 
+$version = trim(file_get_contents(__DIR__ . '/version.txt'));
+
 $phpversion = phpversion() < '4.3' ? '<font color="#FF0000">' . phpversion() . '</font>' :
     '<font color="#008000">' . phpversion() . '</font>';
 $zendversion = zend_version() < '1.3' ? '<font color="#FF0000">' . zend_version() . '</font>' :
@@ -155,7 +157,7 @@ $db = $ret[ 0 ];
                 </tr>
             </thead>
             <tbody>
-                <tr><td><?php echo $languageService->module['webspell_version']; ?></td><td><em class="text-success"><?php echo $version; ?></em></td></tr>
+                <tr><td><?php echo $languageService->module['nexpell_version']; ?></td><td><em class="text-success"><?php echo $version; ?></em></td></tr>
                 <tr><td><?php echo $languageService->module['php_version']; ?></td><td><em><?php echo $phpversion; ?></em></td></tr>
                 <tr><td><?php echo $languageService->module['zend_version']; ?></td><td><em><?php echo $zendversion; ?></em></td></tr>
                 <tr><td><?php echo $languageService->module['mysql_version']; ?></td><td><em><?php echo $mysqlversion; ?></em></td></tr>

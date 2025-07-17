@@ -43,7 +43,7 @@ $language_array = array(
     'system_information' => 'Systeminformationen',
     'value' => 'Wert',
     'version' => 'Version',
-    'webspell_version' => 'Webspell RM Version',
+    'nexpell_version' => 'nexpell Version',
     'zend_version' => 'Zend-Version'
 );
 

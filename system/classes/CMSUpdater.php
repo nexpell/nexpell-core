@@ -23,9 +23,9 @@ class CMSUpdater
         $this->log("Prüfe und aktualisiere Datenbank...");
 
         // Beispiel: neue Spalte einfügen, wenn sie nicht existiert
-        $result = $_database->query("SHOW COLUMNS FROM `users` LIKE 'last_update'");
+        $result = $_database->query("SHOW COLUMNS FROM `settings` LIKE 'last_update'");
         if ($result->num_rows === 0) {
-            $_database->query("ALTER TABLE `users` ADD `last_update` DATETIME DEFAULT NULL");
+            $_database->query("ALTER TABLE `settings` ADD `last_update` DATETIME DEFAULT NULL");
             $this->log("Spalte 'last_update' hinzugefügt.");
         } else {
             $this->log("Spalte 'last_update' bereits vorhanden.");

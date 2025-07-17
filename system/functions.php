@@ -504,6 +504,12 @@ if (file_exists('classes/LanguageManager.php')) {
 #    systeminc('../system/classes/Router');
 #}
 
+if (file_exists('classes/DatabaseMigrationHelper.php')) {
+    systeminc('classes/DatabaseMigrationHelper');
+} else {
+    systeminc('../system/classes/DatabaseMigrationHelper');
+}
+
 
 
 function getCurrentLanguage(): string
