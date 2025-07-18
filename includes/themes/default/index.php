@@ -27,7 +27,6 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-
 // Session starten, falls noch nicht gestartet
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -84,14 +83,10 @@ $theme_name = 'default';
 $description = $description ?? 'Standard Beschreibung für die Webseite';
 $keywords = $keywords ?? 'keyword1, keyword2, keyword3';
 
-
-
-    // Verbindungs-Setup und wichtige Includes
+// Verbindungs-Setup und wichtige Includes
 require_once './system/widget.php'; // Enthält renderWidget()
 
-
 // Seitenname für Widgets-Abfrage
-#$page = 'index';
 $page = isset($_GET['site']) ? $_GET['site'] : 'index';
 
 // SQL-Escape für $page
@@ -113,8 +108,6 @@ if (!empty($positions)) {
 }
 
 loadPluginHeadAssets();
-
-
 
 // Header-Kompatibilität
 header('X-UA-Compatible: IE=edge');
@@ -245,7 +238,6 @@ echo $plugin_loadheadfile_widget_css ?? '';
         </div>
     </main>
 
-
     <!-- Bottom Widgets -->
     <?php if (!empty($positions['bottom'])): ?>
     
@@ -258,7 +250,6 @@ echo $plugin_loadheadfile_widget_css ?? '';
     <?php echo get_footer_modul(); ?>
 
 </div>
-
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <div class="scroll-top-wrapper">
@@ -282,11 +273,6 @@ echo $plugin_loadheadfile_widget_js ?? '';
 echo '<!--Plugin & Widget js END-->' . PHP_EOL;
 ?>
 
-<!--<script defer src="./components/cookies/js/iframemanager.js"></script>
-<script defer src="./components/cookies/js/cookieconsent.js"></script>
-<script defer src="./components/cookies/js/cookieconsent-init.js"></script>
-<script defer src="./components/cookies/js/app.js"></script>-->
-
 <!-- Cookie Consent Banner -->
 <div id="cookie-overlay" style="
     position: fixed;
@@ -296,15 +282,6 @@ echo '<!--Plugin & Widget js END-->' . PHP_EOL;
     display: none; /* wird nur angezeigt, wenn nötig */
 "></div>
 <?php include 'cookie-consent.php'; ?>
-
-
-
-
-
-
-
-
-
 
 <script src="./components/ckeditor/ckeditor.js"></script>
 <script src="./components/ckeditor/config.js"></script>
