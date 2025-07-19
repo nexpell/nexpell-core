@@ -79,11 +79,4 @@ const PLUGIN_INSTALLED = {
   </div>
 </div>
 
-
-
-
-<style>
-  .d-none { display: none !important; }
-</style>
-
 <script src="/includes/themes/default/js/cookie-consent.js"></script>
