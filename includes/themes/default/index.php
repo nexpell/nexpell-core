@@ -251,7 +251,6 @@ echo $plugin_loadheadfile_widget_css ?? '';
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <div class="scroll-top-wrapper">
     <span class="scroll-top-inner">
         <i class="bi bi-arrow-up-circle" style="font-size: 2rem;" aria-label="Nach oben scrollen"></i>
