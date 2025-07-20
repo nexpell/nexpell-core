@@ -1,6 +1,6 @@
 <?php
 
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
@@ -17,7 +17,7 @@ $languageService = new LanguageService($_database);
 // Admin-Modul laden
 $languageService->readModule('db_stats', true);
 
-use webspell\AccessControl;
+use nexpell\AccessControl;
 // Admin-Zugriff prüfen
 AccessControl::checkAdminAccess('ac_db_stats');
 

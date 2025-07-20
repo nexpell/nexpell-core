@@ -1,7 +1,7 @@
 <?php
 
-use webspell\LanguageService;
-use webspell\AccessControl;
+use nexpell\LanguageService;
+use nexpell\AccessControl;
 
 // Session starten
 if (session_status() === PHP_SESSION_NONE) {

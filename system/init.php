@@ -3,7 +3,7 @@ require_once __DIR__ . '/classes/TextFormatter.php';
 
 global $_database;
 // LanguageService einbinden (Namespace beachten!)
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Instanz erzeugen und global verfügbar machen
 global $languageService;

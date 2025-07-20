@@ -1,10 +1,10 @@
 <?php
-namespace webspell;
+namespace nexpell;
 
 // Nur konfigurieren und starten, wenn noch keine Session läuft
 if (session_status() === PHP_SESSION_NONE) {
     // Eigener Session-Name
-    session_name('webspell_session');
+    session_name('nexpell_session');
 
     // Cookie-Einstellungen
     ini_set('session.cookie_lifetime', 3600);  // Cookie gültig 1 Stunde

@@ -1,5 +1,5 @@
 <?php
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {

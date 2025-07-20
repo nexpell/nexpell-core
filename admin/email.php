@@ -1,6 +1,6 @@
 <?php
 
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
@@ -17,7 +17,7 @@ $languageService = new LanguageService($_database);
 // Admin-Modul laden
 $languageService->readModule('email', true);
 
-use webspell\AccessControl;
+use nexpell\AccessControl;
 
 // Admin-Zugriff für das Modul prüfen
 AccessControl::checkAdminAccess('ac_email');
@@ -29,7 +29,7 @@ if (isset($_GET[ 'action' ])) {
 }
 
 if (isset($_POST[ 'submit' ])) {
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_POST[ 'captcha_hash' ])) {
         safe_query(
             "UPDATE
@@ -54,9 +54,9 @@ if (isset($_POST[ 'submit' ])) {
     $subject = $languageService->get('test_subject');
     $message = $languageService->get('test_message');
 
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_POST[ 'captcha_hash' ])) {
-        $sendmail = \webspell\Email::sendEmail($admin_email, 'Test eMail', $to, $subject, $message);
+        $sendmail = \nexpell\Email::sendEmail($admin_email, 'Test eMail', $to, $subject, $message);
         if ($sendmail['result'] == 'fail') {
             if (isset($sendmail['debug'])) {
                 echo '<b>' . $languageService->get('test_fail') . '</b>';
@@ -81,7 +81,7 @@ if (isset($_POST[ 'submit' ])) {
         redirect("admincenter.php?site=email&amp;action=test", $languageService->get('transaction_invalid'), 3);
     }
 } elseif ($action == "test") {
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
 
@@ -122,7 +122,7 @@ if (isset($_POST[ 'submit' ])) {
         </div>
         ';
 } else {
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
 

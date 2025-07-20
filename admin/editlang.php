@@ -1,5 +1,5 @@
 <?php
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
@@ -16,7 +16,7 @@ $languageService = new LanguageService($_database);
 // Admin-Modul laden
 $languageService->readModule('editlang', true);
 
-use webspell\AccessControl;
+use nexpell\AccessControl;
 // Den Admin-Zugriff für das Modul überprüfen
 AccessControl::checkAdminAccess('ac_editlang');
 

@@ -1,9 +1,9 @@
 <?php
 
-use webspell\LanguageService;
-use webspell\AccessControl;
-use webspell\PluginUninstaller;
-use webspell\Plugininstaller;
+use nexpell\LanguageService;
+use nexpell\AccessControl;
+use nexpell\PluginUninstaller;
+use nexpell\Plugininstaller;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
@@ -26,7 +26,7 @@ AccessControl::checkAdminAccess('ac_plugin_installer');
 
 // Konfiguration
 $plugin_dir = '../includes/plugins/';
-$plugin_path = 'https://www.update.webspell-rm.de/plugins';
+$plugin_path = 'https://www.update.nexpell.de/plugins';
 $plugin_json_url = $plugin_path . '/plugins.json';
 
 // Plugin installieren, updaten oder deinstallieren
@@ -283,7 +283,7 @@ echo '
 function download_plugin_files(string $plugin_folder, string $local_plugin_folder, string $plugin_path): bool
 {
     // Vollständige URL zum Download der ZIP-Datei, z.B.:
-    // https://www.update.webspell-rm.de/plugins/download.php?plugin=mein_plugin&site=deinedomain.de
+    // https://www.update.nexpell.de/plugins/download.php?plugin=mein_plugin&site=deinedomain.de
     $url = rtrim($plugin_path, '/') . '/download.php?plugin=' . rawurlencode($plugin_folder) . '&site=' . rawurlencode($_SERVER['SERVER_NAME']);
     
     // Temporärer Pfad für die ZIP-Datei

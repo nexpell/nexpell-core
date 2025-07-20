@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-use webspell\LoginSecurity;
+use nexpell\LoginSecurity;
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -26,7 +26,7 @@ include('../system/multi_language.php');
 
 // Sprachmodul laden
 #$_language->readModule('login', false, true);
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Sprachauswahl setzen (falls noch nicht)
 if (!isset($_SESSION['language'])) {
@@ -140,8 +140,8 @@ if (!empty($email) && LoginSecurity::isEmailBanned($ip, $email)) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="webSPELL-RM CMS Admin Login">
-    <title>webSpell | RM - Admin Login</title>
+    <meta name="description" content="nexpell CMS Admin Login">
+    <title>nexpell - Admin Login</title>
 
     <link href="/admin/css/bootstrap.min.css" rel="stylesheet">
     <link href="/admin/css/style.css" rel="stylesheet">

@@ -1,5 +1,5 @@
 <?php
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
@@ -16,7 +16,7 @@ $languageService = new LanguageService($_database);
 // Admin-Modul laden
 $languageService->readModule('contact', true);
 
-use webspell\AccessControl;
+use nexpell\AccessControl;
 
 // Admin-Zugriff für das Modul prüfen
 AccessControl::checkAdminAccess('ac_contact');
@@ -30,7 +30,7 @@ if (isset($_GET[ 'action' ])) {
 // Kontakt löschen
 if (isset($_GET['delete'])) {
     $contactID = (int)$_GET['contactID'];
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_GET['captcha_hash'])) {
         safe_query("DELETE FROM `contact` WHERE `contactID` = '$contactID'");
     } else {
@@ -41,7 +41,7 @@ if (isset($_GET['delete'])) {
 // Kontakte sortieren
 elseif (isset($_POST['sortieren'])) {
     $sortcontact = $_POST['sortcontact'];
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
         if (is_array($sortcontact)) {
             foreach ($sortcontact as $sortstring) {
@@ -58,7 +58,7 @@ elseif (isset($_POST['sortieren'])) {
 elseif (isset($_POST['save'])) {
     $name = $_POST['name'];
     $email = $_POST['email'];
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
         if (checkforempty(['name', 'email'])) {
             safe_query("INSERT INTO `contact` (`name`, `email`, `sort`) VALUES ('$name', '$email', '1')");
@@ -75,7 +75,7 @@ elseif (isset($_POST['saveedit'])) {
     $name = $_POST['name'];
     $email = $_POST['email'];
     $contactID = (int)$_POST['contactID'];
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
         if (checkforempty(['name', 'email'])) {
             safe_query("UPDATE `contact` SET `name` = '$name', `email` = '$email' WHERE `contactID` = '$contactID'");
@@ -89,7 +89,7 @@ elseif (isset($_POST['saveedit'])) {
 
 // Kontaktformular anzeigen (Add/Edit)
 if (isset($_GET['action'])) {
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
 
@@ -189,7 +189,7 @@ else {
     $count = mysqli_fetch_assoc(safe_query("SELECT COUNT(*) AS cnt FROM `contact`"))['cnt'];
     $i = 1;
 
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
 

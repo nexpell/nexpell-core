@@ -4,8 +4,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-use webspell\AccessControl;
-use webspell\LanguageService;
+use nexpell\AccessControl;
+use nexpell\LanguageService;
 
 global $languageService;
 

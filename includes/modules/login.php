@@ -4,8 +4,8 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 $message = '';
 
-use webspell\LoginSecurity;
-use webspell\LanguageService;
+use nexpell\LoginSecurity;
+use nexpell\LanguageService;
 
 // Initialisieren
 global $_database, $languageService;

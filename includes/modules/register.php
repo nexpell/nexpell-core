@@ -5,9 +5,9 @@ if (session_status() === PHP_SESSION_NONE) {
 
     // LoginSecurity laden
 require_once "system/config.inc.php";
-use webspell\LoginSecurity;
-use webspell\Email;
-use webspell\LanguageService;
+use nexpell\LoginSecurity;
+use nexpell\Email;
+use nexpell\LanguageService;
 
 #require_once __DIR__ . '/../../system/config.inc.php';
 

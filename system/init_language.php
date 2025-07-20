@@ -18,7 +18,7 @@ if (isset($_GET['new_lang'])) {
 
 require_once __DIR__ . '/classes/LanguageService.php';
 
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 global $languageService;
 global $_database; // die bestehende mysqli-Verbindung aus dem globalen Scope

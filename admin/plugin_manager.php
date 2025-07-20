@@ -1,6 +1,6 @@
 <?php
 
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
@@ -18,7 +18,7 @@ $languageService = new LanguageService($_database);
 // Admin-Modul laden
 $languageService->readModule('plugin_manager', true);
 
-use webspell\AccessControl;
+use nexpell\AccessControl;
 // Den Admin-Zugriff für das Modul überprüfen
 AccessControl::checkAdminAccess('ac_plugin_manager');
 
@@ -246,7 +246,7 @@ if (!empty(@$db['active'] == 1) !== false) {
     
     ###FOOTER#################################
     if (isset($_POST['sortieren'])) {
-        $CAPCLASS = new \webspell\Captcha;
+        $CAPCLASS = new \nexpell\Captcha;
         if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
 
             $sort = $_POST['sort'];
@@ -260,7 +260,7 @@ if (!empty(@$db['active'] == 1) !== false) {
     }
 
     if (isset($_GET["delete"])) {
-        $CAPCLASS = new \webspell\Captcha();
+        $CAPCLASS = new \nexpell\Captcha();
         if ($CAPCLASS->checkCaptcha(0, $_GET['captcha_hash'])) {
             $id = $_GET['id'];
 
@@ -313,7 +313,7 @@ if (!empty(@$db['active'] == 1) !== false) {
 if ($action == "edit") {
         $id = $_GET['id'];
 
-        $CAPCLASS = new \webspell\Captcha;
+        $CAPCLASS = new \nexpell\Captcha;
         $CAPCLASS->createTransaction();
         $hash = $CAPCLASS->getHash();
 
@@ -553,7 +553,7 @@ if ($action == "edit") {
 
         $id = $_GET['id'];
 
-        $CAPCLASS = new \webspell\Captcha;
+        $CAPCLASS = new \nexpell\Captcha;
         $CAPCLASS->createTransaction();
         $hash = $CAPCLASS->getHash();
 
@@ -641,7 +641,7 @@ if ($action == "edit") {
         $id = $_GET['id'];
         $widgetname = $_GET['widgetname'];
 
-        $CAPCLASS = new \webspell\Captcha;
+        $CAPCLASS = new \nexpell\Captcha;
         $CAPCLASS->createTransaction();
         $hash = $CAPCLASS->getHash();
 
@@ -870,7 +870,7 @@ if ($action == "edit") {
                     $thergebnis = safe_query("SELECT * FROM settings_themes WHERE active = '1'");
                     $db = mysqli_fetch_array($thergebnis);
 
-                    $CAPCLASS = new \webspell\Captcha;
+                    $CAPCLASS = new \nexpell\Captcha;
                     $CAPCLASS->createTransaction();
                     $hash = $CAPCLASS->getHash();
 

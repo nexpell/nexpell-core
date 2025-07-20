@@ -1,5 +1,5 @@
 <?php
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
@@ -16,7 +16,7 @@ $languageService = new LanguageService($_database);
 // Admin-Modul laden
 $languageService->readModule('headstyle', true);
 
-use webspell\AccessControl;
+use nexpell\AccessControl;
 
 // Admin access check
 AccessControl::checkAdminAccess('ac_headstyle');

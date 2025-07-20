@@ -1,7 +1,7 @@
 <?php
 
-use webspell\PluginSettings;
-use webspell\LanguageService;
+use nexpell\PluginSettings;
+use nexpell\LanguageService;
 
 global $languageService;
 

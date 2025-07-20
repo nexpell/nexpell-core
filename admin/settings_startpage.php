@@ -1,6 +1,6 @@
 <?php
 
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
@@ -17,11 +17,11 @@ $languageService = new LanguageService($_database);
 // Admin-Modul laden
 $languageService->readModule('startpage', true);
 
-use webspell\AccessControl;
+use nexpell\AccessControl;
 
 // Den Admin-Zugriff für das Modul überprüfen
 AccessControl::checkAdminAccess('ac_startpage');
-$CAPCLASS = new \webspell\Captcha;
+$CAPCLASS = new \nexpell\Captcha;
 $tpl = new Template();
 
 // Wenn das Formular gesendet wurde
@@ -36,7 +36,7 @@ if (isset($_POST['submit'])) {
     
     $current_datetime = date("Y-m-d H:i:s");
 
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
         if (mysqli_num_rows(safe_query("SELECT * FROM settings_startpage"))) {
             safe_query("UPDATE settings_startpage SET date=CURRENT_TIMESTAMP, title='" . $title . "', startpage_text='" . $startpage_text . "', editor='" . $editor . "'");

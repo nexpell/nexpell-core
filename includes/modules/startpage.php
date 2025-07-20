@@ -1,11 +1,11 @@
 <?php
 
-use webspell\LanguageService;
-
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+use nexpell\LanguageService;
 
 // Standard setzen, wenn nicht vorhanden
 $_SESSION['language'] = $_SESSION['language'] ?? 'de';

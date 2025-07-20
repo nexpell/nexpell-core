@@ -1,5 +1,5 @@
 <?php
-namespace webspell;
+namespace nexpell;
 
 class CMSUpdater
 {

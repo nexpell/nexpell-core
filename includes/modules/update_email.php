@@ -4,7 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-use webspell\LoginSecurity;
+use nexpell\LoginSecurity;
 
 global $_database;
 

@@ -4,8 +4,8 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-use webspell\CMSUpdater;
-use webspell\AccessControl;
+use nexpell\CMSUpdater;
+use nexpell\AccessControl;
 
 // Admin-Zugriff prüfen
 AccessControl::checkAdminAccess('ac_update_core');
@@ -21,7 +21,7 @@ $data_array = [];
 
 define("CURRENT_VERSION", trim(@file_get_contents(__DIR__ . '/version.txt')) ?: "1.0.0");
 
-$update_info_url = "https://update.webspell-rm.de/updates/update_info.json";
+$update_info_url = "https://update.nexpell.de/updates/update_info.json";
 $update_info_json = @file_get_contents($update_info_url);
 $update_info = $update_info_json ? json_decode($update_info_json, true) : null;
 
@@ -143,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             try {
                 global $migrator;
-                $migrator = new \webspell\DatabaseMigrationHelper($_database);
+                $migrator = new \nexpell\DatabaseMigrationHelper($_database);
 
                 include $sql_file;
 

@@ -3,9 +3,9 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-use webspell\LoginSecurity;
-use webspell\Email;
-use webspell\LanguageService;
+use nexpell\LoginSecurity;
+use nexpell\Email;
+use nexpell\LanguageService;
 
 global $_database,$languageService;
 

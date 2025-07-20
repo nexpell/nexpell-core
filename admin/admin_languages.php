@@ -1,8 +1,8 @@
 <?php
 
-use webspell\LanguageManager;
-use webspell\LanguageService;
-use webspell\AccessControl;
+use nexpell\LanguageManager;
+use nexpell\LanguageService;
+use nexpell\AccessControl;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {

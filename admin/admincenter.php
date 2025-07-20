@@ -1,19 +1,18 @@
 <?php
 /**
  * ─────────────────────────────────────────────────────────────────────────────
- * Webspell-RM 3.0 - Modern Content & Community Management System
+ * nexpell 1.0 - Modern Content & Community Management System
  * ─────────────────────────────────────────────────────────────────────────────
  *
- * @version       3.0
+ * @version       1.0
  * @build         Stable Release
  * @release       2025
- * @copyright     © 2018–2025 Webspell-RM | https://www.webspell-rm.de
+ * @copyright     © 2025 nexpell | https://www.nexpell.de
  * 
- * @description   Webspell-RM is a modern open source CMS designed for gaming
+ * @description   nexpell is a modern open source CMS designed for gaming
  *                communities, esports teams, and digital projects of any kind.
  * 
- * @author        Based on the original WebSPELL Clanpackage by Michael Gruber
- *                (webspell.at), further developed by the Webspell-RM Team.
+ * @author        The nexpell Team
  * 
  * @license       GNU General Public License (GPL)
  *                This software is distributed under the terms of the GPL.
@@ -21,9 +20,9 @@
  *                For license details, see: https://www.gnu.org/licenses/gpl.html
  * 
  * @support       Support, updates, and plugins available at:
- *                → Website: https://www.webspell-rm.de
- *                → Forum:   https://www.webspell-rm.de/forum.html
- *                → Wiki:    https://www.webspell-rm.de/wiki.html
+ *                → Website: https://www.nexpell.de
+ *                → Forum:   https://www.nexpell.de/forum.html
+ *                → Wiki:    https://www.nexpell.de/wiki.html
  * 
  * ─────────────────────────────────────────────────────────────────────────────
  */
@@ -33,7 +32,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-use webspell\RoleManager;
+use nexpell\RoleManager;
 
 
 // Überprüfen, ob der Benutzer bereits eingeloggt ist
@@ -91,7 +90,7 @@ $load = new plugin_manager();
 #$_language->readModule('admincenter', false, true);
 
 
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
@@ -306,13 +305,13 @@ header('Content-Type: text/html; charset=UTF-8');
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="Website using webSPELL-RM CMS">
-	<meta name="copyright" content="Copyright &copy; 2017-2023 by webspell-rm.de">
-	<meta name="author" content="webspell-rm.de">
+	<meta name="description" content="Website using nexpell CMS">
+	<meta name="copyright" content="Copyright &copy; 2017-2025 by nexpell.de">
+	<meta name="author" content="nexpell.de">
 
 	<link rel="SHORTCUT ICON" href="/admin/images/favicon.ico">
 
-	<title>Webspell-RM - Bootstrap Admin Theme</title>
+	<title>nexpell - Bootstrap Admin Theme</title>
 
 	<!-- Bootstrap Core CSS -->
 	<link href="/admin/css/bootstrap.min.css" rel="stylesheet">

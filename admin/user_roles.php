@@ -1,5 +1,5 @@
 <?php
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
@@ -20,12 +20,12 @@ $languageService->readModule('user_roles', true);
 #$_language->readModule('access_rights', false, true);
 #$_language->readModule('user_roles', false, true);
 
-#use webspell\AccessControl;
+#use nexpell\AccessControl;
 // Den Admin-Zugriff für das Modul überprüfen
 #AccessControl::checkAdminAccess('ac_user_roles');
 
-use webspell\LoginSecurity;
-use webspell\Email;
+use nexpell\LoginSecurity;
+use nexpell\Email;
 
 
 

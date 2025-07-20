@@ -1,6 +1,6 @@
 <?php
 
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
@@ -22,7 +22,7 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-use webspell\AccessControl;
+use nexpell\AccessControl;
 // Den Admin-Zugriff für das Modul überprüfen
 AccessControl::checkAdminAccess('ac_statistic');
 
@@ -105,9 +105,9 @@ require_once("../system/sql.php");
 echo '<h2>System-Statistiken</h2>';
 echo '<table class="table table-striped">';
 
-// Webspell-Version (optional aus Konstante oder Datei lesen)
-$webspell_version = defined('WEBSPELL_VERSION') ? WEBSPELL_VERSION : 'Unbekannt';
-echo "<tr><td>Webspell-Version</td><td>$version</td></tr>";
+// nexpell-Version (optional aus Konstante oder Datei lesen)
+$nexpell_version = defined('nexpell_VERSION') ? nexpell_VERSION : 'Unbekannt';
+echo "<tr><td>nexpell-Version</td><td>$version</td></tr>";
 
 // PHP-Version
 echo "<tr><td>PHP-Version</td><td>" . phpversion() . "</td></tr>";

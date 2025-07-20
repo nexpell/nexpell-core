@@ -1,5 +1,5 @@
 <?php
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
@@ -17,7 +17,7 @@ $languageService = new LanguageService($_database);
 // Admin-Modul laden
 $languageService->readModule('dashnavi', true);
 
-use webspell\AccessControl;
+use nexpell\AccessControl;
 // Den Admin-Zugriff für das Modul überprüfen
 AccessControl::checkAdminAccess('ac_dashboard_navigation');
 
@@ -195,7 +195,7 @@ if ($action == "add") {
     
 
     // Captcha erstellen
-$CAPCLASS = new \webspell\Captcha;
+$CAPCLASS = new \nexpell\Captcha;
 $CAPCLASS->createTransaction();
 $_SESSION['captcha_hash'] = $CAPCLASS->getHash();
 $hash = $_SESSION['captcha_hash'];
@@ -295,7 +295,7 @@ while ($dc = mysqli_fetch_array($category)) {
 $cats .= '</select>';
 
 // Captcha erstellen
-$CAPCLASS = new \webspell\Captcha;
+$CAPCLASS = new \nexpell\Captcha;
 $CAPCLASS->createTransaction();
 $_SESSION['captcha_hash'] = $CAPCLASS->getHash();
 $hash = $_SESSION['captcha_hash'];
@@ -428,7 +428,7 @@ if (isset($_POST['savecat'])) {
 
 
 // Captcha-Instanz erstellen
-$CAPCLASS = new \webspell\Captcha;
+$CAPCLASS = new \nexpell\Captcha;
 $CAPCLASS->createTransaction();
 $_SESSION['captcha_hash'] = $CAPCLASS->getHash();
 $hash = $_SESSION['captcha_hash'];
@@ -541,7 +541,7 @@ if (!$ds) {
 }
 
 // Captcha-Instanz erstellen
-$CAPCLASS = new \webspell\Captcha;
+$CAPCLASS = new \nexpell\Captcha;
 $CAPCLASS->createTransaction();
 $_SESSION['captcha_hash'] = $CAPCLASS->getHash();
 $hash = $_SESSION['captcha_hash'];
@@ -729,7 +729,7 @@ $tmp = mysqli_fetch_assoc(safe_query("SELECT count(catID) as cnt FROM navigation
 $anz = $tmp[ 'cnt' ];
 
 // Captcha-Instanz erstellen
-$CAPCLASS = new \webspell\Captcha;
+$CAPCLASS = new \nexpell\Captcha;
 $CAPCLASS->createTransaction();
 $_SESSION['captcha_hash'] = $CAPCLASS->getHash();
 $hash = $_SESSION['captcha_hash'];

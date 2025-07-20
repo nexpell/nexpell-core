@@ -5,7 +5,7 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-use webspell\AccessControl;
+use nexpell\AccessControl;
 
 // Admin-Zugriff überprüfen
 AccessControl::checkAdminAccess('ac_theme');

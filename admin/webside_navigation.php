@@ -1,6 +1,6 @@
 <?php
 
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
@@ -18,7 +18,7 @@ $languageService = new LanguageService($_database);
 // Admin-Modul laden
 $languageService->readModule('webnavi', true);
 
-use webspell\AccessControl;
+use nexpell\AccessControl;
 // Den Admin-Zugriff für das Modul überprüfen
 AccessControl::checkAdminAccess('ac_webside_navigation');
 
@@ -29,7 +29,7 @@ if(!empty(@$db['active'] == 1) !== false) {
 
 if (isset($_GET[ 'delete' ])) {
     $snavID = $_GET[ 'snavID' ];
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_GET[ 'captcha_hash' ])) {
         safe_query("DELETE FROM navigation_website_sub WHERE snavID='$snavID' ");
     } else {
@@ -39,7 +39,7 @@ if (isset($_GET[ 'delete' ])) {
     }
 } elseif (isset($_GET[ 'delcat' ])) {
     $mnavID = $_GET[ 'mnavID' ];
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_GET[ 'captcha_hash' ])) {
         safe_query("UPDATE navigation_website_sub SET mnavID='0' WHERE mnavID='$mnavID' ");
         safe_query("DELETE FROM navigation_website_main WHERE mnavID='$mnavID' ");
@@ -63,7 +63,7 @@ if (isset($_GET[ 'delete' ])) {
         }
     }
 } elseif (isset($_POST[ 'save' ])) {
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
 
     $url = $_POST[ 'link' ];
 
@@ -89,7 +89,7 @@ if (isset($_GET[ 'delete' ])) {
 
 
 } elseif (isset($_POST[ 'savecat' ])) {
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_POST[ 'captcha_hash' ])
     ) {
 
@@ -115,7 +115,7 @@ if (isset($_GET[ 'delete' ])) {
     }
 
 } elseif (isset($_POST[ 'saveedit' ])) {
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     $url = $_POST[ 'link' ];
 
     
@@ -130,7 +130,7 @@ if (isset($_GET[ 'delete' ])) {
     }
 
 } elseif (isset($_POST[ 'saveeditcat' ])) {
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
 
         $url = $_POST[ "link" ];
         #$windows = $_POST[ "windows" ];
@@ -188,7 +188,7 @@ if ($action == "add") {
 
     
     
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
 
@@ -255,7 +255,7 @@ if ($action == "add") {
     $cats .= '</select>';
 
     
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
 
@@ -306,7 +306,7 @@ if ($action == "add") {
 </nav>
      <div class="card-body">';
 
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
 
@@ -366,7 +366,7 @@ if ($action == "add") {
     $ergebnis = safe_query("SELECT * FROM navigation_website_main WHERE mnavID='$mnavID'");
     $ds = mysqli_fetch_array($ergebnis);
 
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
 
@@ -457,7 +457,7 @@ if ($action == "add") {
     $ergebnis = safe_query("SELECT * FROM navigation_website_main ORDER BY sort");
     $tmp = mysqli_fetch_assoc(safe_query("SELECT count(mnavID) as cnt FROM navigation_website_main"));
     $anz = $tmp[ 'cnt' ];
-$CAPCLASS = new \webspell\Captcha;
+$CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
     while ($ds = mysqli_fetch_array($ergebnis)) {
@@ -535,7 +535,7 @@ $CAPCLASS = new \webspell\Captcha;
         $anzlinks = $tmp[ 'cnt' ];
 
         $i = 1;
-        $CAPCLASS = new \webspell\Captcha;
+        $CAPCLASS = new \nexpell\Captcha;
         $CAPCLASS->createTransaction();
         $hash = $CAPCLASS->getHash();
         if (mysqli_num_rows($links)) {

@@ -91,10 +91,10 @@ function system_error($text, $system = 1, $strace = 0)
         <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <meta name="description" content="Clanpage using webSPELL RM CMS">
-            <meta name="author" content="webspell.org">
-            <meta name="generator" content="webSPELL-RM">
-            <title>webSPELL-RM - Error</title>
+            <meta name="description" content="Clanpage using nexpell CMS">
+            <meta name="author" content="nexpell.de">
+            <meta name="generator" content="nexpell">
+            <title>nexpell - Error</title>
             <link href="./components/bootstrap/css/bootstrap.min.css" rel="stylesheet">
             <link href="./components/css/lockpage.css" rel="stylesheet" type="text/css">
         </head>

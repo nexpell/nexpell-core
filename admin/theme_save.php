@@ -1,6 +1,6 @@
 <?php
 
-#use webspell\AccessControl;
+#use nexpell\AccessControl;
 // Den Admin-Zugriff für das Modul überprüfen
 #AccessControl::checkAdminAccess('ac_theme_save');
 

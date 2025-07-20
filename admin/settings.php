@@ -1,6 +1,6 @@
 <?php
 
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
@@ -17,7 +17,7 @@ $languageService = new LanguageService($_database);
 // Admin-Modul laden
 $languageService->readModule('settings', true);
 
-use webspell\AccessControl;
+use nexpell\AccessControl;
 // Den Admin-Zugriff für das Modul überprüfen
 AccessControl::checkAdminAccess('ac_settings');
 
@@ -29,7 +29,7 @@ if (isset($_GET[ 'action' ])) {
 
 
 if(isset($_POST['submit'])) {
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_POST[ 'captcha_hash' ])) {
         safe_query(
             "UPDATE
@@ -59,7 +59,7 @@ if(isset($_POST['submit'])) {
 }
 
 if (isset($_POST["saveedit"])) {
-        $CAPCLASS = new \webspell\Captcha;
+        $CAPCLASS = new \nexpell\Captcha;
         if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
 
             safe_query(
@@ -105,7 +105,7 @@ echo '
             <i class="bi bi-gear-wide-connected"></i> ' . $languageService->get('social_settings') . '
         </a>';
 
-$CAPCLASS = new \webspell\Captcha;
+$CAPCLASS = new \nexpell\Captcha;
 $CAPCLASS->createTransaction();
 $hash = $CAPCLASS->getHash();
 
@@ -341,7 +341,7 @@ echo '<div class="card">
 $ds = mysqli_fetch_array(safe_query("SELECT * FROM settings_social_media"));
 
 // Captcha-Objekt erzeugen und Transaktion starten
-$CAPCLASS = new \webspell\Captcha;
+$CAPCLASS = new \nexpell\Captcha;
 $CAPCLASS->createTransaction();
 $hash = $CAPCLASS->getHash();
 

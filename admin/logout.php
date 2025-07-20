@@ -6,7 +6,7 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 // Namespace verwenden (falls vorhanden)
-use webspell\LoginCookie;
+use nexpell\LoginCookie;
 
 // Session starten, falls noch nicht aktiv
 if (session_status() === PHP_SESSION_NONE) {

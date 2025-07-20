@@ -1,7 +1,7 @@
 <?php
 
 
-namespace webspell\logging;
+namespace nexpell\logging;
 
 class AdminLogger
 {

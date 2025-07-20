@@ -1,6 +1,6 @@
 <?php
 
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 function settitle($string)
 {
@@ -15,7 +15,7 @@ function extractFirstElement($element)
 
 function getPageTitle($url = null, $prefix = true)
 {
-    $data = parseWebspellURL($url);
+    $data = parsenexpellURL($url);
 
     if (!is_array($data)) {
         return $prefix ? settitle('') : '';
@@ -41,7 +41,7 @@ function getPageTitle($url = null, $prefix = true)
 }
 
 
-function parseWebspellURL($parameters = null)
+function parsenexpellURL($parameters = null)
 { 
 
 global $languageService;
@@ -138,7 +138,7 @@ if (!isset($languageService) || !$languageService instanceof LanguageService) {
                         // Meta-Beschreibung aus Artikel-Content (max. 160 Zeichen, ohne HTML)
                         $metadata['description'] = mb_substr(strip_tags($article['content']), 0, 160);
                         // Keywords aus Tags
-                        $metadata['keywords'] = \webspell\Tags::getTags('articles', $articleID);
+                        $metadata['keywords'] = \nexpell\Tags::getTags('articles', $articleID);
                     }
                 } else {
                     $returned_title[] = [$languageService->get('articles')];
@@ -291,7 +291,7 @@ if (!isset($languageService) || !$languageService instanceof LanguageService) {
                         'index.php?site=faq&amp;action=faqcat&amp;faqcatID=' . $faqcatID
                     );
                     $returned_title[] = array($get2['question']);
-                    $metadata['keywords'] = \webspell\Tags::getTags('faq', $faqID);
+                    $metadata['keywords'] = \nexpell\Tags::getTags('faq', $faqID);
                 } else {
                     $returned_title[] = array($languageService->get('faq'));
                 }
@@ -512,7 +512,7 @@ if (!isset($languageService) || !$languageService instanceof LanguageService) {
                     }
 
                     // Keywords aus Tags generieren (Tags-System bleibt gleich)
-                    $metadata['keywords'] = \webspell\Tags::getTags('links', $link_id);
+                    $metadata['keywords'] = \nexpell\Tags::getTags('links', $link_id);
                 } else {
                     $returned_title[] = [$languageService->get('links')];
                 }
@@ -623,7 +623,7 @@ if (!isset($languageService) || !$languageService instanceof LanguageService) {
                         
                     );
                     $returned_title[] = array($get2['headline']);
-                    $metadata['keywords'] = \webspell\Tags::getTags('news', $newsID);
+                    $metadata['keywords'] = \nexpell\Tags::getTags('news', $newsID);
                 } else {
                     $returned_title[] = array($languageService->get('news'));
                     $returned_title[] = array($get2['headline']);
@@ -751,7 +751,7 @@ if (!isset($languageService) || !$languageService instanceof LanguageService) {
                     $username = getusername($id);
                     if ($username) {
                         $returned_title[] = [$username];
-                        $metadata['keywords'] = \webspell\Tags::getTags('profile', $id);
+                        $metadata['keywords'] = \nexpell\Tags::getTags('profile', $id);
                     }
                 }
                 break;
@@ -760,7 +760,7 @@ if (!isset($languageService) || !$languageService instanceof LanguageService) {
             case 'userlist':
                 $returned_title[] = [$languageService->get('userlist')];
                 // Optional: Meta-Daten, falls vorhanden
-                // $metadata['keywords'] = \webspell\Tags::getTags('userlist');
+                // $metadata['keywords'] = \nexpell\Tags::getTags('userlist');
                 break;
 
 
@@ -801,7 +801,7 @@ if (!isset($languageService) || !$languageService instanceof LanguageService) {
                     }
 
                     // Meta Keywords aus Tags
-                    $metadata['keywords'] = \webspell\Tags::getTags('sponsors', $sponsorID);
+                    $metadata['keywords'] = \nexpell\Tags::getTags('sponsors', $sponsorID);
                 }
                 break;
 
@@ -854,7 +854,7 @@ if (!isset($languageService) || !$languageService instanceof LanguageService) {
                     $metadata['description'] = $desc;
                 }
 
-                $metadata['keywords'] = \webspell\Tags::getTags('static', $staticID);
+                $metadata['keywords'] = \nexpell\Tags::getTags('static', $staticID);
 
                 break;
 
@@ -891,7 +891,7 @@ if (!isset($languageService) || !$languageService instanceof LanguageService) {
                 }
 
                 // Optional: Keywords, wenn du welche hinterlegen willst (z.B. Tags)
-                // $metadata['keywords'] = \webspell\Tags::getTags('privacy_policy', $privacyPolicyID);
+                // $metadata['keywords'] = \nexpell\Tags::getTags('privacy_policy', $privacyPolicyID);
 
                 break;
 
@@ -943,7 +943,7 @@ if (!isset($languageService) || !$languageService instanceof LanguageService) {
                 }
 
                 // Optional: Keywords, falls Tags verwendet werden
-                // $metadata['keywords'] = \webspell\Tags::getTags('clan_rules', $clanRulesID);
+                // $metadata['keywords'] = \nexpell\Tags::getTags('clan_rules', $clanRulesID);
 
                 break;
 
@@ -984,7 +984,7 @@ if (!isset($languageService) || !$languageService instanceof LanguageService) {
                         'index.php?site=videos&amp;action=watch&amp;videoscatID=' . $videoscatID
                     );
                     $returned_title[] = array($get2['videoname']);
-                    $metadata['keywords'] = \webspell\Tags::getTags('videos', $videosID);
+                    $metadata['keywords'] = \nexpell\Tags::getTags('videos', $videosID);
                 } else {
                     $returned_title[] = array($languageService->get('videos'));
                     #$returned_title[] = array($get2['videoname']);

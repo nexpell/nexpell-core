@@ -4,7 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 global $languageService;
 
@@ -107,7 +107,7 @@ if ($action == "send") {
             ';
 
 
-        $sendmail = \webspell\Email::sendEmail($from, 'Contact', $getemail, stripslashes($subject), $message);
+        $sendmail = \nexpell\Email::sendEmail($from, 'Contact', $getemail, stripslashes($subject), $message);
 
         if ($sendmail['result'] == 'fail') {
             $fehler[] = $sendmail['error'];

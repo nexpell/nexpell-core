@@ -2,7 +2,7 @@
 
 GLOBAL $_database, $logo,$theme_name,$themes,$tpl,$loggedin,$index_language,$modRewrite,$action,$modulname;
 
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 $_language = new LanguageService($_database);
 $_language->readModule('navigation');

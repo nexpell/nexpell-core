@@ -7,7 +7,7 @@ if (session_status() == PHP_SESSION_NONE) {
 
 $_language->readModule('database', false, true);
 
-use webspell\AccessControl;
+use nexpell\AccessControl;
 // Den Admin-Zugriff für das Modul überprüfen
 AccessControl::checkAdminAccess('ac_database');
 
@@ -15,13 +15,13 @@ if (isset($_POST['upload'])) {
 
 
     $upload = $_FILES['sql'];
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
         if ($upload['name'] != "") {
             $get = safe_query("SELECT DATABASE()");
             $ret = mysqli_fetch_array($get);
             $db = $ret[0];
-            //drop all tables from webSPELL DB
+            //drop all tables from nexpell DB
             $result = mysqli_query($_database, "SHOW TABLES FROM " . $db);
             while ($table = mysqli_fetch_array($result)) {
                 safe_query("DROP TABLE `" . $table[0] . "`");
@@ -55,7 +55,7 @@ if (isset($_GET['back'])) {
 if (isset($_GET['delete'])) {
 
     $filepath = "myphp-backup-files/";
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_GET['captcha_hash'])) {
 
         $id = $_GET['id'];
@@ -965,7 +965,7 @@ $result = $backupDatabase->backupTables($changed) ? 'OK' : 'KO';
         die($_language->module['access_denied']);
     }
 
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
 
@@ -1046,7 +1046,7 @@ $result = $backupDatabase->backupTables($changed) ? 'OK' : 'KO';
     </thead>
   <tbody>';
 
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
 

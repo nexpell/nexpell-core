@@ -1,6 +1,6 @@
 <?php
 
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
@@ -17,14 +17,14 @@ $languageService = new LanguageService($_database);
 // Admin-Modul laden
 $languageService->readModule('privacy_policy', true);
 
-use webspell\AccessControl;
-use webspell\Captcha;
+use nexpell\AccessControl;
+use nexpell\Captcha;
 
 // Zugriffskontrolle für Admin
 AccessControl::checkAdminAccess('ac_privacy_policy');
 
 // Initialisierung der Captcha-Klasse
-$CAPCLASS = new \webspell\Captcha;
+$CAPCLASS = new \nexpell\Captcha;
 $tpl = new Template();
 
 // Verarbeitung und Speichern des Datenschutztexts

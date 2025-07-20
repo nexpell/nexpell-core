@@ -1,6 +1,6 @@
 <?php
 
-use webspell\PluginSettings;
+use nexpell\PluginSettings;
 
 /*
 renderWidget($widget_key)
