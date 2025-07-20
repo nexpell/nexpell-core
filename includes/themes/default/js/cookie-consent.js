@@ -161,10 +161,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function showBanner() {
         banner.classList.remove('d-none');
+        const overlay = document.getElementById('cookie-overlay');
+        if (overlay) overlay.style.display = 'block';
+        document.body.style.overflow = 'hidden'; // Scroll sperren
     }
 
     function hideBanner() {
         banner.classList.add('d-none');
+        const overlay = document.getElementById('cookie-overlay');
+        if (overlay) overlay.style.display = 'none';
+        document.body.style.overflow = ''; // Scroll erlauben
     }
 
     // Zustimmen
