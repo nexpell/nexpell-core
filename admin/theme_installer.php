@@ -1,6 +1,6 @@
 <?php
 
-use webspell\LanguageService;
+use nexpell\LanguageService;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
@@ -19,16 +19,16 @@ $languageService = new LanguageService($_database);
 $languageService->readModule('theme_installer', true);
 
 
-use webspell\AccessControl;
-use webspell\themeUninstaller;
-use webspell\Plugininstaller;
+use nexpell\AccessControl;
+use nexpell\themeUninstaller;
+use nexpell\Plugininstaller;
 
 // Admin-Rechte prüfen
 #AccessControl::checkAdminAccess('ac_plugin_installer');
 
 // Konfiguration
 $theme_dir = '../includes/themes/default/css/dist/';
-$theme_path = 'https://www.update.webspell-rm.de/themes';
+$theme_path = 'https://www.update.nexpell.de/themes';
 $theme_json_url = $theme_path . '/theme.json';
 
 // Theme-Aktion: Installieren, Updaten, Deinstallieren
