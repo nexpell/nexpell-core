@@ -301,10 +301,8 @@ header('X-UA-Compatible: IE=edge');
         <?php foreach ($positions['bottom'] as $widget_key) echo renderWidget($widget_key); ?>
     <?php endif; ?>
 
-    
-</div><footer style="margin-top: 40px;">
-<?= get_footer_modul(); ?>
-</footer>
+    <?= get_footer_modul(); ?>
+</div>
 <!-- Scroll Top Button -->
 <div class="scroll-top-wrapper">
     <span class="scroll-top-inner">

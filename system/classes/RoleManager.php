@@ -29,4 +29,24 @@ class RoleManager {
 
         return $stmt->num_rows > 0;
     }
+
+    public static function getUserRoles(int $userID): array {
+        global $_database;
+
+        $stmt = $_database->prepare("
+            SELECT r.role_name
+            FROM user_role_assignments ura
+            JOIN user_roles r ON ura.roleID = r.roleID
+            WHERE ura.userID = ?
+        ");
+        $stmt->bind_param("i", $userID);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $roles = [];
+        while ($row = $result->fetch_assoc()) {
+            $roles[] = $row['role_name'];
+        }
+        return $roles;
+    }
 }
