@@ -215,15 +215,30 @@ $total_points = 0;
 $post_type = '';
 foreach ($counts as $type => $count) {
     $weight = $weights[$type] ?? 0;
-    $single_points = $count * $weight;
+    //$single_points = $count * $weight;
+    $single_points = $count;
     $total_points += $single_points;
     $post_type .= '<tr><td>' . htmlspecialchars($type) . '</td><td>' . $single_points . '</td></tr>';
 }
 
-$level = floor($total_points / 100);
-$level_percent = $total_points % 100;
+#$total_points = 0;
+#$post_type = '';
 
+// Punkte berechnen
+foreach ($counts as $type => $count) {
+    $weight = $weights[$type] ?? 0;
+    $single_points = $count * $weight;
+    //echo "$type: $count × $weight = $single_points Punkte<br>";
+    $total_points += $single_points;
+}
 
+// Level-Berechnung
+$level = floor($total_points / 100);         // z. B. 329 / 100 = 3
+$level_percent = $total_points % 100;        // 329 % 100 = 29
+
+//echo "<strong>Total Points:</strong> $total_points<br>";
+//echo "<strong>Level:</strong> $level<br>";
+//echo "<strong>Fortschritt im Level:</strong> $level_percent %<br>";
 
 if ($isLocked == 1 ) {
     $isrowLocked='<div class="alert alert-danger d-flex align-items-center" role="alert">
@@ -251,6 +266,7 @@ $data_array = [
     'website_url'     => $website_url,
     'instagram_url'   => $instagram_url,
     'last_visit'      => $last_visit,
+    'user_points'     => $total_points,
     'user_level'      => $level,
     'level_progress'  => $level_percent,
     'edit_button'     => $edit_button,
