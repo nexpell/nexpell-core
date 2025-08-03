@@ -1,115 +1,152 @@
 <?php
 
 use nexpell\LanguageService;
+use nexpell\AccessControl;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Standard setzen, wenn nicht vorhanden
-$_SESSION['language'] = $_SESSION['language'] ?? 'de';
+// Sprache setzen
+$_SESSION['language'] = $_POST['language'] ?? ($_SESSION['language'] ?? 'de');
+$language = $_SESSION['language'];
 
-// Initialisieren
 global $languageService;
 $languageService = new LanguageService($_database);
-
-// Admin-Modul laden
 $languageService->readModule('startpage', true);
 
-use nexpell\AccessControl;
-
-// Den Admin-Zugriff für das Modul überprüfen
+// Admin-Zugriff prüfen
 AccessControl::checkAdminAccess('ac_startpage');
+
 $CAPCLASS = new \nexpell\Captcha;
 $tpl = new Template();
 
-// Wenn das Formular gesendet wurde
+// Formularverarbeitung
 if (isset($_POST['submit'])) {
-    $title = $_POST['title'];
-    $startpage_text = $_POST['message'];
+    $title = $_POST['title'] ?? '';
     $editor = isset($_POST['editor']) ? '1' : '0';
+    $nameArray = $_POST['name'] ?? [];
 
-    // Umwandlung der Zeilenumbrüche in <br /> für die Speicherung
-    $startpage_text = nl2br($startpage_text);
+    // Mehrsprachigen Text zusammenbauen
+    $startpage_text = '';
+    foreach (['de', 'en', 'it'] as $lang) {
+        $text = $nameArray[$lang] ?? '';
+        $startpage_text .= "[[lang:$lang]]" . $text;
+    }
 
-    
-    $current_datetime = date("Y-m-d H:i:s");
-
-    $CAPCLASS = new \nexpell\Captcha;
+    // CAPTCHA prüfen
     if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
         if (mysqli_num_rows(safe_query("SELECT * FROM settings_startpage"))) {
-            safe_query("UPDATE settings_startpage SET date=CURRENT_TIMESTAMP, title='" . $title . "', startpage_text='" . $startpage_text . "', editor='" . $editor . "'");
+            safe_query("UPDATE settings_startpage SET date=CURRENT_TIMESTAMP, title='" . escape($title) . "', startpage_text='" . $startpage_text . "', editor='" . $editor . "'");
         } else {
-            safe_query("INSERT INTO settings_startpage (date, startpage_text, editor) VALUES (NOW(), '" . $startpage_text . "', '" . $editor . "')");
+            safe_query("INSERT INTO settings_startpage (date, title, startpage_text, editor) VALUES (NOW(), '" . escape($title) . "', '" . $startpage_text . "', '" . $editor . "')");
         }
-        echo '<div class="alert alert-success" role="alert">' . $languageService->module['changes_successful'] . '</div>';
-        echo '<script type="text/javascript">
-                setTimeout(function() {
-                    window.location.href = "admincenter.php?site=settings_startpage";
-                }, 3000); // 3 Sekunden warten
-            </script>';
+
+        echo '<div class="alert alert-success">' . $languageService->module['changes_successful'] . '</div>';
+        echo '<script>setTimeout(() => window.location.href = "admincenter.php?site=settings_startpage", 3000);</script>';
     } else {
-        echo $languageService->module['transaction_invalid'];
-        echo '<script type="text/javascript">
-                setTimeout(function() {
-                    window.location.href = "admincenter.php?site=settings_startpage";
-                }, 3000); // 3 Sekunden warten
-            </script>';
+        echo '<div class="alert alert-danger">' . $languageService->module['transaction_invalid'] . '</div>';
+        echo '<script>setTimeout(() => window.location.href = "admincenter.php?site=settings_startpage", 3000);</script>';
     }
 }
 
-// Daten abrufen
-$ergebnis = safe_query("SELECT * FROM settings_startpage");
-$ds = mysqli_fetch_array($ergebnis);
+// Daten laden
+$ds = mysqli_fetch_array(safe_query("SELECT * FROM settings_startpage"));
+
+// Mehrsprachigen Text extrahieren
+function extractLangText(?string $multiLangText, string $lang): string {
+    if (!$multiLangText) return '';
+    if (preg_match('/\[\[lang:' . preg_quote($lang, '/') . '\]\](.*?)(?=\[\[lang:|$)/s', $multiLangText, $matches)) {
+        return trim($matches[1]);
+    }
+    return '';
+}
+
+// Sprach-Array
+$languages = [];
+
+$query = "SELECT iso_639_1, name_de FROM settings_languages WHERE active = 1 ORDER BY id ASC";
+$result = mysqli_query($_database, $query);
+
+if ($result) {
+    while ($row = mysqli_fetch_assoc($result)) {
+        // $row['iso_639_1'] z.B. 'de', $row['name_de'] z.B. 'Deutsch'
+        $languages[$row['iso_639_1']] = $row['name_de'];
+    }
+} else {
+    // Fallback falls Query nicht klappt
+    $languages = ['de' => 'Deutsch', 'en' => 'English', 'it' => 'Italiano'];
+}
+
+// Editor-Status
+$editor_checked = ($ds['editor'] ?? 0) == 1 ? 'checked' : '';
 
 // CAPTCHA vorbereiten
 $CAPCLASS->createTransaction();
 $hash = $CAPCLASS->getHash();
-
-// Editor aktivieren, wenn Checkbox aktiviert war
-  $editor_checked = '';
-if (isset($ds['editor']) && $ds['editor'] == 1) {
-    $editor_checked = 'checked'; // Wenn der Wert 1 ist, wird die Checkbox aktiviert
-}
-
-// Template laden
-$data_array = [
-    'startpage_label' => $languageService->module['startpage'],
-    'title_head' => $languageService->module['title_head'],
-    'title' => htmlspecialchars($ds['title']),
-    'startpage_text' => htmlspecialchars($ds['startpage_text']),
-    'editor_is_editor' => $languageService->module['editor_is_editor'], // Fügt die Label für "Editor anzeigen" hinzu
-    'editor_checked' => $editor_checked, // Setzt den Wert für die Checkbox
-    'captcha_hash' => $hash,
-    'update_button_label' => $languageService->module['update']
-];
-
-echo $tpl->loadTemplate("startpage", "content", $data_array, 'admin');
-
 ?>
+
+<div class="card">
+    <div class="card-header"><?= $languageService->module['startpage'] ?></div>
+    <nav class="breadcrumb bg-light px-3 py-2">
+        <a class="breadcrumb-item" href="admincenter.php?site=settings_startpage"><?= $languageService->module['startpage'] ?></a>
+        <span class="breadcrumb-item active">Edit</span>
+    </nav>
+    <div class="card-body">
+        <form class="form-horizontal" method="post" id="post" name="post">
+            <div class="mb-3 row">
+                <label class="col-sm-2 col-form-label"><?= $languageService->module['title_head'] ?></label>
+                <div class="col-sm-10">
+                    <input class="form-control" type="text" name="title" value="<?= htmlspecialchars($ds['title'] ?? '') ?>" />
+                </div>
+            </div>
+
+            <div class="mb-3 row">
+                <label class="col-sm-2 col-form-label"><?= $languageService->module['editor_is_editor'] ?></label>
+                <div class="col-sm-10">
+                    <input class="form-check-input" type="checkbox" id="toggle-editor" name="editor" value="1" <?= $editor_checked ?>>
+                </div>
+            </div>
+            <div class="alert alert-info" role="alert">
+                 <label for="text" class="form-label"><h4><?= $languageService->module['text'] ?></h4></label>
+            <?php foreach ($languages as $code => $label): ?>
+                <div class="mb-3 row">
+                    <label class="col-sm-2 col-form-label"><?= $label ?>:</label>
+                    <div class="col-sm-10">
+                        <textarea class="form-control lang-field" rows="6" id="editor_<?= $code ?>" name="name[<?= $code ?>]"><?= htmlspecialchars(extractLangText($ds['startpage_text'] ?? '', $code)) ?></textarea>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+            </div>
+            <input type="hidden" name="captcha_hash" value="<?= $hash ?>" />
+            <button class="btn btn-warning" type="submit" name="submit"><?= $languageService->module['update'] ?></button>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const toggle = document.getElementById('toggle-editor');
-    const textarea = document.getElementById('ckeditor');
+    const editors = document.querySelectorAll('.lang-field');
 
-    // Funktion zum Editor aktivieren/deaktivieren
-    function toggleEditor() {
-        if (toggle.checked) {
-            if (!CKEDITOR.instances['ckeditor']) {
-                CKEDITOR.replace('ckeditor');
+    function toggleEditors() {
+        editors.forEach(textarea => {
+            const id = textarea.id;
+            if (toggle.checked) {
+                if (!CKEDITOR.instances[id]) {
+                    CKEDITOR.replace(id);
+                }
+            } else {
+                if (CKEDITOR.instances[id]) {
+                    CKEDITOR.instances[id].destroy(true);
+                }
             }
-        } else {
-            if (CKEDITOR.instances['ckeditor']) {
-                CKEDITOR.instances['ckeditor'].destroy(true);
-            }
-        }
+        });
     }
 
-    // Initialer Zustand (z. B. bei Seiten-Reload)
-    toggleEditor();
-
-    // Reaktion auf Umschalten
-    toggle.addEventListener('change', toggleEditor);
+    toggle.addEventListener('change', toggleEditors);
+    toggleEditors(); // Initialer Zustand
 });
 </script>

@@ -1,13 +1,19 @@
 Options -MultiViews
 
 <IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /
+RewriteEngine On
+RewriteBase /
 
-  # Wenn die URL nicht schon index.php ist und keine echte Datei oder Verzeichnis
-  RewriteCond %{REQUEST_URI} !^/index\.php
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
+# Standard-Seiten
+RewriteRule ^([a-z]{2})/([a-zA-Z0-9_-]+)$ index.php?lang=$1&site=$2 [QSA,L]
 
-  RewriteRule ^(.*)$ index.php?site=$1 [QSA,L]
+# Mit zusätzlichen Parametern: z. B. /de/forum/thread/3
+RewriteRule ^([a-z]{2})/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/([0-9]+)$ index.php?lang=$1&site=$2&action=$3&id=$4 [QSA,L]
+
+# Optional: weitere Patterns wie page=X, hash-links usw.
+RewriteRule ^([a-z]{2})/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/([0-9]+)/page/([0-9]+)$ index.php?lang=$1&site=$2&action=$3&id=$4&page=$5 [QSA,L]
+
+# Sprachweiterleitung
+RewriteRule ^([a-z]{2})/?$ index.php?lang=$1 [QSA,L]
 </IfModule>
+

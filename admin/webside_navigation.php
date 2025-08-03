@@ -11,7 +11,7 @@ if (session_status() === PHP_SESSION_NONE) {
 $_SESSION['language'] = $_SESSION['language'] ?? 'de';
 
 // Initialisieren
-global $languageService;
+global $_database,$languageService;
 $lang = $languageService->detectLanguage();
 $languageService = new LanguageService($_database);
 
@@ -22,18 +22,14 @@ use nexpell\AccessControl;
 // Den Admin-Zugriff für das Modul überprüfen
 AccessControl::checkAdminAccess('ac_webside_navigation');
 
-$theme_active = safe_query("SELECT * FROM settings_themes WHERE active = '1'");
-    $db = mysqli_fetch_array($theme_active);
-
-if(!empty(@$db['active'] == 1) !== false) {
-
 if (isset($_GET[ 'delete' ])) {
     $snavID = $_GET[ 'snavID' ];
     $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_GET[ 'captcha_hash' ])) {
         safe_query("DELETE FROM navigation_website_sub WHERE snavID='$snavID' ");
     } else {
-        echo $languageService->get('transaction_invalid');
+        echo '<div class="alert alert-warning" role="alert">' . htmlspecialchars($languageService->get('transaction_invalid')) . '</div>';
+
         redirect("admincenter.php?site=webside_navigation",3);
     return false;
     }
@@ -44,7 +40,8 @@ if (isset($_GET[ 'delete' ])) {
         safe_query("UPDATE navigation_website_sub SET mnavID='0' WHERE mnavID='$mnavID' ");
         safe_query("DELETE FROM navigation_website_main WHERE mnavID='$mnavID' ");
     } else {
-        echo $languageService->get('transaction_invalid');
+        echo '<div class="alert alert-warning" role="alert">' . htmlspecialchars($languageService->get('transaction_invalid')) . '</div>';
+
     }
 } elseif (isset($_POST[ 'sortieren' ])) {
     if(isset($_POST[ 'sortcat' ])) { $sortcat = $_POST[ 'sortcat' ]; } else { $sortcat="";}
@@ -73,67 +70,97 @@ if (isset($_GET[ 'delete' ])) {
         );
         $url = $_POST[ 'link' ];
         safe_query(
-            "INSERT INTO navigation_website_sub ( mnavID, name, url, themes_modulname, sort )
+            "INSERT INTO navigation_website_sub ( mnavID, name, url, sort )
             values (
             '" . $_POST[ 'mnavID' ] . "',
             '" . $_POST[ 'name' ] . "',
             '" . $url . "',
-            'default',
             '1'
             )"
         );
     } else {
-        echo $languageService->get('transaction_invalid');
+        echo '<div class="alert alert-warning" role="alert">' . htmlspecialchars($languageService->get('transaction_invalid')) . '</div>';
+
     }
 
 
 
-} elseif (isset($_POST[ 'savecat' ])) {
+} elseif (isset($_POST['savecat'])) {
     $CAPCLASS = new \nexpell\Captcha;
-    if ($CAPCLASS->checkCaptcha(0, $_POST[ 'captcha_hash' ])
-    ) {
+    if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
 
-    $url = $_POST[ 'link' ];
-    $windows = $_POST[ "windows" ];
+        $url = $_POST['link'] ?? '';
+        $windows = $_POST['windows'] ?? 0;
+        $isdropdown = isset($_POST['isdropdown']) ? 1 : 0;
 
-    if (isset($_POST[ 'isdropdown' ])) {
-        $isdropdown = 1;
+        // Mehrsprachigen Namen zusammensetzen
+        $name = '';
+        if (isset($_POST['name']) && is_array($_POST['name'])) {
+            $name = buildMultiLangString($_POST['name']);
+        }
+
+        // Prepared Statement für Insert
+        $stmt = $_database->prepare("
+            INSERT INTO navigation_website_main (name, url, windows, isdropdown, sort)
+            VALUES (?, ?, ?, ?, 1)
+        ");
+        $stmt->bind_param('ssii', $name, $url, $windows, $isdropdown);
+        $stmt->execute();
+
+        if ($stmt->affected_rows > 0) {
+            $id = $stmt->insert_id;
+            echo '<div class="alert alert-success" role="alert">' . htmlspecialchars($languageService->get('transaction_successful')) . '</div>';
+        } else {
+            echo '<div class="alert alert-danger" role="alert">' . htmlspecialchars($languageService->get('transaction_failed')) . '</div>';
+        }
+        $stmt->close();
+
     } else {
-        $isdropdown = 0;
+        echo '<div class="alert alert-warning" role="alert">' . htmlspecialchars($languageService->get('transaction_invalid')) . '</div>';
     }
-    if (!$isdropdown) {
-        $isdropdown = 0;
-    }
-        $anz = mysqli_num_rows(safe_query("SELECT mnavID FROM navigation_website_main"));
-        safe_query(
-            "INSERT INTO navigation_website_main ( mnavID, name, url, windows, isdropdown, sort )
-            values( '', '" . $_POST[ 'name' ] . "', '" . $url . "', '" . $windows . "', '" . $isdropdown . "', '1' )"
-        );
-        $id = mysqli_insert_id($_database);
-    } else {
-        echo $languageService->get('transaction_invalid');
-    }
-
-} elseif (isset($_POST[ 'saveedit' ])) {
+}
+ elseif (isset($_POST['saveedit'])) {
     $CAPCLASS = new \nexpell\Captcha;
-    $url = $_POST[ 'link' ];
 
-    
-    if ($CAPCLASS->checkCaptcha(0, $_POST[ 'captcha_hash' ])) {
-        safe_query(
-            "UPDATE navigation_website_sub
-            SET mnavID='" . $_POST[ 'mnavID' ] . "', name='" . $_POST[ 'name' ] . "', url= '" . $url . "', themes_modulname='" . $themes_modulname . "' 
-            WHERE snavID='" . $_POST[ 'snavID' ] . "'"
-        );
+    if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
+        $url = $_POST['link'];
+        $mnavID = (int)$_POST['mnavID'];
+        $snavID = (int)$_POST['snavID'];
+        $modulname = $_POST['modulname'] ?? '';
+
+        // Mehrsprachigen Namen zusammensetzen (wenn $name ein Array ist)
+        $name = '';
+        if (is_array($_POST['name'])) {
+            $name = buildMultiLangString($_POST['name']);
+        } else {
+            $name = $_POST['name'];
+        }
+
+        $stmt = $_database->prepare("
+            UPDATE navigation_website_sub
+            SET mnavID = ?, name = ?, url = ?, modulname = ?
+            WHERE snavID = ?
+        ");
+        // 'i' = integer, 's' = string (mnavID=int, name=string, url=string, modulname=string, snavID=int)
+        $stmt->bind_param('isssi', $mnavID, $name, $url, $modulname, $snavID);
+        $stmt->execute();
+
+        if ($stmt->affected_rows > 0) {
+            echo '<div class="alert alert-success" role="alert">' . htmlspecialchars($languageService->get('transaction_successful')) . '</div>';
+        } else {
+            echo '<div class="alert alert-danger" role="alert">' . htmlspecialchars($languageService->get('transaction_failed')) . '</div>';
+        }
+
+        $stmt->close();
     } else {
-        echo $languageService->get('transaction_invalid');
+        echo '<div class="alert alert-warning" role="alert">' . htmlspecialchars($languageService->get('transaction_invalid')) . '</div>';
     }
-
-} elseif (isset($_POST[ 'saveeditcat' ])) {
+}
+elseif (isset($_POST[ 'saveeditcat' ])) {
     $CAPCLASS = new \nexpell\Captcha;
 
         $url = $_POST[ "link" ];
-        #$windows = $_POST[ "windows" ];
+        $windows = $_POST[ "windows" ];
     if (isset($_POST[ "isdropdown" ])) {
         $isdropdown = 1;
     } else {
@@ -149,8 +176,17 @@ if (isset($_GET[ 'delete' ])) {
 
         $id = $_POST[ 'mnavID' ];
     } else {
-        echo $languageService->get('transaction_invalid');
+        echo '<div class="alert alert-warning" role="alert">' . htmlspecialchars($languageService->get('transaction_invalid')) . '</div>';
+
     }
+}
+
+function buildMultiLangString(array $texts): string {
+    $result = '';
+    foreach ($texts as $lang => $text) {
+        $result .= "[[lang:$lang]]" . trim($text);
+    }
+    return $result;
 }
 
 if (isset($_GET[ 'action' ])) {
@@ -161,67 +197,98 @@ if (isset($_GET[ 'action' ])) {
 
 if ($action == "add") {
     echo '<div class="card">
-        <div class="card-header">
-            ' . $languageService->get('dashnavi') . '
-        </div>
+        <div class="card-header">'
+            . $languageService->get('dashnavi') .
+        '</div>
             
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="admincenter.php?site=webside_navigation">' . $languageService->get('dashnavi') . '</a></li>
-    <li class="breadcrumb-item active" aria-current="page">' . $languageService->get('add_link') . '</li>
+    <li class="breadcrumb-item"><a href="admincenter.php?site=webside_navigation">'
+        . $languageService->get('dashnavi') . '</a></li>
+    <li class="breadcrumb-item active" aria-current="page">'
+        . $languageService->get('add_link') . '</li>
   </ol>
 </nav>
      <div class="card-body">';
 
+    // Kategorien aus navigation_website_main laden
     $ergebnis = safe_query("SELECT * FROM navigation_website_main ORDER BY sort");
     $cats = '<select class="form-select" name="mnavID">';
     while ($ds = mysqli_fetch_array($ergebnis)) {
-        if ($ds[ 'default' ] == 0) {
-            $name = $languageService->get( 'cat_' . htmlspecialchars($ds[ 'name' ]));
+        if ($ds['default'] == 0) {
+            $name = $languageService->get('cat_' . htmlspecialchars($ds['name']));
         } else {
-            $name = htmlspecialchars($ds[ 'name' ]);
-            
+            $name = htmlspecialchars($ds['name']);
         }
-        $cats .= '<option value="' . $ds[ 'mnavID' ] . '">' . $name . '</option>';
+        $translate = new multiLanguage($lang);
+        $translate->detectLanguages($ds['name']);
+        $cats .= '<option value="' . $ds[ 'mnavID' ] . '">' . $translate->getTextByLanguage($ds['name']) . '</option>';
     }
     $cats .= '</select>';
 
-    
-    
+    // Mehrsprachige Namen leer, da neu anlegen
+    $languages = [];
+
+    $query = "SELECT iso_639_1, name_de FROM settings_languages WHERE active = 1 ORDER BY id ASC";
+    $result = mysqli_query($_database, $query);
+
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            // $row['iso_639_1'] z.B. 'de', $row['name_de'] z.B. 'Deutsch'
+            $languages[$row['iso_639_1']] = $row['name_de'];
+        }
+    } else {
+        // Fallback falls Query nicht klappt
+        $languages = ['de' => 'Deutsch', 'en' => 'English', 'it' => 'Italiano'];
+    }
+
     $CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
 
     echo '<form class="form-horizontal" method="post" action="admincenter.php?site=webside_navigation">
     <div class="mb-3 row">
-    <label class="col-sm-2 control-label">'.$languageService->get('category').':</label>
-    <div class="col-sm-8"><span class="text-muted small"><em>
-      ' . $cats . '</em></span>
+        <label class="col-sm-2 control-label">' . $languageService->get('category') . ':</label>
+        <div class="col-sm-8"><span class="text-muted small"><em>' . $cats . '</em></span></div>
     </div>
-    </div>
-    <div class="mb-3 row">
-    <label class="col-sm-2 col-form-label">'.$languageService->get('name').':</label>
-    <div class="col-sm-8"><span class="text-muted small"><em>
-      <input class="form-control" type="text" name="name" placeholder="Name"></em></span>
-    </div>
-  </div>
-  <div class="mb-3 row">
-    <label class="col-sm-2 control-label">'.$languageService->get('url').':</label>
-    <div class="col-sm-8"><span class="text-muted small"><em>
-        <input class="form-control" type="text" name="link" placeholder="URL"/></td></em></span>
-    </div>
-  </div>
 
-    
-  <div class="mb-3 row">
-    <div class="col-sm-offset-2 col-sm-10">
-      <input type="hidden" name="captcha_hash" value="' . $hash . '">
-      <input class="btn btn-success btn-sm" type="submit" name="save" value="' . $languageService->get('add_link') . '">
+    <div class="alert alert-info" role="alert">';
+
+    foreach ($languages as $code => $label) {
+        echo '<div class="mb-3 row">
+            <label class="col-sm-2 control-label" for="text_' . $code . '">' . $label . '</label>
+            <div class="col-sm-8"><span class="text-muted small"><em>
+                <input class="form-control" type="text" id="text_' . $code . '" name="name[' . $code . ']" value="">
+            </em></span></div>
+        </div>';
+    }
+
+    echo '</div>
+
+    <div class="mb-3 row">
+        <label class="col-sm-2 control-label">' . $languageService->get('url') . ':</label>
+        <div class="col-sm-8"><span class="text-muted small"><em>
+            <input class="form-control" type="text" name="link" placeholder="URL"/>
+        </em></span></div>
     </div>
-  </div>
-   
-          </form></div></div>';
-} elseif ($action == "edit") {
+
+    <div class="mb-3 row">
+        <label class="col-sm-2 control-label">Modulname:</label>
+        <div class="col-sm-8">
+            <input class="form-control" type="text" name="module" placeholder="optional Modulname"/>
+        </div>
+    </div>
+
+    <div class="mb-3 row">
+        <div class="col-sm-offset-2 col-sm-10">
+            <input type="hidden" name="captcha_hash" value="' . $hash . '">
+            <input class="btn btn-success btn-sm" type="submit" name="save" value="' . $languageService->get('add_link') . '">
+        </div>
+    </div>
+    </form>
+    </div></div>';
+}
+ elseif ($action == "edit") {
     echo '<div class="card">
         <div class="card-header">
             ' . $languageService->get('dashnavi') . '
@@ -250,9 +317,13 @@ if ($action == "add") {
         } else {
             $selected = "";
         }
-        $cats .= '<option value="' . $dc[ 'mnavID' ] . '"' . $selected . '>' . $name . '</option>';
+        $translate = new multiLanguage($lang);
+        $translate->detectLanguages($dc['name']);
+        $cats .= '<option value="' . $dc[ 'mnavID' ] . '"' . $selected . '>' . $translate->getTextByLanguage($dc['name']) . '</option>';
     }
     $cats .= '</select>';
+
+    
 
     
     $CAPCLASS = new \nexpell\Captcha;
@@ -267,12 +338,62 @@ if ($action == "add") {
       ' . $cats . '</em></span>
     </div>
   </div>
-  <div class="mb-3 row">
-    <label class="col-sm-2 control-label">'.$languageService->get('name').':</label>
-    <div class="col-sm-8"><span class="text-muted small"><em>
-      <input class="form-control" type="text" name="name" value="' . htmlspecialchars($ds[ 'name' ]) . '" size="60"></em></span>
+  <div class="alert alert-info" role="alert">';
+
+
+
+
+
+
+function extractLangText(?string $multiLangText, string $lang): string {
+    if (!$multiLangText) {
+        return '';
+    }
+    $pattern = '/\[\[lang:' . preg_quote($lang, '/') . '\]\](.*?)(?=\[\[lang:|$)/s';
+    if (preg_match($pattern, $multiLangText, $matches)) {
+        return trim($matches[1]);
+    }
+    return '';
+}
+$result = $_database->query("SELECT name FROM navigation_website_sub WHERE snavID = $snavID");
+$multiLangText = '';
+if ($result && $row = $result->fetch_assoc()) {
+    $multiLangText = $row['name']; // z.B. [[lang:de]]Hallo[[lang:en]]Hello
+}
+
+// Sprachen-Array
+$languages = [];
+
+$query = "SELECT iso_639_1, name_de FROM settings_languages WHERE active = 1 ORDER BY id ASC";
+$result = mysqli_query($_database, $query);
+
+if ($result) {
+    while ($row = mysqli_fetch_assoc($result)) {
+        // $row['iso_639_1'] z.B. 'de', $row['name_de'] z.B. 'Deutsch'
+        $languages[$row['iso_639_1']] = $row['name_de'];
+    }
+} else {
+    // Fallback falls Query nicht klappt
+    $languages = ['de' => 'Deutsch', 'en' => 'English', 'it' => 'Italiano'];
+}
+
+foreach ($languages as $code => $label) {
+    $value = extractLangText($multiLangText, $code);
+    echo '<div class="mb-3 row">
+    <label class="col-sm-2 control-label" for="text_' . $code . '">' . $label . '</label>';
+    echo '<div class="col-sm-8"><span class="text-muted small"><em><input class="form-control" type="text" id="text_' . $code . '" name="name[' . $code . ']" value="' . htmlspecialchars($value) . '"></em></span>
     </div>
-  </div>
+  </div>';
+}
+
+echo'</div>
+
+<div class="mb-3 row">
+                <label class="col-md-2 control-label">' . $languageService->get('modulname') . ':</label>
+                <div class="col-md-8"><span class="text-muted small"><em>
+                    <input class="form-control" type="text" name="modulname" value="' . htmlspecialchars($ds['modulname']) . '" size="60"></em></span>
+                </div>
+            </div>
   <div class="mb-3 row">
     <label class="col-sm-2 control-label">'.$languageService->get('url').':</label>
     <div class="col-sm-8"><span class="text-muted small"><em>
@@ -297,58 +418,81 @@ if ($action == "add") {
         <div class="card-header">
             ' . $languageService->get('dashnavi') . '
         </div>
-            
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="admincenter.php?site=webside_navigation">' . $languageService->get('dashnavi') . '</a></li>
-    <li class="breadcrumb-item active" aria-current="page">' . $languageService->get('add_category') . '</li>
-  </ol>
-</nav>
-     <div class="card-body">';
+
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="admincenter.php?site=webside_navigation">' . $languageService->get('dashnavi') . '</a></li>
+            <li class="breadcrumb-item active" aria-current="page">' . $languageService->get('add_category') . '</li>
+          </ol>
+        </nav>
+
+        <div class="card-body">';
 
     $CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
 
-    
-    
-   echo '<form class="form-horizontal" method="post" action="admincenter.php?site=webside_navigation">
+    // Sprachen-Array
+    $languages = [];
 
-    <div class="mb-3 row">
-    <label class="col-sm-2 control-label">'.$languageService->get('name').':</label>
-    <div class="col-sm-8"><span class="text-muted small"><em>
-      <input class="form-control" type="text" name="name" size="60"></em></span>
-    </div>
-  </div>
-  <div class="mb-3 row">
-    <label class="col-sm-2 control-label">'.$languageService->get('url').':</label>
-    <div class="col-sm-8"><span class="text-muted small"><em>
-      <input class="form-control" type="text" name="link" size="60"></em></span><br>
-      <select id="windows" name="windows" class="form-select">
-  <option value="0">' . $languageService->get('_blank') . '</option>
-  <option value="1">' . $languageService->get('_self') . '</option>
-</select>
-    </div>
-  </div>
-  
-  <div class="mb-3 row">
-    <label class="col-sm-2 control-label">'.$languageService->get('dropdown').':</label>
-    <div class="col-sm-8 form-check form-switch" style="padding: 0px 43px;">
-      <input class="form-check-input" type="checkbox" name="isdropdown" id="isdropdown" checked="checked" />
-    </div>
-  </div>
-  
+    $query = "SELECT iso_639_1, name_de FROM settings_languages WHERE active = 1 ORDER BY id ASC";
+    $result = mysqli_query($_database, $query);
 
-<div class="mb-3 row">
-    <div class="col-sm-offset-2 col-sm-10">
-      <input type="hidden" name="captcha_hash" value="'.$hash.'" />
-      <input class="btn btn-success btn-sm" type="submit" name="savecat" value="' . $languageService->get('add_category') . '">
-    </div>
-  </div>
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            // $row['iso_639_1'] z.B. 'de', $row['name_de'] z.B. 'Deutsch'
+            $languages[$row['iso_639_1']] = $row['name_de'];
+        }
+    } else {
+        // Fallback falls Query nicht klappt
+        $languages = ['de' => 'Deutsch', 'en' => 'English', 'it' => 'Italiano'];
+    }
+
+    echo '<form class="form-horizontal" method="post" action="admincenter.php?site=webside_navigation">
+
+        <div class="alert alert-info" role="alert">';
+
+    // Mehrsprachige Eingabefelder für Namen ohne Vorbefüllung (neue Kategorie)
+    foreach ($languages as $code => $label) {
+        echo '<div class="mb-3 row">
+            <label class="col-sm-2 control-label" for="text_' . $code . '">' . $label . '</label>
+            <div class="col-sm-8">
+                <input class="form-control" type="text" id="text_' . $code . '" name="name[' . $code . ']" value="">
+            </div>
+          </div>';
+    }
+    echo '</div>
+
+        <div class="mb-3 row">
+            <label class="col-sm-2 control-label">' . $languageService->get('url') . ':</label>
+            <div class="col-sm-8">
+                <input class="form-control" type="text" name="link" size="60" value="">
+                <br>
+                <select id="windows" name="windows" class="form-select">
+                    <option value="0">' . $languageService->get('_blank') . '</option>
+                    <option value="1">' . $languageService->get('_self') . '</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-3 row">
+            <label class="col-sm-2 control-label">' . $languageService->get('dropdown') . ':</label>
+            <div class="col-sm-8 form-check form-switch" style="padding: 0px 43px;">
+                <input class="form-check-input" type="checkbox" name="isdropdown" id="isdropdown" checked="checked" />
+            </div>
+        </div>
+
+        <div class="mb-3 row">
+            <div class="col-sm-offset-2 col-sm-10">
+                <input type="hidden" name="captcha_hash" value="' . $hash . '" />
+                <input class="btn btn-success btn-sm" type="submit" name="savecat" value="' . $languageService->get('add_category') . '">
+            </div>
+        </div>
 
     </form>
     </div></div>';
-} elseif ($action == "editcat") {
+}
+ elseif ($action == "editcat") {
     echo '<div class="card">
         <div class="card-header">
             ' . $languageService->get('dashnavi') . '
@@ -386,12 +530,49 @@ if ($action == "add") {
 
     echo '<form class="form-horizontal" method="post" action="admincenter.php?site=webside_navigation">
 <input type="hidden" name="mnavID" value="' . $ds[ 'mnavID' ] . '" />
-        <div class="mb-3 row">
-    <label class="col-sm-2 control-label">' . $languageService->get('name') . ':</label>
-    <div class="col-sm-8"><span class="text-muted small"><em>
-      <input class="form-control" type="text" name="name" value="' . htmlspecialchars($ds[ 'name' ]) . '" size="60"></em></span>
+<div class="alert alert-info" role="alert">';
+
+  function extractLangText(?string $multiLangText, string $lang): string {
+    if (!$multiLangText) {
+        return '';
+    }
+    $pattern = '/\[\[lang:' . preg_quote($lang, '/') . '\]\](.*?)(?=\[\[lang:|$)/s';
+    if (preg_match($pattern, $multiLangText, $matches)) {
+        return trim($matches[1]);
+    }
+    return '';
+}
+$result = $_database->query("SELECT name FROM navigation_website_main WHERE mnavID = $mnavID");
+$multiLangText = '';
+if ($result && $row = $result->fetch_assoc()) {
+    $multiLangText = $row['name']; // z.B. [[lang:de]]Hallo[[lang:en]]Hello
+}
+
+// Sprachen-Array
+$languages = [];
+
+$query = "SELECT iso_639_1, name_de FROM settings_languages WHERE active = 1 ORDER BY id ASC";
+$result = mysqli_query($_database, $query);
+
+if ($result) {
+    while ($row = mysqli_fetch_assoc($result)) {
+        // $row['iso_639_1'] z.B. 'de', $row['name_de'] z.B. 'Deutsch'
+        $languages[$row['iso_639_1']] = $row['name_de'];
+    }
+} else {
+    // Fallback falls Query nicht klappt
+    $languages = ['de' => 'Deutsch', 'en' => 'English', 'it' => 'Italiano'];
+}
+
+foreach ($languages as $code => $label) {
+    $value = extractLangText($multiLangText, $code);
+    echo '<div class="mb-3 row">
+    <label class="col-sm-2 control-label" for="text_' . $code . '">' . $label . '</label>';
+    echo '<div class="col-sm-8"><span class="text-muted small"><em><input class="form-control" type="text" id="text_' . $code . '" name="name[' . $code . ']" value="' . htmlspecialchars($value) . '"></em></span>
     </div>
-  </div>
+  </div>';
+}
+echo'</div>
 
   <div class="mb-3 row">
     <label class="col-sm-2 control-label">'.$languageService->get('url').':</label>
@@ -527,10 +708,7 @@ $CAPCLASS = new \nexpell\Captcha;
             <td width="15%" td_head">' . $sort . '</td>
         </tr>';
         
-       $themeergebnis = safe_query("SELECT * FROM settings_themes WHERE active = '1'");
-    $db = mysqli_fetch_array($themeergebnis);
-        
-        $links = safe_query("SELECT * FROM navigation_website_sub WHERE mnavID='" . $ds[ 'mnavID' ] . "'  AND themes_modulname='".$db['modulname']."' ORDER BY sort");
+        $links = safe_query("SELECT * FROM navigation_website_sub WHERE mnavID='" . $ds[ 'mnavID' ] . "' ORDER BY sort");
         $tmp = mysqli_fetch_assoc(safe_query("SELECT count(snavID) as cnt FROM navigation_website_sub WHERE mnavID='" . $ds[ 'mnavID' ] . "'"));
         $anzlinks = $tmp[ 'cnt' ];
 
@@ -616,39 +794,7 @@ $CAPCLASS = new \nexpell\Captcha;
     </form></div></div>';
 }
 
-} else {
 
-    echo '<style type="text/css">
- p.test {
-    font-family: Georgia, serif;
-    font-size: 78px;
-    font-style: italic;
-}
-.titlehead {
-    border: 3px solid;
-    border-color: #c4183c; 
-    background-color: #fff}
-</style>
-<div class="card">
-    <div class="card-body">
-        <div class="titlehead"><br>
-            <center>
-        <div>
-            <img class="img-fluid" src="/images/install-logo.jpg" alt="" style="height: 150px"/><br>
-              <small>Ohje !</small><br>
-              <p class="test">404 Error.</p><br>
-              '.$languageService->get('info').'
-        </div>
-        <br />
-              <p><a class="btn btn-warning btn-sm" href="/admin/admincenter.php?site=settings_templates">'.$languageService->get('activate_template').'</a></p>
-              <br />
-            </center>
-        </div>
-    </div>
-</div>
-
-';
-}
 ?>
 <script>
 document.addEventListener('DOMContentLoaded', function () {

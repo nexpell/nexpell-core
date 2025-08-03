@@ -52,7 +52,6 @@ include_once("system/widget.php");
 include_once("system/multi_language.php");
 include_once("system/classes/track_visitor.php");
 include_once("system/init_language.php"); // setzt $languageService
-include_once("system/classes/Router.php");
 include_once("system/classes/Template.php");
 
 // === Globale Variablen ===
@@ -104,23 +103,65 @@ if (file_exists("includes/plugins/whoisonline/whoisonline_tracker.php")) {
     include_once("includes/plugins/whoisonline/whoisonline_tracker.php");
 }
 
-// === Routing starten ===
-#include_once("system/routes/web.php");
 
-// === Router aufrufen ===
-#$router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);
-include($tpl->themes_path . "index.php");
+$availableLangs = ['de', 'en', 'it'];
+define('BASE_PATH', realpath(__DIR__));
 
-/*if (isset($_GET['site'])) {
-    $expected_uri = '/' . trim($_GET['site'], '/');
-    $request_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-    
-    // Normalisiere beide Pfade ohne abschließenden Slash
-    $normalized_expected = rtrim($expected_uri, '/');
-    $normalized_request = rtrim($request_path, '/');
+$requestUri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+$segments = explode('/', $requestUri);
 
-    if ($normalized_request !== $normalized_expected) {
-        header("Location: $expected_uri", true, 301);
-        exit;
+// Sprache
+if (isset($_GET['lang']) && in_array($_GET['lang'], $availableLangs)) {
+    $lang = $_GET['lang'];
+} elseif (isset($segments[0]) && in_array($segments[0], $availableLangs)) {
+    $lang = $segments[0];
+} elseif (isset($_SESSION['language']) && in_array($_SESSION['language'], $availableLangs)) {
+    $lang = $_SESSION['language'];
+} else {
+    $lang = 'de';
+}
+$_SESSION['language'] = $lang;
+
+// Seite
+$site = $_GET['site'] ?? ($segments[1] ?? 'index');
+$site = preg_replace('/[^a-zA-Z0-9_-]/', '', $site);
+$_GET['site'] = $site;
+
+// Action, ID, Page etc.
+$action = $_GET['action'] ?? ($segments[2] ?? null);
+$id     = $_GET['id'] ?? ($segments[3] ?? null);
+$page   = $_GET['page'] ?? null;
+
+if ($action) $_GET['action'] = $action;
+if ($id) $_GET['id'] = $id;
+if ($page) $_GET['page'] = $page;
+
+$langfile = BASE_PATH . "/languages/{$lang}/{$site}.php";
+if (!file_exists($langfile)) {
+    $pluginLangFile = BASE_PATH . "/includes/plugins/{$site}/languages/{$lang}/{$site}.php";
+    if (file_exists($pluginLangFile)) {
+        $langfile = $pluginLangFile;
+    } else {
+        // Kein trigger_error
+        $translations = [];
     }
-}*/
+}
+
+if (file_exists($langfile)) {
+    $translations = include $langfile; // Spracharray laden
+} else {
+    $translations = [];
+}
+
+// Sprachauswahl an LanguageService übergeben – hier nur die Sprachkennung
+$languageService->setLanguage($lang);  // $lang ist ein String, z.B. 'de'
+
+
+// Template laden
+$themeFile = BASE_PATH . '/' . $tpl->themes_path . 'index.php';
+
+if (file_exists($themeFile)) {
+    include $themeFile;
+} else {
+    die("Theme-Datei nicht gefunden: " . $themeFile);
+}

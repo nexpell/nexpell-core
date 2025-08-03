@@ -44,7 +44,7 @@ $language_array = array(
     'streamer' => 'Streamer',
     'techniker' => 'Techniker',
     'trial-member' => 'Trial-Mitglied',
-    'war-organisator' => 'War-Organisator'
+    'war-organisator' => 'War-Organisator',
 );
 
 ?>

@@ -45,7 +45,6 @@ if(isset($_POST['submit'])) {
                 webkey ='" . $_POST['webkey'] . "',
                 seckey ='" . $_POST['seckey'] . "',
                 keywords='" . $_POST[ 'keywords' ] . "',
-                description='" . $_POST[ 'description' ] . "',
                 webkey ='" . $_POST['webkey'] . "',
                 seckey ='" . $_POST['seckey'] . "',
                 startpage='"  . $_POST[ 'startpage' ] . "'"
@@ -87,6 +86,40 @@ if (isset($_POST["saveedit"])) {
 }
 
 
+if (isset($_POST["use_seo_urls_edit"])) {
+    $result = $_database->query("SELECT use_seo_urls FROM settings LIMIT 1");
+    if ($result) {
+        $row = $result->fetch_assoc();
+        $currentValue = (int)$row['use_seo_urls'];
+        $newValue = $currentValue === 1 ? 0 : 1;
+
+        $stmt = $_database->prepare("UPDATE settings SET use_seo_urls = ? LIMIT 1");
+        $stmt->bind_param('i', $newValue);
+        $stmt->execute();
+        $affected = $stmt->affected_rows;
+        $stmt->close();
+
+        if ($affected > 0) {
+            if ($newValue === 1) {
+                echo '<div class="alert alert-success" role="alert">' . $languageService->get('seo_urls_activated') . '</div>';
+            } else {
+                echo '<div class="alert alert-danger" role="alert">' . $languageService->get('seo_urls_deactivated') . '</div>';
+            }
+        } else {
+            echo '<div class="alert alert-danger" role="alert">' . $languageService->get('transaction_invalid') . '</div>';
+        }
+    } else {
+        echo '<div class="alert alert-danger" role="alert">' . $languageService->get('transaction_invalid') . '</div>';
+    }
+
+    #$_database->close();
+}
+
+
+
+
+
+
 #==== Allgemeine Einstellungen=============#
 if ($action == "") { 
 
@@ -114,29 +147,21 @@ echo '
             <form class="form-horizontal" method="post" id="post" name="post" action="admincenter.php?site=settings" onsubmit="return chkFormular();">
 
                
-                        <div class="row">
+                        <div class="row align-items-stretch">
                             <div class="col-md-6">
-
-                                <div class="card border-primary mb-4 shadow-sm">
+                                <div class="card border-primary mb-4 shadow-sm h-100">
                                     <div class="card-body">
                                         <h5 class="card-title text-primary mb-3">
                                             🌐 ' . $languageService->get('site_settings') .'
                                         </h5>
                                         <p class="card-text text-muted">
-                                            Hier kannst du die grundlegenden Informationen zu deiner Website sowie wichtige SEO-Einstellungen eintragen. Diese helfen, deine Seite besser in Suchmaschinen zu positionieren.
+                                            ' . $languageService->get('website_info_description') . '
                                         </p>
 
                                         <div class="mb-3 row">
                                             <label class="col-md-4 col-form-label fw-semibold">' . $languageService->get('page_url') . ':</label>
                                             <div class="col-md-8">
                                                 <input class="form-control" type="url" name="url" value="' . htmlspecialchars($ds['hpurl']) . '">
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3 row">
-                                            <label class="col-md-4 col-form-label fw-semibold">' . $languageService->get('since') . ':</label>
-                                            <div class="col-md-8">
-                                                <input class="form-control" type="text" name="since" value="' . htmlspecialchars($ds['since']) . '">
                                             </div>
                                         </div>
 
@@ -154,32 +179,34 @@ echo '
                                             </div>
                                         </div>
 
-                                        <div class="mb-3 row">
-                                            <label class="col-md-4 col-form-label fw-semibold">' . $languageService->get('meta_description') . ':</label>
-                                            <div class="col-md-8">
-                                                <textarea class="form-control" name="description" rows="5">' . htmlspecialchars($ds['description']) . '</textarea>
-                                            </div>
-                                        </div>
                                     </div>
-                                </div>
+                                </div>';
 
-                            </div> <!-- col-md-6 -->
+
+
+                           echo' </div> <!-- col-md-6 -->
 
                             <div class="col-md-6">
-
-                                <div class="card border-success mb-4 shadow-sm">
+                                <div class="card border-success mb-4 shadow-sm h-100">
                                     <div class="card-body">
                                         <h5 class="card-title text-success mb-3">
                                             ⚙️ ' . $languageService->get('general_settings') . '
                                         </h5>
                                         <p class="card-text text-muted">
-                                            Allgemeine Informationen zu deinem Clan oder Projekt, die auf der gesamten Seite sichtbar sind. Diese Angaben können jederzeit geändert werden.
+                                            ' . $languageService->get('project_info_description') . '
                                         </p>
 
                                         <div class="mb-3 row">
                                             <label class="col-md-4 col-form-label fw-semibold">' . $languageService->get('clan_name') . ':</label>
                                             <div class="col-md-8">
                                                 <input class="form-control" type="text" name="clanname" value="' . htmlspecialchars($ds['clanname']) . '">
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3 row">
+                                            <label class="col-md-4 col-form-label fw-semibold">' . $languageService->get('since') . ':</label>
+                                            <div class="col-md-8">
+                                                <input class="form-control" type="text" name="since" value="' . htmlspecialchars($ds['since']) . '">
                                             </div>
                                         </div>
 
@@ -205,71 +232,159 @@ echo '
                                         </div>
                                     </div>
                                 </div>
-
-                                ';
-
-// Site lock info holen und Button bestimmen
-$db = mysqli_fetch_array(safe_query("SELECT * FROM settings"));
-$lock = ($db['closed'] == '1') ? 'success' : 'danger';
-$text_lock = ($db['closed'] == '1') ? $languageService->get('off_pagelock') : $languageService->get('on_pagelock');
-
-echo '
-                                <div class="card border-warning mb-4 shadow-sm">
-                                    <div class="card-body">
-                                        <h5 class="card-title text-warning mb-3">🔒 Website deaktivieren</h5>
-                                        <p class="card-text text-muted">
-                                            Deaktiviere die öffentliche Erreichbarkeit deiner Website vorübergehend. Besucher sehen eine Wartungsseite, während Administratoren weiterhin Zugriff auf das Backend haben.
-                                        </p>
-
-                                        <div class="row align-items-center mt-3">
-                                            <div class="col-md-4 fw-semibold">' . $languageService->get('additional_options') . ':</div>
-                                            <div class="col-md-8">
-                                                <a class="btn btn-' . $lock . '" href="admincenter.php?site=site_lock">' . $text_lock . '</a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>';
+                            </div> <!-- col-md-6 -->
+                        </div> <br> <!-- row -->';
 
 
-// Plugins einlesen
-$modules = ['news_manager', 'about_us', 'history', 'calendar', 'blog', 'forum'];
-$widget_alle = "<option value='blank'>" . $languageService->get('no_startpage') . "</option>\n";
-$widget_alle .= "<option value='startpage'>Startpage</option>\n";
+                    // Site lock info holen und Button bestimmen
+                    $db = mysqli_fetch_array(safe_query("SELECT * FROM settings"));
+                    $lock = ($db['closed'] == '1') ? 'success' : 'danger';
+                    $text_lock = ($db['closed'] == '1') ? $languageService->get('off_pagelock') : $languageService->get('on_pagelock');        
 
-foreach ($modules as $modul) {
-    $dx = mysqli_fetch_array(safe_query("SELECT * FROM settings_plugins WHERE modulname='" . $modul . "'"));
-    if (@$dx['modulname'] == $modul) {
-        $widget_alle .= "<option value='{$modul}'>" . ucfirst(str_replace("_", " ", $modul)) . "</option>\n";
-    }
-}
 
-$widget_startpage = str_replace(
-    "value='" . $ds['startpage'] . "'",
-    "value='" . $ds['startpage'] . "' selected='selected'",
-    $widget_alle
-);
+                    // Plugins einlesen
+                    $modules = ['articles', 'about', 'history', 'calendar', 'blog', 'forum'];
+                    $widget_alle = "<option value='blank'>" . $languageService->get('no_startpage') . "</option>\n";
+                    $widget_alle .= "<option value='startpage'>Startpage</option>\n";
 
-echo '
-                                <div class="card border-info mb-4 shadow-sm">
-                                    <div class="card-body">
-                                        <h5 class="card-title text-info mb-3">🏠 ' . $languageService->get('startpage') . '</h5>
-                                        <p class="card-text text-muted">
-                                            Wähle die Seite aus, die als Startseite deiner Website angezeigt werden soll. Diese Seite wird nach dem Aufruf der Domain zuerst geladen.
-                                        </p>
+                    foreach ($modules as $modul) {
+                        $dx = mysqli_fetch_array(safe_query("SELECT * FROM settings_plugins WHERE modulname='" . $modul . "'"));
+                        if (@$dx['modulname'] == $modul) {
+                            $widget_alle .= "<option value='{$modul}'>" . ucfirst(str_replace("_", " ", $modul)) . "</option>\n";
+                        }
+                    }
 
-                                        <div class="row align-items-center mt-3">
-                                            <div class="col-md-4 fw-semibold">' . $languageService->get('startpage') . ':</div>
-                                            <div class="col-md-8">
-                                                <select class="form-select" name="startpage">' . $widget_startpage . '</select>
-                                            </div>
+                    $widget_startpage = str_replace(
+                        "value='" . $ds['startpage'] . "'",
+                        "value='" . $ds['startpage'] . "' selected='selected'",
+                        $widget_alle
+                    );
+
+
+                    // SEO-URLs Einstellung aus DB laden
+                    $db = mysqli_fetch_array(safe_query("SELECT use_seo_urls FROM settings"));
+
+                    // SEO-URLs aktiviert?
+                    $seoEnabled = ($db['use_seo_urls'] == '1');
+
+                    // Button-Klasse und Text je nach Status setzen
+                    $btnClass = $seoEnabled ? 'success' : 'danger';
+                    $btnText = $seoEnabled ? $languageService->get('seo_urls_enabled') : $languageService->get('seo_urls_disabled');
+
+                    // Datum auslesen
+
+                    $lastUpdate = 'Noch keine Sitemap generiert';
+                    $updateFile = __DIR__ . '/sitemap_last_update.txt';
+
+                    if (file_exists($updateFile)) {
+                        $lastUpdate = file_get_contents($updateFile);
+                    }
+
+                    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate'])) {
+                        include __DIR__ . '/../sitemap.php';
+
+                        // Datum auf deutsch
+                        file_put_contents($updateFile, date('d.m.Y H:i:s'));
+
+                        // Reload zur Anzeige
+                        header('Location: ' . $_SERVER['REQUEST_URI']);
+                        exit;
+                    }
+
+                    echo '
+                        <div class="row d-flex align-items-stretch">
+                          <!-- Linke Spalte -->
+                          <div class="col-md-6 d-flex">
+                            <div class="card border-danger mb-3 shadow-sm flex-fill">
+                              <div class="card-body p-3">
+                                <h5 class="text-danger mb-3">🌐 ' . htmlspecialchars($languageService->get('seo_urls_title')) . '</h5>
+                                <p class="card-text text-muted">
+                                  ' . htmlspecialchars($languageService->get('seo_urls_description')) . '
+                                </p>
+
+                                <div class="row align-items-center mt-3">
+                                  <div class="col-md-5 fw-semibold">' . htmlspecialchars($languageService->get('seo_url_setting')) . ':</div>
+                                  <div class="col-md-7">
+                                    <form method="post" action="">
+                                      <button type="submit" name="use_seo_urls_edit" class="btn btn-' . $btnClass . '">
+                                        ' . htmlspecialchars($btnText) . '
+                                      </button>
+                                    </form>
+                                  </div>
+                                </div>
+
+                                <hr>
+
+                                <h5 class="text-danger mt-4">📄 ' . htmlspecialchars($languageService->get('sitemap_title')) . '</h5>
+                                <p class="card-text text-muted mb-2">
+                                  ' . htmlspecialchars($languageService->get('sitemap_description')) . '
+                                </p>
+                                <div class="row align-items-center mt-3">
+                                  <div class="col-md-5 fw-semibold">' . htmlspecialchars($languageService->get('sitemap_last_update')) . ': <strong>' . htmlspecialchars($lastUpdate) . '</strong></div>
+                                  <div class="col-md-7">
+                                    <form method="post">
+                                      <button type="submit" name="generate" class="btn btn-info">' . htmlspecialchars($languageService->get('sitemap_regenerate')) . '</button>
+                                    </form>
+                                  </div>
+                                </div>
+
+                                <hr>
+
+
+                                <h5 class="text-danger mt-4">' . $languageService->get('meta_description') . ':</h5>
+                                <p class="card-text text-muted mb-2">
+                                    Die Meta-Beschreibung kann hier nicht direkt bearbeitet werden. Um Titel und Beschreibungen für diese und alle anderen Seiten zu verwalten, nutze bitte den untenstehenden Button. Auf der SEO-Meta-Verwaltungsseite kannst du alle SEO-relevanten Texte zentral anpassen, um die Auffindbarkeit deiner Website in Suchmaschinen zu verbessern und die Darstellung in Suchergebnissen zu optimieren.
+                                </p>
+                                <div class="row align-items-center mt-3">
+                                    <div class="col-md-5 fw-semibold">' . htmlspecialchars($languageService->get('seo_url_setting')) . ':</div>
+                                        <div class="col-md-7">
+                                            <a href="admin_seo_meta.php" class="btn btn-primary mt-2" role="button" title="SEO Meta Einstellungen bearbeiten">
+                                                SEO Meta Einstellungen bearbeiten
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
 
-                            </div> <!-- col-md-6 -->
-                        </div> <!-- row -->
+                        <!-- Rechte Spalte -->
+                        <div class="col-md-6 d-flex">
+                            <div class="d-flex flex-column w-100">
+                              <div class="card border-warning shadow-sm mb-3">
+                                <div class="card-body p-3">
+                                  <h5 class="card-title text-warning mb-3">🔒 ' . htmlspecialchars($languageService->get('website_disable')) . '</h5>
+                                  <p class="card-text text-muted" style="font-size: 0.9rem;">
+                                    ' . htmlspecialchars($languageService->get('disable_website_text')) . '
+                                  </p>
+                                  <div class="row align-items-center mt-3">
+                                    <div class="col-md-4 fw-semibold">' . htmlspecialchars($languageService->get('additional_options')) . ':</div>
+                                    <div class="col-md-8">
+                                      <a class="btn btn-' . $lock . '" href="admincenter.php?site=site_lock">' . htmlspecialchars($text_lock) . '</a>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
 
-                        <div class="card border-secondary mb-4 shadow-sm">
+                              <div class="card border-info shadow-sm mb-3">
+                                <div class="card-body p-3">
+                                  <h5 class="card-title text-info mb-3">🏠 ' . htmlspecialchars($languageService->get('startpage')) . '</h5>
+                                  <p class="card-text text-muted" style="font-size: 0.9rem;">
+                                    ' . htmlspecialchars($languageService->get('startpage_description')) . '
+                                  </p>
+                                  <div class="row align-items-center mt-3">
+                                    <div class="col-md-4 fw-semibold">' . htmlspecialchars($languageService->get('startpage')) . ':</div>
+                                    <div class="col-md-8">
+                                      <select class="form-select form-select-sm" name="startpage">' . $widget_startpage . '</select>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>';
+
+
+                    echo' <div class="card border-secondary mb-4 shadow-sm">
                             <div class="card-body">
                                 <h5 class="card-title text-secondary mb-3">🖼️ ' . $languageService->get('reCaptcha') . '</h5>
                                 <div class="row align-items-center">

@@ -9,6 +9,7 @@ $language_array = array(
     'title' => 'Datenschutz-Bestimmungen',
     'editor_is_editor' => 'Editor aus / einschalten:',
     'changes_successful' => 'Änderungen erfolgreich',
+    'text' => 'Text',
 );
 
 ?>

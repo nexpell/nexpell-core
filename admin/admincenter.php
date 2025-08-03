@@ -34,14 +34,6 @@ if (session_status() === PHP_SESSION_NONE) {
 
 use nexpell\RoleManager;
 
-
-// Überprüfen, ob der Benutzer bereits eingeloggt ist
-#if (isset($_SESSION['userID'])) {
-    // Wenn der Benutzer eingeloggt ist, Weiterleitung zum Admincenter
-#    header("Location: /admin/admincenter.php");
-#    exit;
-#}
-
 // Überprüfen, ob ein Login-Versuch gemacht wurde
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ws_user'], $_POST['password'])) {
     $ws_user = trim($_POST['ws_user']);
@@ -87,11 +79,9 @@ chdir('admin');
 
 // Plugin-Manager laden und Sprachmodul für Admincenter einbinden
 $load = new plugin_manager();
-#$_language->readModule('admincenter', false, true);
-
 
 use nexpell\LanguageService;
-
+use nexpell\AccessControl;
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -195,85 +185,78 @@ function getplugincatID($catname)
 
 
 function dashnavi() {
-    global $userID;
+    global $userID,$languageService;
 
     $links = '';
-    // aktuelle URL ermitteln
-    $current_script = basename($_SERVER['PHP_SELF']);
-    $current_query = isset($_GET['site']) ? $_GET['site'] : '';
+    $current_query = $_GET['site'] ?? '';
+    $lang = $_SESSION['language'] ?? 'de';
+    $translate = new multiLanguage($lang);
 
-    // Kategorien holen
-    $ergebnis = safe_query("SELECT * FROM navigation_dashboard_categories ORDER BY sort");
+    $categories = safe_query("SELECT * FROM navigation_dashboard_categories ORDER BY sort");
 
-    while ($ds = mysqli_fetch_array($ergebnis)) {
-        $catID = (int)$ds['catID'];
-        $name = $ds['name'];
-        $fa_name = $ds['fa_name'];
+    while ($cat = mysqli_fetch_array($categories)) {
+        $catID = (int)$cat['catID'];
+        
+        $translateCat = new multiLanguage($lang);
+        $translateCat->detectLanguages($cat['name']);
+        $catName = $translateCat->getTextByLanguage($cat['name']);
 
-        $lang = $_SESSION['language'] ?? 'de';
+        $fa_name = $cat['fa_name'];
 
-        $translate = new multiLanguage($lang);
-        $translate->detectLanguages($name);
-        $name = $translate->getTextByLanguage($name);
+        $catLinks = safe_query("SELECT * FROM navigation_dashboard_links WHERE catID='" . $catID . "' ORDER BY sort");
 
-        if (checkAccessRights($userID, $catID)) {
+        $cat_active = false;
+        $cat_links_html = '';
 
-            // Prüfen ob ein Link dieser Kategorie aktiv ist
-            $catlinks = safe_query("SELECT * FROM navigation_dashboard_links WHERE catID='" . $catID . "' ORDER BY sort");
+        while ($link = mysqli_fetch_array($catLinks)) {
+            $modulname = $link['modulname'];
+            $url = $link['url'];
 
-            $cat_active = false; // merken ob irgendwas aktiv ist
-            $cat_links_html = '';
+            // MultiLanguage-Instanz für den Kategorienamen erstellen und Sprach-Tags erkennen
+            $translateCat = new multiLanguage($lang);
+            $translateCat->detectLanguages($link['name']);
+            $linkName = $translateCat->getTextByLanguage($link['name']);
 
-            while ($db = mysqli_fetch_array($catlinks)) {
-                $linkID = (int)$db['linkID'];
-                $url = $db['url'];
+            if (AccessControl::hasAdminAccess($modulname)) {
+                $url_parts = parse_url($url);
+                parse_str($url_parts['query'] ?? '', $url_query);
 
-                $translate->detectLanguages($db['name']);
-                $link_name = $translate->getTextByLanguage($db['name']);
-
-                if (checkAccessRights($userID, null, $linkID)) {
-
-                    // Ist der Link aktiv?
-                    $url_parts = parse_url($url);
-                    parse_str($url_parts['query'] ?? '', $url_query);
-
-                    $is_active = false;
-                    if (isset($url_query['site']) && $url_query['site'] == $current_query) {
-                        $is_active = true;
-                        $cat_active = true; // Sobald einer aktiv, ganze Kategorie merken
-                    }
-
-                    $active_class = $is_active ? 'active' : '';
-
-                    $icon_class = $active_class ? 'bi bi-arrow-right' : 'bi bi-plus-lg';
-
-                    $cat_links_html .= '<li class="' . $active_class . '">'
-                        . '<a href="' . $url . '">'
-                        . '<i class="' . $icon_class . ' ac-link"></i> ' 
-                        . $link_name 
-                        . '</a></li>';
+                $is_active = ($url_query['site'] ?? '') === $current_query;
+                if ($is_active) {
+                    $cat_active = true;
                 }
-            }
 
-            if ($cat_links_html != '') {
-                $expand_class = $cat_active ? 'mm-active' : ''; // mm-active hält Menü offen
-                $aria_expanded = $cat_active ? 'true' : 'false';
-                $show_class = $cat_active ? 'style="display:block;"' : '';
+                $active_class = $is_active ? 'active' : '';
+                $icon_class = $is_active ? 'bi bi-arrow-right' : 'bi bi-plus-lg';
 
-                $links .= '<li class="' . $expand_class . '">
-                    <a class="has-arrow" aria-expanded="' . $aria_expanded . '" href="#">
-                        <i class="' . $fa_name . '" style="font-size: 1rem;"></i> ' . $name . '
-                    </a>
-                    <ul class="nav nav-third-level" ' . $show_class . '>
-                        ' . $cat_links_html . '
-                    </ul>
-                </li>';
+                $cat_links_html .= '<li class="' . $active_class . '">'
+                    . '<a href="' . $url . '">'
+                    . '<i class="' . $icon_class . ' ac-link"></i> ' 
+                    . $linkName 
+                    . '</a></li>';
             }
+        }
+
+        if (!empty($cat_links_html)) {
+            $expand_class = $cat_active ? 'mm-active' : '';
+            $aria_expanded = $cat_active ? 'true' : 'false';
+            $show_class = $cat_active ? 'style="display:block;"' : '';
+
+            $links .= '<li class="' . $expand_class . '">
+                <a class="has-arrow" aria-expanded="' . $aria_expanded . '" href="#">
+                    <i class="' . $fa_name . '" style="font-size: 1rem;"></i> ' . $catName . '
+                </a>
+                <ul class="nav nav-third-level" ' . $show_class . '>
+                    ' . $cat_links_html . '
+                </ul>
+            </li>';
         }
     }
 
-    return $links ? $links : '<li>Keine zugriffsberechtigten Links gefunden.</li>';
+    return $links ?: '<li>Keine zugriffsberechtigten Links gefunden.</li>';
 }
+
+
 
 
 if ($userID && !isset($_GET['userID']) && !isset($_POST['userID'])) {

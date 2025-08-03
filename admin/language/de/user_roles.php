@@ -75,6 +75,12 @@ $language_array = array(
     #'email_subject'             => 'Dein Konto für %pagetitle%',
     #'email_text'                => 'Dein Konto für %pagetitle%<p>ACHTUNG dein Passwort wurde vom Admin geändert</p><p>Deine E-Mail Adresse: %email%<br>Dein neues Passwort: %new_password%</p><p>Viel Spass auf unserer Webseite</p>%homepage_url%',
 
+    'set_password_manually' => 'Passwort manuell setzen',
+    'manual_password_info'  => 'Achtung: Das manuelle Setzen eines Benutzerpassworts sollte nur mit größter Vorsicht erfolgen. Änderungen können die Kontosicherheit beeinträchtigen und den Benutzerzugang beeinflussen. Bitte stellen Sie sicher, dass das neue Passwort sicher gewählt wird und der Benutzer über die Änderung informiert ist.', 
+    'activate_user' => 'Benutzer aktivieren',
+    'deactivate_user' => 'Benutzer deaktivieren',
+    'activated' => 'Aktiviert',
+
 
 
     'email_text' => '

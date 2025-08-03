@@ -31,22 +31,22 @@
                         <small class="text-body-secondary">Dies ist die aktuell aktive CMS-Version.</small>
                     </p>
 
-                    <hr class="my-3">
+                    {if has_update}
+                        <hr class="my-3">
+                        <p class="mb-2">
+                            <i class="bi bi-cloud-download-fill text-success me-1"></i>
+                            <strong>Verfügbare Version:</strong>
+                            <span class="text-muted">{new_version}</span><br>
+                            <small class="text-body-secondary">Ein Update ist verfügbar und kann installiert werden.</small>
+                        </p>
 
-                    <p class="mb-2">
-                        <i class="bi bi-cloud-download-fill text-success me-1"></i>
-                        <strong>Verfügbare Version:</strong>
-                        <span class="text-muted">{new_version}</span><br>
-                        <small class="text-body-secondary">Ein Update ist verfügbar und kann installiert werden.</small>
-                    </p>
-
-                    <hr class="my-3">
-
-                    <p>
-                        <i class="bi bi-pencil-fill text-warning me-1"></i>
-                        <strong>Änderungen im Update:</strong><br>
-                        <span class="text-muted">{changelog}</span>
-                    </p>
+                        <hr class="my-3">
+                        <p>
+                            <i class="bi bi-pencil-fill text-warning me-1"></i>
+                            <strong>Änderungen im Update:</strong><br>
+                            <span class="text-muted">{changelog}</span>
+                        </p>
+                    {endif}
                 </div>
             </div>
 
@@ -57,27 +57,24 @@
                         <i class="bi bi-arrow-clockwise me-1"></i> Update jetzt starten
                     </button>
                 </form>
+            {endif}
 
-                <!-- Update-Log -->
-                <div class="update-log mt-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <h6 class="card-title mb-3">
-                                <i class="bi bi-terminal text-info me-2"></i> Update-Status & Log
-                            </h6>
-                            <div class="small text-body">
-                                {update_status}
-                            </div>
+            <!-- Update-Log oder Erfolgs-/Infomeldung -->
+            <div class="update-log mt-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title mb-3">
+                            <i class="bi bi-terminal text-info me-2"></i> Update-Status & Log
+                        </h6>
+                        <div class="small text-body">
+                            {update_status}
                         </div>
                     </div>
                 </div>
-            {else}
-                <div class="alert alert-success">
-                    Du verwendest bereits die neueste Version.
-                </div>
-            {endif}
+            </div>
         </div>
     </div>
 </div>
+
 <!-- end -->
 

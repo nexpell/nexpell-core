@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Fehler vorhanden? Dann Rückgabe
     if (!empty($errors)) {
         $_SESSION['error_message'] = implode("<br>", $errors);
-        header("Location: index.php?site=register");
+        header("Location: " . convertToSeoUrl('index.php?site=register'));
         exit;
     }
 
@@ -204,6 +204,9 @@ unset($_SESSION['error_message']);
 $successmessage = $_SESSION['success_message'] ?? '';
 unset($_SESSION['success_message']);
 
+$termsofuse = '<a href="' . convertToSeoUrl('index.php?site=privacy_policy') . '">' . $languageService->get('terms_of_use') . '</a>';
+$loginlink = '<a href="' . convertToSeoUrl('index.php?site=login') . '">' . $languageService->get('login_link') . '</a>';
+
 $data_array = [
 
     'csrf_token' => htmlspecialchars($csrf_token),
@@ -224,7 +227,7 @@ $data_array = [
     'recaptcha_site_key' => '<div class="g-recaptcha" data-sitekey="' . htmlspecialchars($webkey) . '"></div>',
     'reg_title' => $languageService->get('reg_title'),
     'reg_info_text' =>  $languageService->get('reg_info_text'),
-    'login_link' => $languageService->get('login_link'),
+    'loginlink' => $loginlink,
     'login_text' =>  $languageService->get('login_text'),
     'mail' => $languageService->get('mail'),
     'username_label' => $languageService->get('username'),
@@ -238,7 +241,7 @@ $data_array = [
     'pass_text' => $languageService->get('pass_text'),
     'register' => $languageService->get('register'),
     'terms_of_use_text' => $languageService->get('terms_of_use_text'),
-    'terms_of_use' => $languageService->get('terms_of_use'),
+    '$termsofuse' => $termsofuse,
 ];
 
 echo $tpl->loadTemplate("register", "content", $data_array);

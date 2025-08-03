@@ -27,11 +27,13 @@ $language_array = array(
     'options' => 'Optionen',
     'no_additional_links_available' => 'Es gibt keine zusätzlichen Links',
     'dropdown' => 'Dropdown-Menü',
-    'info' => 'Die angefragte Seite konnte nicht gefunden werden. <i><b>Aktiviere ein Template im Dashbord!</b></i>',
     'activate_template' => 'Template aktivieren',
     'delete_info_link' => 'Möchten Sie diesen Link wirklich entfernen? <br><br>Es wird alles endgültig gelöscht.',
     'delete_info_category' => 'Möchten Sie diesen Kategorie wirklich entfernen? <br><br>Es wird alles endgültig gelöscht.',
-    'close' => 'Schließen'
+    'close' => 'Schließen',
+    'transaction_successful' => 'Transaktion erfolgreich',
+    'transaction_failed' => 'Transaktion fehlgeschlagen. Bitte versuchen Sie es erneut.',
+    'modulname' => 'Modulname',
 );
 
 ?>

@@ -4,6 +4,72 @@ namespace nexpell;
 
 class AccessControl
 {
+
+    public static function hasAdminAccess($modulname)
+    {
+        global $userID;
+
+        if (!$userID) {
+            return false;
+        }
+
+        $query = "
+            SELECT COUNT(*) AS access_count
+            FROM `user_role_admin_navi_rights` ar
+            JOIN `user_role_assignments` ur ON ar.`roleID` = ur.`roleID`
+            WHERE ur.`userID` = '" . (int)$userID . "'
+            AND ar.`modulname` = '" . escape($modulname) . "'
+        ";
+
+        $result = safe_query($query);
+        $row = mysqli_fetch_assoc($result);
+        return $row['access_count'] > 0;
+    }
+
+    public static function checkAdminAccess($modulname)
+    {
+        global $userID, $languageService;
+
+        if (!$userID) {
+            header('Location: login.php');
+            exit;
+        }
+
+        if (!self::hasAdminAccess($modulname)) {
+            $modulnameDisplay = htmlspecialchars($modulname);
+            $errorMessage = "<b>Zugriff verweigert:</b> Keine Berechtigung für das Modul '<i>$modulnameDisplay</i>'.<br>";
+
+            // Protokoll für Diagnose
+            error_log("AccessControl Fehler: Modul '$modulnameDisplay' nicht erlaubt für userID $userID");
+
+            // Versuche, den Linknamen zu holen
+            $linkQuery = "
+                SELECT `name`
+                FROM `navigation_dashboard_links`
+                WHERE `modulname` = '" . escape($modulname) . "'
+            ";
+            $linkResult = safe_query($linkQuery);
+            $linkRow = mysqli_fetch_assoc($linkResult);
+            $linkName = $linkRow ? htmlspecialchars($linkRow['name']) : 'Unbekannter Link';
+
+            try {
+                $languageService->detectLanguages($linkName);
+            } catch (\Error $e) {
+                error_log("Fehler in detectLanguages(): " . $e->getMessage());
+                echo "<div class='alert alert-danger'>Ein interner Fehler ist aufgetreten. Bitte wende dich an den Administrator.</div>";
+                exit;
+            }
+
+            $translatedName = $languageService->getTextByLanguage($linkName);
+            $errorMessage .= "<b>Linkname:</b> $translatedName<br>";
+
+            echo "<div class='alert alert-danger' role='alert'>$errorMessage</div>";
+            exit;
+        }
+    }
+
+
+/*
     public static function checkAdminAccess($modulname)
     {
         global $userID, $languageService;
@@ -69,7 +135,7 @@ class AccessControl
 
 
     }
-
+*/
     public static function hasAnyRole(array $roleNames): bool
 {
     // Kein Zugriff, wenn keine Rollen erlaubt sind

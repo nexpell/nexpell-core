@@ -381,14 +381,6 @@ if (file_exists('func/check_access.php')) {
     systeminc('../system/func/check_access');
 }
 
-// -- MESSENGER INFORMATION -- //
-// Einbinden der Messenger-Funktionen
-/*if (file_exists('func/messenger.php')) {
-    systeminc('func/messenger');
-} else {
-    systeminc('../system/func/messenger');
-}*/
-
 // -- Page INFORMATION -- //
 // Einbinden der Seiten-Funktionen
 if (file_exists('func/page.php')) {
@@ -396,14 +388,6 @@ if (file_exists('func/page.php')) {
 } else {
     systeminc('../system/func/page');
 }
-
-// -- SPAM -- //
-// Einbinden der Spam-Funktionen
-/*if (file_exists('func/spam.php')) {
-    systeminc('func/spam');
-} else {
-    systeminc('../system/func/spam');
-}*/
 
 // -- Tags -- //
 // Einbinden der Tags-Funktionen
@@ -413,25 +397,11 @@ if (file_exists('func/tags.php')) {
     systeminc('../system/func/tags');
 }
 
-// -- Upload -- //
-// Einbinden der Upload-Funktionen
-/*if (file_exists('func/upload.php')) {
-    systeminc('func/upload');
+if (file_exists('classes/NavigationUpdater.php')) {
+    systeminc('classes/NavigationUpdater');
 } else {
-    systeminc('../system/func/upload');
-}*/
-
-/*if (file_exists('func/httpupload.php')) {
-    systeminc('func/httpupload');
-} else {
-    systeminc('../system/func/httpupload');
-}*/
-
-/*if (file_exists('func/urlupload.php')) {
-    systeminc('func/urlupload');
-} else {
-    systeminc('../system/func/urlupload');
-}*/
+    systeminc('../system/classes/NavigationUpdater');
+}
 
 // -- INDEX CONTENT -- //
 // Einbinden des Inhalts für die Startseite
@@ -440,14 +410,6 @@ if (file_exists('content.php')) {
 } else {
     systeminc('../system/content');
 }
-
-// -- INSTALL BASE -- //
-// Einbinden der Installations-Basisklasse
-/*if (file_exists('func/install_base.php')) {
-    systeminc('func/install_base');
-} else {
-    systeminc('../system/func/install_base');
-}*/
 
 // Für Login unf Rollen
 if (file_exists('classes/LoginSecurity.php')) {
@@ -497,12 +459,6 @@ if (file_exists('classes/LanguageManager.php')) {
 } else {
     systeminc('../system/classes/LanguageManager');
 }
-
-#if (file_exists('classes/Router.php')) {
-#    systeminc('classes/Router');
-#} else {
-#    systeminc('../system/classes/Router');
-#}
 
 if (file_exists('classes/DatabaseMigrationHelper.php')) {
     systeminc('classes/DatabaseMigrationHelper');
@@ -573,24 +529,7 @@ if (!isset($_SERVER['REQUEST_URI'])) {
     }
 }
 
-// -- BANNED USERS -- //
-// Überprüft alle Benutzer auf Bannstatus und entfernt abgelaufene Banns
-/*if (date("dh", $lastBanCheck) != date("dh")) {
-    $get = safe_query("SELECT userID, banned FROM users WHERE banned IS NOT NULL");
-    $removeBan = array();
-    while ($ds = mysqli_fetch_assoc($get)) {
-        if ($ds['banned'] != "perm") {
-            if ($ds['banned'] <= time()) {
-                $removeBan[] = 'userID="' . $ds['userID'] . '"';
-            }
-        }
-    }
-    if (!empty($removeBan)) {
-        $where = implode(" OR ", $removeBan);
-        safe_query("UPDATE users SET banned=NULL WHERE " . $where);
-    }
-    safe_query("UPDATE settings SET bancheck='" . time() . "'");
-}*/
+
 // -- BANNED IPs -- //
 // Löscht abgelaufene Einträge in der Tabelle für gesperrte IPs
 safe_query("DELETE FROM banned_ips WHERE deltime < '" . time() . "'");
@@ -664,12 +603,7 @@ function httpprotokoll($string) {
     }
 }
 
-// =======================
-// FORUM GROUP CHECK
-// =======================
-#function usergrpexists($fgrID) {
-#    return (mysqli_num_rows(safe_query("SELECT `fgrID` FROM `plugins_forum_groups` WHERE `fgrID` = " . (int)$fgrID)) > 0);
-#}
+
 
 // =======================
 // TABLE EXISTENCE CHECK
@@ -698,5 +632,79 @@ function get_all_settings() {
         return mysqli_fetch_assoc($result);
     }
     return [];
+}
+
+
+// Konstante zur Steuerung von SEO-URLs
+//define('USE_SEO_URLS', true);
+// SEO-Einstellung laden
+$result = $_database->query("SELECT use_seo_urls FROM settings LIMIT 1");
+$seoEnabled = 0;
+if ($result) {
+    $row = $result->fetch_assoc();
+    $seoEnabled = (int)$row['use_seo_urls'];
+}
+
+// Konstante setzen
+define('USE_SEO_URLS', $seoEnabled === 1);
+/**
+ * Konvertiert interne Links zu SEO-URLs (z. B. /de/forum/thread/3/page/2#post17).
+ * Unterstützt Eingabe als URL-String oder Array mit Parametern.
+ *
+ * @param string|array $input URL (z. B. "index.php?site=...") oder Array (z. B. ['site'=>'forum', 'id'=>3])
+ * @return string SEO-URL oder Original-URL, wenn deaktiviert
+ */
+
+function convertToSeoUrl($input): string {
+    if (!USE_SEO_URLS) {
+        return is_array($input) ? 'index.php?' . http_build_query($input) : $input;
+    }
+
+    $lang = $_SESSION['language'] ?? 'de';
+
+    // Wenn ein Array übergeben wurde
+    if (is_array($input)) {
+        $site    = $input['site']    ?? 'start';
+        $action  = $input['action']  ?? null;
+        $id      = $input['id']      ?? null;
+        $page    = $input['page']    ?? null;
+        $userID  = $input['userID']  ?? null;
+        $anchor  = $input['anchor']  ?? null;
+
+        $url = "/$lang/" . urlencode($site);
+        if ($action) $url .= '/' . urlencode($action);
+        if ($id)     $url .= '/' . urlencode($id);
+        if ($userID) $url .= '/user/' . urlencode($userID);
+        if ($page)   $url .= '/page/' . urlencode($page);
+        if ($anchor) $url .= '#' . urlencode($anchor);
+
+        return $url;
+    }
+
+    // Wenn ein String übergeben wurde
+    if (is_string($input) && stripos($input, 'index.php') !== false) {
+        $parts = parse_url($input);
+        parse_str($parts['query'] ?? '', $params);
+
+        $site    = $params['site']    ?? 'start';
+        $action  = $params['action']  ?? null;
+        $id      = $params['id']      ?? null;
+        $userID  = $params['userID']  ?? null;
+        $page    = $params['page']    ?? null;
+
+        $url = "/$lang/" . urlencode($site);
+        if ($action) $url .= '/' . urlencode($action);
+        if ($id)     $url .= '/' . urlencode($id);
+        if ($userID) $url .= '/user/' . urlencode($userID);
+        if ($page)   $url .= '/page/' . urlencode($page);
+
+        if (!empty($parts['fragment'])) {
+            $url .= '#' . urlencode($parts['fragment']);
+        }
+
+        return $url;
+    }
+
+    return $input;
 }
 

@@ -24,7 +24,7 @@ Bindet das Footer-Widget statisch ein, indem die Widget-Datei widget_footer_easy
 */
 
 
-function renderWidget($widget_key)
+/*function renderWidget($widget_key)
 {
     global $_database;
 
@@ -69,7 +69,44 @@ function renderWidget($widget_key)
     }
 
     return $output;
+}*/
+
+function renderWidget($widget_key)
+{
+    global $_database;
+    global $needed_widget_css, $needed_widget_js;
+    $needed_widget_css ??= [];
+    $needed_widget_js ??= [];
+
+    $stmt = $_database->prepare("SELECT widget_key, plugin FROM settings_widgets WHERE widget_key = ? LIMIT 1");
+    if (!$stmt) {
+        error_log("DB-Fehler in renderWidget (prepare fehlgeschlagen)");
+        return "<!-- Widget konnte nicht geladen werden (DB-Fehler) -->";
+    }
+    $stmt->bind_param("s", $widget_key);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    if (!$res || $res->num_rows === 0) {
+        return "<!-- Widget " . htmlspecialchars($widget_key) . " nicht gefunden -->";
+    }
+
+    $row = $res->fetch_assoc();
+    $plugin = $row['plugin'];
+
+    $basePath = rtrim($_SERVER['DOCUMENT_ROOT'] . "/includes/plugins/$plugin/", '/');
+    $widgetFile = $basePath . "/$widget_key.php";
+
+    if (file_exists($widgetFile)) {
+        ob_start();
+        include $widgetFile;
+        return ob_get_clean();
+    } else {
+        error_log("Widget-Datei nicht gefunden: $widgetFile");
+        return "<!-- Widget " . htmlspecialchars($widget_key) . " nicht gefunden im Plugin " . htmlspecialchars($plugin) . " -->";
+    }
 }
+
 
 
 
@@ -95,6 +132,26 @@ function loadHeadAssetIfExists(string $type, string $base_path, string &$collect
         }
     }
 }
+
+
+
+function getCurrentSite(): string {
+    global $availableLangs;
+
+    $requestUri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+    $segments = explode('/', $requestUri);
+
+    if (isset($_GET['site'])) {
+        return preg_replace('/[^a-zA-Z0-9_-]/', '', $_GET['site']);
+    }
+
+    if (isset($segments[0]) && in_array($segments[0], $availableLangs)) {
+        return preg_replace('/[^a-zA-Z0-9_-]/', '', $segments[1] ?? 'start');
+    }
+
+    return 'start';
+}
+
 
 /**
  * Widget-Assets laden
@@ -127,10 +184,12 @@ function loadWidgetHeadAssets(string $widget_key): void {
     $loaded_head_assets_plugins[] = $plugin;
 }
 
+
+
 /**
  * Plugin-Assets laden (z.B. über ?site=plugin)
  */
-function loadPluginHeadAssets(): void {
+/*function loadPluginHeadAssets(): void {
     global $_database, $plugin_loadheadfile_widget_css, $plugin_loadheadfile_widget_js, $loaded_head_assets_plugins;
 
     if (!isset($_GET['site'])) {
@@ -138,6 +197,35 @@ function loadPluginHeadAssets(): void {
     }
 
     $site = $_GET['site'];
+
+    $stmt = $_database->prepare("SELECT modulname FROM settings_plugins WHERE modulname = ? LIMIT 1");
+    $stmt->bind_param("s", $site);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    $row = $res->fetch_assoc();
+    if (!$row) {
+        return;
+    }
+
+    $plugin = $row['modulname'];
+
+    if (in_array($plugin, $loaded_head_assets_plugins, true)) {
+        return;
+    }
+
+    $base_path = "/includes/plugins/{$plugin}";
+
+    loadHeadAssetIfExists('css', $base_path, $plugin_loadheadfile_widget_css, $plugin);
+    loadHeadAssetIfExists('js', $base_path, $plugin_loadheadfile_widget_js, $plugin);
+
+    $loaded_head_assets_plugins[] = $plugin;
+}*/
+
+function loadPluginHeadAssets(): void {
+    global $_database, $plugin_loadheadfile_widget_css, $plugin_loadheadfile_widget_js, $loaded_head_assets_plugins;
+
+    $site = getCurrentSite(); // <<< statt $_GET['site']
 
     $stmt = $_database->prepare("SELECT modulname FROM settings_plugins WHERE modulname = ? LIMIT 1");
     $stmt->bind_param("s", $site);

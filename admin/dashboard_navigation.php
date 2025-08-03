@@ -21,16 +21,11 @@ use nexpell\AccessControl;
 // Den Admin-Zugriff für das Modul überprüfen
 AccessControl::checkAdminAccess('ac_dashboard_navigation');
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
-$ergebnis = safe_query("SELECT * FROM navigation_dashboard_links WHERE modulname='ac_dashnavi'");
-    while ($db=mysqli_fetch_array($ergebnis)) {
-      $accesslevel = 'is'.$db['accesslevel'].'admin';
-
-if (!$accesslevel($userID) || mb_substr(basename($_SERVER[ 'REQUEST_URI' ]), 0, 15) != "admincenter.php") {
-    die($languageService->get('access_denied'));
-}
+if (isset($_GET[ 'action' ])) {
+    $action = $_GET[ 'action' ];
+} else {
+    $action = '';
 }
 
 if (isset($_POST[ 'sortieren' ])) {
@@ -51,380 +46,562 @@ if (isset($_POST[ 'sortieren' ])) {
     }
 }
 
-if (isset($_GET[ 'action' ])) {
-    $action = $_GET[ 'action' ];
-} else {
-    $action = '';
-}
-
-
-
-if (isset($_POST['saveedit'])) {
-    if ($_POST['captcha_hash'] != $_SESSION['captcha_hash']) {
-        die('<div class="alert alert-danger" role="alert">Fehler: Ungültiges Captcha.</div>');        
-        redirect("admincenter.php?site=dashboard_navigation", "", 3);
-    }
-
-    $catID = (int)$_POST['catID'];
-    $name = mysqli_real_escape_string($_database, $_POST['name']);
-    $url = mysqli_real_escape_string($_database, $_POST['url']);
-    $modulname = mysqli_real_escape_string($_database, $_POST['modulname']);
-    $linkID = (int)$_POST['linkID'];
-
-    // Link updaten
-    $query = "UPDATE navigation_dashboard_links SET catID = ?, name = ?, url = ?, modulname = ? WHERE linkID = ?";
-    $stmt = $_database->prepare($query);
-    $stmt->bind_param("isssi", $catID, $name, $url, $modulname, $linkID);
-    
-    if ($stmt->execute()) {
-        // Rechte-Tabelle updaten oder einfügen
-        $type = 'link';
-        $roleID = 1; // Admin-Rolle
-
-        $access_query = "
-            INSERT INTO user_role_admin_navi_rights (roleID, type, modulname, accessID) 
-            VALUES (?, ?, ?, ?) 
-            ON DUPLICATE KEY UPDATE accessID = VALUES(accessID)
-        ";
-        $stmt_access = $_database->prepare($access_query);
-        $stmt_access->bind_param("isss", $roleID, $type, $modulname, $linkID);
-
-        if ($stmt_access->execute()) {
-            echo '<div class="alert alert-success" role="alert">Link und Zugriffsrechte erfolgreich aktualisiert!</div>';
-            redirect("admincenter.php?site=dashboard_navigation", "", 3);
-        } else {
-            echo '<div class="alert alert-danger" role="alert">Fehler beim Aktualisieren der Zugriffsrechte: ' . $_database->error . '</div>';
-            redirect("admincenter.php?site=dashboard_navigation", "", 3);
-        }
-
-        $stmt_access->close();
-    } else {
-        echo '<div class="alert alert-warning" role="alert">Fehler beim Speichern des Links oder keine Änderungen.</div>';
-        redirect("admincenter.php?site=dashboard_navigation", "", 3);
-    }
-
-    $stmt->close();
-}
-
-
-if (isset($_POST[ 'save' ])) {
-
-
-    // Überprüfen des Captchas
-    if ($_POST['captcha_hash'] != $_SESSION['captcha_hash']) {
-        die('<div class="alert alert-danger" role="alert">Fehler: Ungültiges Captcha.</div>');        
-        redirect("admincenter.php?site=dashboard_navigation", "", 3);
-    }  
-
-    // Eingabewerte validieren und schützen
-    $catID = isset($_POST['catID']) ? mysqli_real_escape_string($_database, $_POST['catID']) : '';
-    $name = isset($_POST['name']) ? mysqli_real_escape_string($_database, $_POST['name']) : '';
-    $url = isset($_POST['url']) ? mysqli_real_escape_string($_database, $_POST['url']) : '';
-    $modulname = isset($_POST['modulname']) ? mysqli_real_escape_string($_database, $_POST['modulname']) : '';
-
-    // Überprüfen, ob alle Felder ausgefüllt sind
-    if (empty($catID) || empty($name) || empty($url) || empty($modulname)) {
-        echo '<div class="alert alert-danger" role="alert">Bitte füllen Sie alle Felder aus.</div>';
-    } else {
-        // SQL-Injection verhindern und prepared statements verwenden
-        $stmt = $_database->prepare("INSERT INTO navigation_dashboard_links (catID, name, url, modulname, sort) VALUES (?, ?, ?, ?, ?)");
-        $sort = 1;
-       
-        $stmt->bind_param("ssssi", $catID, $name, $url, $modulname, $sort);
-        
-        if ($stmt->execute()) {
-            
-            $catID = mysqli_insert_id($_database);
-
-            $type = 'link';
-
-            $roleID = 1; // Admin-Rolle
-
-            $access_query = "INSERT INTO user_role_admin_navi_rights (roleID, type, modulname, accessID) VALUES (?, ?, ?, ?)";
-
-            $stmt_access = $_database->prepare($access_query);
-
-            $stmt_access->bind_param("isss", $roleID, $type, $modulname, $catID);
-
-            if ($stmt_access->execute()) {
-                echo '<div class="alert alert-success" role="alert">Kategorie erfolgreich hinzugefügt und Zugriffsrechte gesetzt!</div>';
-            redirect("admincenter.php?site=dashboard_navigation", "", 3);
-            return false;
-            } else {
-                echo '<div class="alert alert-danger" role="alert">Fehler beim Hinzufügen der Zugriffsrechte: ' . mysqli_error($_database) . '</div>';
-            redirect("admincenter.php?site=dashboard_navigation", "", 3);
-            return false;
-            }
-
-            $stmt_access->close();
-        } else {
-            // Fehler bei der SQL-Abfrage
-            echo '<div class="alert alert-danger" role="alert">Fehler beim Hinzufügen der Kategorie: ' . mysqli_error($_database) . '</div>';
-            redirect("admincenter.php?site=dashboard_navigation", "", 3);
-            return false;
-        }
-
-        $stmt->close();
-    }
-
-}    
-
-
-
-
-if ($action == "add") {
-   
-
-    $ergebnis = safe_query("SELECT * FROM navigation_dashboard_categories ORDER BY sort");
-    $cats = '<select class="form-select" name="catID">';
-    while ($ds = mysqli_fetch_array($ergebnis)) {
-         $name = $ds['name'];
-    $translate = new multiLanguage($lang);
-    $translate->detectLanguages($name);
-    $name = $translate->getTextByLanguage($name);
-    
-    $data_array = array();
-    $data_array['$name'] = $ds['name'];
-
-
-        
-        $cats .= '<option value="' . $ds[ 'catID' ] . '">' . $name . '</option>';
-    }
-    $cats .= '</select>';
-
-    
-
-    // Captcha erstellen
-$CAPCLASS = new \nexpell\Captcha;
-$CAPCLASS->createTransaction();
-$_SESSION['captcha_hash'] = $CAPCLASS->getHash();
-$hash = $_SESSION['captcha_hash'];
-
-
-     echo '<div class="card">
-        <div class="card-header"><i class="bi bi-menu-app"></i> 
-            ' . $languageService->get('dashnavi') . '
-        </div>
-            
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="admincenter.php?site=dashboard_navigation">' . $languageService->get('dashnavi') . '</a></li>
-    <li class="breadcrumb-item active" aria-current="page">' . $languageService->get('add_link') . '</li>
-  </ol>
-</nav>
-     <div class="card-body">';
-
-    echo '<form class="form-horizontal" method="post">
-    <div class="mb-3 row">
-    <label class="col-md-2 control-label">'.$languageService->get('category').':</label>
-    <div class="col-md-8"><span class="text-muted small"><em>
-      ' . $cats . '</em></span>
-    </div>
-    </div>
- <div class="mb-3 row">
-    <label class="col-md-2 control-label"></label>
-    <div class="col-md-8">'.$languageService->get('info').'</div>
-  </div> 
-
-
-    <div class="mb-3 row">
-    <label class="col-md-2 control-label">'.$languageService->get('name').':</label>
-    <div class="col-md-8"><span class="text-muted small"><em>
-        <input class="form-control" type="text" name="name" size="60"></em></span>
-    </div>
-  </div>
-  <div class="mb-3 row">
-    <label class="col-md-2 control-label">'.$languageService->get('url').':</label>
-    <div class="col-md-8"><span class="text-muted small"><em>
-        <input class="form-control" type="text" name="url" size="60"></em></span>
-    </div>
-  </div>
-  <div class="mb-3 row">
-    <label class="col-md-2 control-label">' . $languageService->get('modulname') . ':</label>
-    <div class="col-md-8"><span class="text-muted small"><em>
-        <input class="form-control" type="text" name="modulname" size="60"></em></span>
-    </div>
-  </div>
-  <div class="mb-3 row">
-    <div class="col-md-offset-2 col-md-10">
-      <input type="hidden" name="captcha_hash" value="' . $hash . '"><button class="btn btn-success btn-sm" type="submit" name="save"><i class="bi bi-box-arrow-down"></i> ' . $languageService->get( 'add_link') . '</button>
-    </div>
-  </div>
-   
-          </form></div></div>';
-
-
-
-
-
-
-
-
-
-
-
-} elseif ($action == "edit") {
-
-
-
-
-
-
-
-// Holen der Link-Daten aus der URL
-$linkID = $_GET['linkID'];
-$ergebnis = safe_query("SELECT * FROM navigation_dashboard_links WHERE linkID='$linkID'");
-$ds = mysqli_fetch_array($ergebnis);
-
-// Holen der Kategorien aus der DB
-$category = safe_query("SELECT * FROM navigation_dashboard_categories ORDER BY sort");
-$cats = '<select class="form-select" name="catID">';
-while ($dc = mysqli_fetch_array($category)) {
-    // Übersetzen des Kategoriebeschreibung
-    $name = $dc['name'];
-    $translate = new multiLanguage($lang);
-    $translate->detectLanguages($name);
-    $name = $translate->getTextByLanguage($name);
-
-    // Überprüfen, ob die Kategorie ausgewählt ist
-    $selected = ($ds['catID'] == $dc['catID']) ? " selected=\"selected\"" : "";
-
-    // Hinzufügen der Option zur Select-Liste
-    $cats .= '<option value="' . $dc['catID'] . '"' . $selected . '>' . $name . '</option>';
-}
-$cats .= '</select>';
-
-// Captcha erstellen
-$CAPCLASS = new \nexpell\Captcha;
-$CAPCLASS->createTransaction();
-$_SESSION['captcha_hash'] = $CAPCLASS->getHash();
-$hash = $_SESSION['captcha_hash'];
-
-// Ausgabe des Formulars
-echo '<div class="card">
-        <div class="card-header"><i class="bi bi-menu-app"></i> ' . $languageService->get('dashnavi') . '</div>
-        <nav aria-label="breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="admincenter.php?site=dashboard_navigation">' . $languageService->get('dashnavi') . '</a></li>
-            <li class="breadcrumb-item active" aria-current="page">' . $languageService->get('edit_link') . '</li>
-          </ol>
-        </nav>
-        <div class="card-body">
-        <form class="form-horizontal" method="post">
-            <div class="mb-3 row">
-                <label class="col-md-2 control-label">' . $languageService->get('category') . ':</label>
-                <div class="col-md-8"><span class="text-muted small"><em>' . $cats . '</em></span></div>
-            </div>
-
-            <div class="mb-3 row">
-                <label class="col-md-2 control-label">' . $languageService->get('name') . ':</label>
-                <div class="col-md-8">' . $languageService->get('info') . ' <span class="text-muted small"><em>
-                    <input class="form-control" type="text" name="name" value="' . htmlspecialchars($ds['name']) . '" size="60"></em></span>
-                </div>
-            </div>
-
-            <div class="mb-3 row">
-                <label class="col-md-2 control-label">' . $languageService->get('url') . ':</label>
-                <div class="col-md-8"><span class="text-muted small"><em>
-                    <input class="form-control" type="text" name="url" value="' . htmlspecialchars($ds['url']) . '" size="60"></em></span>
-                </div>
-            </div>
-
-            <div class="mb-3 row">
-                <label class="col-md-2 control-label">' . $languageService->get('modulname') . ':</label>
-                <div class="col-md-8"><span class="text-muted small"><em>
-                    <input class="form-control" type="text" name="modulname" value="' . htmlspecialchars($ds['modulname']) . '" size="60"></em></span>
-                </div>
-            </div>
-
-            <div class="mb-3 row">
-                <div class="col-md-offset-2 col-md-10">
-                    <input type="hidden" name="captcha_hash" value="' . $hash . '" />
-                    <input type="hidden" name="linkID" value="' . $linkID . '">
-                    <button class="btn btn-warning btn-sm" type="submit" name="saveedit">
-                        <i class="bi bi-box-arrow-down"></i> ' . $languageService->get('edit_link') . '
-                    </button>
-                </div>
-            </div>
-        </form>
-        </div>
-    </div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-} elseif ($action == "addcat") {
-
-
-if (isset($_POST['savecat'])) {
-    if ($_POST['captcha_hash'] != $_SESSION['captcha_hash']) {
-        echo '<div class="alert alert-danger" role="alert">Fehler: Ungültiges Captcha.</div>';
+if (isset($_GET['delete'])) {
+    // Validierung der linkID
+    $linkID = isset($_GET['linkID']) ? (int) $_GET['linkID'] : 0;
+    if ($linkID <= 0) {
+        echo '<div class="alert alert-danger" role="alert">Ungültige Link-ID.</div>';
         redirect("admincenter.php?site=dashboard_navigation", "", 3);
         die();
     }
 
-    // Eingabewerte validieren und schützen
-    $fa_name = isset($_POST['fa_name']) ? mysqli_real_escape_string($_database, $_POST['fa_name']) : '';
-    $name = isset($_POST['name']) ? mysqli_real_escape_string($_database, $_POST['name']) : '';
-    $modulname = isset($_POST['modulname']) ? mysqli_real_escape_string($_database, $_POST['modulname']) : '';
+    // Link und Rechte löschen
+    $stmt = $_database->prepare("DELETE FROM navigation_dashboard_links WHERE linkID = ?");
+    $stmt->bind_param("i", $linkID);
+    $stmt->execute();
+    $stmt->close();
 
-    // Überprüfen, ob alle Felder ausgefüllt sind
-    if (empty($fa_name) || empty($name) || empty($modulname)) {
-        echo '<div class="alert alert-danger" role="alert">Bitte füllen Sie alle Felder aus.</div>';
+    $stmt = $_database->prepare("DELETE FROM user_role_admin_navi_rights WHERE accessID = ?");
+    $stmt->bind_param("i", $linkID);
+    $stmt->execute();
+    $stmt->close();
+
+    echo '<div class="alert alert-success" role="alert">Link erfolgreich gelöscht!</div>';
+    redirect("admincenter.php?site=dashboard_navigation", "", 3);
+
+} elseif (isset($_GET['delcat'])) {
+    // Validierung der catID
+    $catID = isset($_GET['catID']) ? (int) $_GET['catID'] : 0;
+    if ($catID <= 0) {
+        echo '<div class="alert alert-danger" role="alert">Ungültige Kategoriedaten.</div>';
+        redirect("admincenter.php?site=dashboard_navigation", "", 3);
+        die();
+    }
+
+    // Links der Kategorie zuordnen (catID=0)
+    $stmt = $_database->prepare("UPDATE navigation_dashboard_links SET catID = ? WHERE catID = ?");
+    $newCatID = 0;
+    $stmt->bind_param("ii", $newCatID, $catID);
+    $stmt->execute();
+    $stmt->close();
+
+    // Kategorie löschen
+    $stmt = $_database->prepare("DELETE FROM navigation_dashboard_categories WHERE catID = ?");
+    $stmt->bind_param("i", $catID);
+    $stmt->execute();
+    $stmt->close();
+
+    // Rechte für die Kategorie löschen
+    $stmt = $_database->prepare("DELETE FROM user_role_admin_navi_rights WHERE accessID = ?");
+    $stmt->bind_param("i", $catID);
+    $stmt->execute();
+    $stmt->close();
+
+    echo '<div class="alert alert-success" role="alert">Kategorie erfolgreich gelöscht!</div>';
+    redirect("admincenter.php?site=dashboard_navigation", "", 3);
+}
+
+
+if (isset($_POST['saveedit'])) {
+    $CAPCLASS = new \nexpell\Captcha;
+
+    // Captcha prüfen
+    if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
+
+        // Eingaben holen und validieren
+        $catID      = (int)$_POST['catID'];
+        $linkID     = (int)$_POST['linkID'];
+        $nameArray  = $_POST['name'] ?? [];
+        $url        = mysqli_real_escape_string($_database, $_POST['url'] ?? '');
+        $modulname  = mysqli_real_escape_string($_database, $_POST['modulname'] ?? '');
+
+        // Mehrsprachigen Text zusammenbauen
+        $name = '';
+        foreach (['de', 'en', 'it'] as $lang) {
+            $text = $nameArray[$lang] ?? '';
+            $name .= "[[lang:$lang]]" . $text;
+        }
+
+        // Haupt-Linkdaten aktualisieren
+        $query = "UPDATE navigation_dashboard_links 
+                  SET catID = ?, name = ?, url = ?, modulname = ? 
+                  WHERE linkID = ?";
+
+        if ($stmt = $_database->prepare($query)) {
+            $stmt->bind_param("isssi", $catID, $name, $url, $modulname, $linkID);
+
+            if ($stmt->execute()) {
+                // Zugriffsrechte für Admin-Rolle (roleID = 1) setzen
+                $roleID = 1;
+                $type = 'link';
+
+                $access_query = "
+                    INSERT INTO user_role_admin_navi_rights (roleID, type, modulname)
+                    VALUES (?, ?, ?)
+                    ON DUPLICATE KEY UPDATE modulname = VALUES(modulname)
+                ";
+
+                if ($stmt_access = $_database->prepare($access_query)) {
+                    $stmt_access->bind_param("iss", $roleID, $type, $modulname);
+                    if ($stmt_access->execute()) {
+                        echo '<div class="alert alert-success" role="alert">Link und Zugriffsrechte erfolgreich aktualisiert!</div>';
+                    } else {
+                        echo '<div class="alert alert-danger" role="alert">Fehler beim Aktualisieren der Zugriffsrechte: ' . $stmt_access->error . '</div>';
+                    }
+                    $stmt_access->close();
+                } else {
+                    echo '<div class="alert alert-danger" role="alert">Fehler beim Vorbereiten der Rechte-Abfrage: ' . $_database->error . '</div>';
+                }
+
+                redirect("admincenter.php?site=dashboard_navigation", "", 3);
+
+            } else {
+                echo '<div class="alert alert-warning" role="alert">Fehler beim Speichern des Links oder keine Änderungen vorgenommen.</div>';
+                redirect("admincenter.php?site=dashboard_navigation", "", 3);
+            }
+
+            $stmt->close();
+
+        } else {
+            echo '<div class="alert alert-danger" role="alert">Fehler bei der SQL-Vorbereitung: ' . $_database->error . '</div>';
+        }
+
     } else {
-        // SQL-Injection verhindern und prepared statements verwenden
-        $stmt = $_database->prepare("INSERT INTO navigation_dashboard_categories (fa_name, name, modulname, sort_art, sort) VALUES (?, ?, ?, ?, ?)");
-        $sort_art = 0;
+        echo '<div class="alert alert-danger" role="alert">Fehler: Ungültiges Captcha.</div>';
+    }
+}
+
+
+
+
+if (isset($_POST['save'])) {
+
+    $CAPCLASS = new \nexpell\Captcha;
+
+    // Captcha prüfen
+    if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
+
+        // Eingabewerte holen & absichern
+        $nameArray  = $_POST['name'] ?? [];
+        $url        = mysqli_real_escape_string($_database, $_POST['url'] ?? '');
+        $modulname  = mysqli_real_escape_string($_database, $_POST['modulname'] ?? '');
+        $catID      = (int)$_POST['catID'];
+
+        // Mehrsprachigen Namen zusammenbauen
+        $name = '';
+        foreach (['de', 'en', 'it'] as $lang) {
+            $text = $nameArray[$lang] ?? '';
+            $name .= "[[lang:$lang]]" . $text;
+        }
+
+        // Standard-Sortierung
         $sort = 1;
-       
-        $stmt->bind_param("ssssi", $fa_name, $name, $modulname, $sort_art, $sort);
-        
+
+        // Insert vorbereiten
+        $stmt = $_database->prepare("
+            INSERT INTO navigation_dashboard_links (catID, name, url, modulname, sort)
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        $stmt->bind_param("isssi", $catID, $name, $url, $modulname, $sort);
+
         if ($stmt->execute()) {
-            
-            $catID = mysqli_insert_id($_database);
+            $linkID = mysqli_insert_id($_database);  // zuletzt eingefügter Link
 
-            $type = 'category';
+            // Rechte für Admin-Rolle setzen
+            $roleID = 1;
+            $type   = 'link';
 
-            $roleID = 1; // Admin-Rolle
-
-            $access_query = "INSERT INTO user_role_admin_navi_rights (roleID, type, modulname, accessID) VALUES (?, ?, ?, ?)";
+            $access_query = "
+                INSERT INTO user_role_admin_navi_rights (roleID, type, modulname, accessID)
+                VALUES (?, ?, ?, ?)
+            ";
 
             $stmt_access = $_database->prepare($access_query);
-
-            $stmt_access->bind_param("isss", $roleID, $type, $modulname, $catID);
+            $stmt_access->bind_param("isss", $roleID, $type, $modulname, $linkID);
 
             if ($stmt_access->execute()) {
-                echo '<div class="alert alert-success" role="alert">Kategorie erfolgreich hinzugefügt und Zugriffsrechte gesetzt!</div>';
-            redirect("admincenter.php?site=dashboard_navigation", "", 3);
-            return false;
+                echo '<div class="alert alert-success" role="alert">Link erfolgreich hinzugefügt und Rechte gesetzt.</div>';
             } else {
-                echo '<div class="alert alert-danger" role="alert">Fehler beim Hinzufügen der Zugriffsrechte: ' . mysqli_error($_database) . '</div>';
-            redirect("admincenter.php?site=dashboard_navigation", "", 3);
-            return false;
+                echo '<div class="alert alert-danger" role="alert">Fehler beim Setzen der Rechte: ' . $stmt_access->error . '</div>';
             }
 
             $stmt_access->close();
-        } else {
-            // Fehler bei der SQL-Abfrage
-            echo '<div class="alert alert-danger" role="alert">Fehler beim Hinzufügen der Kategorie: ' . mysqli_error($_database) . '</div>';
             redirect("admincenter.php?site=dashboard_navigation", "", 3);
-            return false;
+        } else {
+            echo '<div class="alert alert-danger" role="alert">Fehler beim Einfügen des Links: ' . $stmt->error . '</div>';
         }
 
         $stmt->close();
+
+    } else {
+        echo '<div class="alert alert-danger" role="alert">Fehler: Ungültiges Captcha.</div>';
     }
 }
+
+
+###################
+
+if (isset($_POST['saveaddcat'])) {
+    $CAPCLASS = new \nexpell\Captcha;
+
+    // Captcha prüfen
+    if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
+
+        // Eingabewerte holen und escapen
+        $fa_name    = trim($_POST['fa_name'] ?? '');
+        $nameArray  = $_POST['name'] ?? [];
+        $modulname  = trim($_POST['modulname'] ?? ''); // optional
+        $sort_art   = 0;
+        $sort       = 1;
+
+        // Prüfung auf Pflichtfelder (z. B. fa_name, mindestens ein Sprachfeld)
+        if (empty($fa_name) || empty($nameArray['de'])) {
+            echo '<div class="alert alert-warning" role="alert">Bitte mindestens einsprachigen Kategorienamen und ein Icon angeben.</div>';
+            return;
+        }
+
+        // Mehrsprachigen Namen aufbauen
+        $name = '';
+        foreach (['de', 'en', 'it'] as $lang) {
+            $text = trim($nameArray[$lang] ?? '');
+            $name .= "[[lang:$lang]]" . $text;
+        }
+
+        // SQL vorbereiten und ausführen
+        $stmt = $_database->prepare("
+            INSERT INTO navigation_dashboard_categories (fa_name, name, modulname, sort_art, sort)
+            VALUES (?, ?, ?, ?, ?)
+        ");
+
+        if ($stmt) {
+            $stmt->bind_param("ssssi", $fa_name, $name, $modulname, $sort_art, $sort);
+
+            if ($stmt->execute()) {
+                echo '<div class="alert alert-success" role="alert">Kategorie erfolgreich hinzugefügt.</div>';
+                redirect("admincenter.php?site=dashboard_navigation", "", 2);
+            } else {
+                echo '<div class="alert alert-danger" role="alert">Fehler beim Speichern: ' . $stmt->error . '</div>';
+            }
+
+            $stmt->close();
+        } else {
+            echo '<div class="alert alert-danger" role="alert">Fehler bei der SQL-Vorbereitung: ' . $_database->error . '</div>';
+        }
+
+    } else {
+        echo '<div class="alert alert-danger" role="alert">Fehler: Ungültiges Captcha.</div>';
+    }
+}
+
+
+
+if (isset($_POST['savecat'])) {
+    $CAPCLASS = new \nexpell\Captcha;
+
+    // Captcha prüfen
+    if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
+
+        // Eingaben sichern und validieren
+        $fa_name    = trim($_POST['fa_name'] ?? '');
+        $catID      = (int)($_POST['catID'] ?? 0);
+        $nameArray  = $_POST['name'] ?? [];
+
+        // Validierung: Pflichtfelder prüfen
+        if (empty($catID) || empty($fa_name) || empty($nameArray['de'])) {
+            echo '<div class="alert alert-warning" role="alert">Bitte alle Pflichtfelder ausfüllen (Icon und deutscher Name).</div>';
+            return;
+        }
+
+        // Mehrsprachigen Namen aufbauen
+        $name = '';
+        foreach (['de', 'en', 'it'] as $lang) {
+            $text = trim($nameArray[$lang] ?? '');
+            $name .= "[[lang:$lang]]" . $text;
+        }
+
+        // SQL-Update vorbereiten
+        $updateQuery = "
+            UPDATE navigation_dashboard_categories 
+            SET fa_name = ?, name = ? 
+            WHERE catID = ?
+        ";
+
+        if ($stmt = $_database->prepare($updateQuery)) {
+            $stmt->bind_param("ssi", $fa_name, $name, $catID);
+
+            if ($stmt->execute()) {
+                echo '<div class="alert alert-success" role="alert">Kategorie erfolgreich bearbeitet!</div>';
+                redirect("admincenter.php?site=dashboard_navigation", "", 3);
+            } else {
+                echo '<div class="alert alert-danger" role="alert">Fehler beim Ausführen der SQL-Abfrage: ' . htmlspecialchars($stmt->error) . '</div>';
+            }
+
+            $stmt->close();
+        } else {
+            echo '<div class="alert alert-danger" role="alert">Fehler bei der Vorbereitung der SQL-Abfrage: ' . htmlspecialchars($_database->error) . '</div>';
+        }
+
+    } else {
+        echo '<div class="alert alert-warning" role="alert">' . htmlspecialchars($languageService->get('transaction_invalid')) . '</div>';
+    }
+}
+
+
+
+if ($action == "add") {
+
+    $result = mysqli_query($_database, "SELECT * FROM navigation_dashboard_categories ORDER BY sort");
+    $cats = '<select class="form-select" name="catID">';
+    while ($ds = mysqli_fetch_assoc($result)) {
+        $name = $ds['name'];
+        $translate = new multiLanguage($lang);
+        $translate->detectLanguages($name);
+        $name = $translate->getTextByLanguage($name);
+
+        $cats .= '<option value="' . $ds['catID'] . '">' . htmlspecialchars($name) . '</option>';
+    }
+    $cats .= '</select>';
+
+    function extractLangText(?string $multiLangText, string $lang): string {
+        if (!$multiLangText) return '';
+        if (preg_match('/\[\[lang:' . preg_quote($lang, '/') . '\]\](.*?)(?=\[\[lang:|$)/s', $multiLangText, $matches)) {
+            return trim($matches[1]);
+        }
+        return '';
+    }
+
+    // Sprachen laden
+    $languages = [];
+    $query = "SELECT iso_639_1, name_de FROM settings_languages WHERE active = 1 ORDER BY id ASC";
+    $res = mysqli_query($_database, $query);
+    if ($res) {
+        while ($row = mysqli_fetch_assoc($res)) {
+            $languages[$row['iso_639_1']] = $row['name_de'];
+        }
+    } else {
+        $languages = ['de' => 'Deutsch', 'en' => 'English', 'it' => 'Italiano'];
+    }
+
+    // Captcha erzeugen
+    $CAPCLASS = new \nexpell\Captcha;
+    $CAPCLASS->createTransaction();
+    $_SESSION['captcha_hash'] = $CAPCLASS->getHash();
+    $hash = $_SESSION['captcha_hash'];
+
+    echo '<div class="card">
+        <div class="card-header"><i class="bi bi-menu-app"></i> ' . $languageService->get('dashnavi') . '</div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="admincenter.php?site=dashboard_navigation">' . $languageService->get('dashnavi') . '</a></li>
+            <li class="breadcrumb-item active" aria-current="page">' . $languageService->get('add_link') . '</li>
+          </ol>
+        </nav>
+        <div class="card-body">
+            <form class="form-horizontal" method="post">
+                <div class="mb-3 row">
+                    <label class="col-md-2 control-label">' . $languageService->get('category') . ':</label>
+                    <div class="col-md-8"><span class="text-muted small"><em>' . $cats . '</em></span></div>
+                </div>
+
+                <div class="alert alert-info" role="alert">
+                    <label class="form-label"><h4>' . $languageService->get('text') . '</h4></label>';
+
+                foreach ($languages as $code => $label) {
+                    echo '
+                    <div class="mb-3 row">
+                        <label class="col-sm-2 col-form-label">' . htmlspecialchars($label) . ':</label>
+                        <div class="col-sm-8">
+                            <input class="form-control" type="text" id="text_' . htmlspecialchars($code) . '" name="name[' . htmlspecialchars($code) . ']" value="">
+                        </div>
+                    </div>';
+                }
+
+    echo '</div>
+
+                <div class="mb-3 row">
+                    <label class="col-md-2 control-label">' . $languageService->get('url') . ':</label>
+                    <div class="col-md-8"><input class="form-control" type="text" name="url" size="60"></div>
+                </div>
+
+                <div class="mb-3 row">
+                    <label class="col-md-2 control-label">' . $languageService->get('modulname') . ':</label>
+                    <div class="col-md-8"><input class="form-control" type="text" name="modulname" size="60"></div>
+                </div>
+
+                <div class="mb-3 row">
+                    <div class="col-md-offset-2 col-md-10">
+                        <input type="hidden" name="captcha_hash" value="' . htmlspecialchars($hash) . '">
+                        <button class="btn btn-success btn-sm" type="submit" name="save"><i class="bi bi-box-arrow-down"></i> ' . $languageService->get('add_link') . '</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>';
+}
+ elseif ($action === "edit") {
+
+    // --- POST-Handler zum Speichern ---
+    if (isset($_POST['saveedit'])) {
+        $CAPCLASS = new \nexpell\Captcha;
+
+        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
+            // Eingaben sicher holen
+            $linkID   = (int)($_POST['linkID'] ?? 0);
+            $fa_name  = $_POST['fa_name'] ?? '';        // falls benötigt
+            $catID    = (int)($_POST['catID'] ?? 0);
+            $url      = $_POST['url'] ?? '';
+            $modulname= $_POST['modulname'] ?? '';
+            $nameArray= $_POST['name'] ?? [];
+
+            // Mehrsprachigen Text zusammenbauen
+            $name = '';
+            foreach (['de', 'en', 'it'] as $l) {
+                $txt = $nameArray[$l] ?? '';
+                $name .= "[[lang:$l]]" . $txt;
+            }
+
+            // Update Query vorbereiten
+            $stmt = $_database->prepare("UPDATE navigation_dashboard_links SET catID = ?, name = ?, url = ?, modulname = ? WHERE linkID = ?");
+            if ($stmt) {
+                $stmt->bind_param("isssi", $catID, $name, $url, $modulname, $linkID);
+                if ($stmt->execute()) {
+                    echo '<div class="alert alert-success" role="alert">' . $languageService->get('edit_success') . '</div>';
+                    redirect("admincenter.php?site=dashboard_navigation", "", 3);
+                } else {
+                    echo '<div class="alert alert-danger" role="alert">' . $languageService->get('edit_error') . '</div>';
+                }
+                $stmt->close();
+            } else {
+                echo '<div class="alert alert-danger" role="alert">Fehler bei der SQL-Vorbereitung.</div>';
+            }
+        } else {
+            echo '<div class="alert alert-warning" role="alert">' . htmlspecialchars($languageService->get('transaction_invalid')) . '</div>';
+        }
+    }
+
+    // --- Daten für Formular laden ---
+    $linkID = isset($_GET['linkID']) ? (int)$_GET['linkID'] : 0;
+    if ($linkID <= 0) {
+        echo '<div class="alert alert-danger">Ungültige Link-ID.</div>';
+        return;
+    }
+
+    $stmt = $_database->prepare("SELECT * FROM navigation_dashboard_links WHERE linkID = ?");
+    $stmt->bind_param("i", $linkID);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $ds = $result->fetch_assoc();
+    $stmt->close();
+
+    if (!$ds) {
+        echo '<div class="alert alert-danger">Link nicht gefunden.</div>';
+        return;
+    }
+
+    // Kategorien laden
+    $category = safe_query("SELECT * FROM navigation_dashboard_categories ORDER BY sort");
+    $cats = '<select class="form-select" name="catID">';
+    while ($dc = mysqli_fetch_array($category)) {
+        $name = $dc['name'];
+        $translate = new multiLanguage($lang);
+        $translate->detectLanguages($name);
+        $name = $translate->getTextByLanguage($name);
+
+        $selected = ($ds['catID'] == $dc['catID']) ? ' selected="selected"' : '';
+        $cats .= '<option value="' . $dc['catID'] . '"' . $selected . '>' . htmlspecialchars($name) . '</option>';
+    }
+    $cats .= '</select>';
+
+    // Hilfsfunktion zur Sprach-Extraktion
+    function extractLangText(?string $multiLangText, string $lang): string {
+        if (!$multiLangText) return '';
+        if (preg_match('/\[\[lang:' . preg_quote($lang, '/') . '\]\](.*?)(?=\[\[lang:|$)/s', $multiLangText, $matches)) {
+            return trim($matches[1]);
+        }
+        return '';
+    }
+
+    // Sprachen aus DB laden
+    $languages = [];
+    $query = "SELECT iso_639_1, name_de FROM settings_languages WHERE active = 1 ORDER BY id ASC";
+    $result = mysqli_query($_database, $query);
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $languages[$row['iso_639_1']] = $row['name_de'];
+        }
+    } else {
+        $languages = ['de' => 'Deutsch', 'en' => 'English', 'it' => 'Italiano'];
+    }
+
+    // Captcha erstellen
+    $CAPCLASS = new \nexpell\Captcha;
+    $CAPCLASS->createTransaction();
+    $_SESSION['captcha_hash'] = $CAPCLASS->getHash();
+    $hash = $_SESSION['captcha_hash'];
+
+    // Formular ausgeben
+    echo '<div class="card">
+            <div class="card-header"><i class="bi bi-menu-app"></i> ' . $languageService->get('dashnavi') . '</div>
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="admincenter.php?site=dashboard_navigation">' . $languageService->get('dashnavi') . '</a></li>
+                <li class="breadcrumb-item active" aria-current="page">' . $languageService->get('edit_link') . '</li>
+              </ol>
+            </nav>
+            <div class="card-body">
+            <form class="form-horizontal" method="post">
+                <div class="mb-3 row">
+                    <label class="col-md-2 control-label">' . $languageService->get('category') . ':</label>
+                    <div class="col-md-8"><span class="text-muted small"><em>' . $cats . '</em></span></div>
+                </div>
+
+                <div class="alert alert-info" role="alert">
+                    <label class="form-label"><h4>' . $languageService->get('text') . '</h4></label>';
+
+                    foreach ($languages as $code => $label) {
+                        echo '
+                        <div class="mb-3 row">
+                            <label class="col-sm-2 col-form-label">' . htmlspecialchars($label) . ':</label>
+                            <div class="col-sm-8"><input class="form-control" type="text" id="text_' . htmlspecialchars($code) . '" name="name[' . htmlspecialchars($code) . ']" value="'
+                                . htmlspecialchars(extractLangText($ds['name'] ?? '', $code)) .
+                                '">
+                            </div>
+                        </div>';
+                    }
+
+            echo '</div>
+
+                <div class="mb-3 row">
+                    <label class="col-md-2 control-label">' . $languageService->get('url') . ':</label>
+                    <div class="col-md-8"><span class="text-muted small"><em>
+                        <input class="form-control" type="text" name="url" value="' . htmlspecialchars($ds['url']) . '" size="60"></em></span>
+                    </div>
+                </div>
+
+                <div class="mb-3 row">
+                    <label class="col-md-2 control-label">' . $languageService->get('modulname') . ':</label>
+                    <div class="col-md-8"><span class="text-muted small"><em>
+                        <input class="form-control" type="text" name="modulname" value="' . htmlspecialchars($ds['modulname']) . '" size="60"></em></span>
+                    </div>
+                </div>
+
+                <div class="mb-3 row">
+                    <div class="col-md-offset-2 col-md-10">
+                        <input type="hidden" name="captcha_hash" value="' . $hash . '" />
+                        <input type="hidden" name="linkID" value="' . $linkID . '">
+                        <button class="btn btn-warning btn-sm" type="submit" name="saveedit">
+                            <i class="bi bi-box-arrow-down"></i> ' . $languageService->get('edit_link') . '
+                        </button>
+                    </div>
+                </div>
+            </form>
+            </div>
+        </div>';
+}
+ elseif ($action == "addcat") {
+
+
+
 
 
 // Captcha-Instanz erstellen
@@ -432,6 +609,28 @@ $CAPCLASS = new \nexpell\Captcha;
 $CAPCLASS->createTransaction();
 $_SESSION['captcha_hash'] = $CAPCLASS->getHash();
 $hash = $_SESSION['captcha_hash'];
+
+
+// Hilfsfunktion zur Sprach-Extraktion
+    function extractLangText(?string $multiLangText, string $lang): string {
+        if (!$multiLangText) return '';
+        if (preg_match('/\[\[lang:' . preg_quote($lang, '/') . '\]\](.*?)(?=\[\[lang:|$)/s', $multiLangText, $matches)) {
+            return trim($matches[1]);
+        }
+        return '';
+    }
+
+    // Sprachen aus DB
+    $languages = [];
+    $query = "SELECT iso_639_1, name_de FROM settings_languages WHERE active = 1 ORDER BY id ASC";
+    $result = mysqli_query($_database, $query);
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $languages[$row['iso_639_1']] = $row['name_de'];
+        }
+    } else {
+        $languages = ['de' => 'Deutsch', 'en' => 'English', 'it' => 'Italiano'];
+    }
 
 echo '<div class="card">
         <div class="card-header"><i class="bi bi-menu-app"></i> 
@@ -453,12 +652,21 @@ echo '<form class="form-horizontal" method="post">
       <input class="form-control" type="text" name="fa_name" size="60"></em></span>
     </div>
   </div>
-  <div class="mb-3 row">
-    <label class="col-md-2 control-label">'.$languageService->get('name').':</label>
-    <div class="col-md-8"><span class="text-muted small"><em>
-      <input class="form-control" type="text" name="name" size="60"></em></span>
-    </div>
-  </div>
+  <div class="alert alert-info" role="alert">
+                <label class="form-label"><h4>' . $languageService->get('text') . '</h4></label>';
+
+                foreach ($languages as $code => $label) {
+                    echo '
+                    <div class="mb-3 row">
+                        <label class="col-sm-2 col-form-label">' . $label . ':</label>
+                        <div class="col-sm-8"><input class="form-control" type="text" id="text_' . $code . '" name="name[' . $code . ']" value="'
+                            . htmlspecialchars(extractLangText($ds['name'] ?? '', $code)) .
+                            '">
+                        </div>
+                    </div>';
+                }
+
+        echo '</div>
   <div class="mb-3 row">
     <label class="col-md-2 control-label">modulname:</label>
     <div class="col-md-8"><span class="text-muted small"><em>
@@ -469,7 +677,7 @@ echo '<form class="form-horizontal" method="post">
   <div class="mb-3 row">
     <div class="col-md-offset-2 col-md-10">
       <input type="hidden" name="captcha_hash" value="' . $hash . '" />
-      <button class="btn btn-success btn-sm" type="submit" name="savecat"><i class="bi bi-box-arrow-down"></i> ' . $languageService->get('add_category') . '</button>
+      <button class="btn btn-success btn-sm" type="submit" name="saveaddcat"><i class="bi bi-box-arrow-down"></i> ' . $languageService->get('add_category') . '</button>
     </div>
   </div>
 
@@ -483,212 +691,136 @@ echo '<form class="form-horizontal" method="post">
 
 } elseif ($action == "editcat") {
 
+    // POST-Handler zum Speichern
+    if (isset($_POST['savecat'])) {
+        $CAPCLASS = new \nexpell\Captcha;
 
-if (isset($_POST['savecat'])) {
+        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
+            // Eingaben holen und sichern
+            $catID   = (int)($_POST['catID'] ?? 0);
+            $fa_name = $_POST['fa_name'] ?? '';
+            $modulname = $_POST['modulname'] ?? ''; // wird nicht bearbeitet, nur zur Vollständigkeit
+            $nameArray = $_POST['name'] ?? [];
 
-    if ($_POST['captcha_hash'] != $_SESSION['captcha_hash']) {
-        echo '<div class="alert alert-danger" role="alert">Fehler: Ungültiges Captcha.</div>';
-        redirect("admincenter.php?site=dashboard_navigation", "", 3);
-        die();
-    }
+            // Mehrsprachigen Namen zusammensetzen
+            $name = '';
+            foreach (['de','en','it'] as $lang) {
+                $txt = $nameArray[$lang] ?? '';
+                $name .= "[[lang:$lang]]" . $txt;
+            }
 
-    // Eingabewerte validieren und schützen
-    $fa_name = isset($_POST['fa_name']) ? $_POST['fa_name'] : '';
-    $name = isset($_POST['name']) ? $_POST['name'] : '';
-
-    if (empty($fa_name) || empty($name)) {
-        echo '<div class="alert alert-danger" role="alert">Bitte füllen Sie alle Felder aus.</div>';
-    } else {
-        // Sichere Eingabevalidierung und prepared statements verwenden
-        if (isset($_database) && $_database) {
-            $fa_name = mysqli_real_escape_string($_database, $fa_name);
-            $name = mysqli_real_escape_string($_database, $name);
-
-            // UPDATE-Query vorbereiten
-            $updateQuery = "UPDATE navigation_dashboard_categories 
-                            SET fa_name = ?, name = ? 
-                            WHERE catID = ?";
-
-            // Prepared statement verwenden
-            if ($stmt = $_database->prepare($updateQuery)) {
-                $stmt->bind_param("ssi", $fa_name, $name, $_POST['catID']);
-
-                // Ausführen und prüfen, ob das Update erfolgreich war
+            // Update vorbereiten (Prepared Statement empfohlen)
+            $stmt = $_database->prepare("UPDATE navigation_dashboard_categories SET fa_name = ?, name = ? WHERE catID = ?");
+            if ($stmt) {
+                $stmt->bind_param("ssi", $fa_name, $name, $catID);
                 if ($stmt->execute()) {
-                    echo '<div class="alert alert-success" role="alert">Kategorie erfolgreich bearbeitet!</div>';
+                    echo '<div class="alert alert-success" role="alert">' . $languageService->get('edit_success') . '</div>';
                     redirect("admincenter.php?site=dashboard_navigation", "", 3);
                 } else {
-                    echo '<div class="alert alert-danger" role="alert">Fehler beim Bearbeiten der Kategorie.</div>';
+                    echo '<div class="alert alert-danger" role="alert">' . $languageService->get('edit_error') . '</div>';
                 }
                 $stmt->close();
             } else {
-                echo '<div class="alert alert-danger" role="alert">Fehler bei der Vorbereitung der SQL-Abfrage.</div>';
+                echo '<div class="alert alert-danger" role="alert">Fehler bei der SQL-Vorbereitung.</div>';
             }
+
         } else {
-            die('Fehler: Datenbankverbindung nicht verfügbar!');
+            echo '<div class="alert alert-warning" role="alert">' . htmlspecialchars($languageService->get('transaction_invalid')) . '</div>';
         }
     }
-}
 
-// Abrufen der aktuellen Daten zur Bearbeitung
-$catID = isset($_GET['catID']) ? $_GET['catID'] : 0;
-$ergebnis = safe_query("SELECT * FROM navigation_dashboard_categories WHERE catID = '$catID'");
-$ds = mysqli_fetch_array($ergebnis);
+    // --- Formularanzeige ---
 
-// Sicherstellen, dass Daten gefunden wurden
-if (!$ds) {
-    die('Fehler: Kategorie nicht gefunden!');
-}
+    // Daten laden
+    $catID = isset($_GET['catID']) ? (int)$_GET['catID'] : 0;
+    $ergebnis = safe_query("SELECT * FROM navigation_dashboard_categories WHERE catID = '$catID'");
+    $ds = mysqli_fetch_array($ergebnis);
 
-// Captcha-Instanz erstellen
-$CAPCLASS = new \nexpell\Captcha;
-$CAPCLASS->createTransaction();
-$_SESSION['captcha_hash'] = $CAPCLASS->getHash();
-$hash = $_SESSION['captcha_hash'];
-
-echo '<div class="card">
-        <div class="card-header"><i class="bi bi-menu-app"></i> 
-            ' . $languageService->get('dashnavi') . '
-        </div>
-            
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="admincenter.php?site=dashboard_navigation">' . $languageService->get('dashnavi') . '</a></li>
-    <li class="breadcrumb-item active" aria-current="page">' . $languageService->get('edit_category') . '</li>
-  </ol>
-</nav>
-     <div class="card-body">';
-// Formular zur Bearbeitung der Kategorie
-echo '<form class="form-horizontal" method="post">
-        <div class="mb-3 row">
-          <label class="col-md-2 control-label">' . $languageService->get('fa_name') . ':</label>
-          <div class="col-md-8"><span class="text-muted small"><em>
-            <input class="form-control" type="text" name="fa_name" value="' . htmlspecialchars($ds['fa_name']) . '" size="60"></em></span>
-          </div>
-        </div>
-
-        <div class="mb-3 row">
-          <label class="col-md-2 control-label">' . $languageService->get('name') . ':</label>
-          <div class="col-md-8"><span class="text-muted small"><em>
-            <input class="form-control" type="text" name="name" value="' . htmlspecialchars($ds['name']) . '" size="60"></em></span>
-          </div>
-        </div>
-
-        <div class="mb-3 row">
-          <div class="col-md-offset-2 col-md-10">
-            <input type="hidden" name="captcha_hash" value="' . $hash . '" />
-            <input type="hidden" name="catID" value="' . $catID . '">
-            <button class="btn btn-warning btn-sm" type="submit" name="savecat">
-              <i class="bi bi-box-arrow-down"></i> ' . $languageService->get('edit_category') . '
-            </button>
-          </div>
-        </div>
-      </form>';
-echo '</div></div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-} else {
-
-
-
-
-
-
-if (isset($_GET['delete'])) {
-
-    // Überprüfen des Captchas
-    #if ($_POST['captcha_hash'] != $_SESSION['captcha_hash']) {
-    #    echo '<div class="alert alert-danger" role="alert">Fehler: Ungültiges Captcha.</div>';
-    #    redirect("admincenter.php?site=dashboard_navigation", "", 3);
-    #    die();
-    #}
-
-    // Validierung der linkID (nur ganze Zahlen erlauben)
-    $linkID = isset($_GET['linkID']) ? (int) $_GET['linkID'] : 0;
-    if ($linkID <= 0) {
-        echo '<div class="alert alert-danger" role="alert">Ungültige Link-ID.</div>';
-        redirect("admincenter.php?site=dashboard_navigation", "", 3);
-        die();
+    if (!$ds) {
+        die('Fehler: Kategorie nicht gefunden!');
     }
 
-    // Löschen des Links und der zugehörigen Rechte mit Prepared Statements
-    $stmt = $_database->prepare("DELETE FROM navigation_dashboard_links WHERE linkID = ?");
-    $stmt->bind_param("i", $linkID); // "i" für Integer
-    $stmt->execute();
-    $stmt->close();
+    // Captcha erzeugen
+    $CAPCLASS = new \nexpell\Captcha;
+    $CAPCLASS->createTransaction();
+    $hash = $CAPCLASS->getHash();
 
-    $stmt = $_database->prepare("DELETE FROM user_role_admin_navi_rights WHERE accessID = ?");
-    $stmt->bind_param("i", $linkID); // "i" für Integer
-    $stmt->execute();
-    $stmt->close();
-
-    // Erfolgreiche Nachricht
-    echo '<div class="alert alert-success" role="alert">Link erfolgreich gelöscht!</div>';
-    redirect("admincenter.php?site=dashboard_navigation", "", 3);
-
-
-
-
-
-} elseif (isset($_GET['delcat'])) {
-
-    // Überprüfen des Captchas
-    #if ($_POST['captcha_hash'] != $_SESSION['captcha_hash']) {
-    #    echo '<div class="alert alert-danger" role="alert">Fehler: Ungültiges Captcha.</div>';
-    #    redirect("admincenter.php?site=dashboard_navigation", "", 3);
-    #    die();
-    #}
-
-    // Validierung der catID (nur ganze Zahlen erlauben)
-    $catID = isset($_GET['catID']) ? (int) $_GET['catID'] : 0;
-    if ($catID <= 0) {
-        echo '<div class="alert alert-danger" role="alert">Ungültige Kategoriedaten.</div>';
-        redirect("admincenter.php?site=dashboard_navigation", "", 3);
-        die();
+    // Hilfsfunktion zur Sprach-Extraktion
+    function extractLangText(?string $multiLangText, string $lang): string {
+        if (!$multiLangText) return '';
+        if (preg_match('/\[\[lang:' . preg_quote($lang, '/') . '\]\](.*?)(?=\[\[lang:|$)/s', $multiLangText, $matches)) {
+            return trim($matches[1]);
+        }
+        return '';
     }
 
-    // Update und Löschen von Einträgen mit Prepared Statements
-    // Zuerst die catID in der navigation_dashboard_links auf 0 setzen
-    $stmt = $_database->prepare("UPDATE navigation_dashboard_links SET catID = ? WHERE catID = ?");
-    $newCatID = 0;
-    $stmt->bind_param("ii", $newCatID, $catID);
-    $stmt->execute();
-    $stmt->close();
+    // Sprachen aus DB laden
+    $languages = [];
+    $query = "SELECT iso_639_1, name_de FROM settings_languages WHERE active = 1 ORDER BY id ASC";
+    $result = mysqli_query($_database, $query);
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $languages[$row['iso_639_1']] = $row['name_de'];
+        }
+    } else {
+        $languages = ['de' => 'Deutsch', 'en' => 'English', 'it' => 'Italiano'];
+    }
 
-    // Löschen der Kategorie aus navigation_dashboard_categories
-    $stmt = $_database->prepare("DELETE FROM navigation_dashboard_categories WHERE catID = ?");
-    $stmt->bind_param("i", $catID);
-    $stmt->execute();
-    $stmt->close();
+    // Formular ausgeben
+    echo '<div class="card">
+        <div class="card-header"><i class="bi bi-menu-app"></i> ' . $languageService->get('dashnavi') . '</div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="admincenter.php?site=dashboard_navigation">' . $languageService->get('dashnavi') . '</a></li>
+                <li class="breadcrumb-item active" aria-current="page">' . $languageService->get('edit_category') . '</li>
+            </ol>
+        </nav>
+        <div class="card-body">
 
-    // Löschen der zugehörigen Rechte aus user_role_admin_navi_rights
-    $stmt = $_database->prepare("DELETE FROM user_role_admin_navi_rights WHERE accessID = ?");
-    $stmt->bind_param("i", $catID);
-    $stmt->execute();
-    $stmt->close();
+        <form class="form-horizontal" method="post">
+            <div class="mb-3 row">
+                <label class="col-md-2 control-label">' . $languageService->get('fa_name') . ':</label>
+                <div class="col-md-8">
+                    <input class="form-control" type="text" name="fa_name" value="' . htmlspecialchars($ds['fa_name']) . '" size="60">
+                </div>
+            </div>
 
-    // Erfolgreiche Nachricht
-    echo '<div class="alert alert-success" role="alert">Kategorie erfolgreich gelöscht!</div>';
-    redirect("admincenter.php?site=dashboard_navigation", "", 3);
+            <div class="alert alert-info" role="alert">
+                <label class="form-label"><h4>' . $languageService->get('text') . '</h4></label>';
+
+                foreach ($languages as $code => $label) {
+                    echo '
+                    <div class="mb-3 row">
+                        <label class="col-sm-2 col-form-label">' . htmlspecialchars($label) . ':</label>
+                        <div class="col-sm-8"><input class="form-control" type="text" id="text_' . htmlspecialchars($code) . '" name="name[' . htmlspecialchars($code) . ']" value="'
+                            . htmlspecialchars(extractLangText($ds['name'] ?? '', $code)) .
+                            '">
+                        </div>
+                    </div>';
+                }
+
+        echo '</div>
+            <div class="mb-3 row">
+                <label class="col-md-2 control-label">' . $languageService->get('modulname') . ':</label>
+                <div class="col-md-8"><span class="text-muted small"><em>
+                    <input class="form-control" type="text" name="modulname" value="' . htmlspecialchars($ds['modulname']) . '" size="60" disabled></em></span>
+                </div>
+            </div>
+            <div class="mb-3 row">
+                <div class="col-md-offset-2 col-md-10">
+                    <input type="hidden" name="captcha_hash" value="' . $hash . '" />
+                    <input type="hidden" name="catID" value="' . $catID . '">
+                    <button class="btn btn-warning btn-sm" type="submit" name="savecat">
+                        <i class="bi bi-box-arrow-down"></i> ' . $languageService->get('edit_category') . '
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>';
 }
 
-
-
-
-
-
-
+ else {
 
 
 echo '<div class="card">

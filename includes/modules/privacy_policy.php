@@ -43,7 +43,8 @@ if (mysqli_num_rows($ergebnis)) {
     $privacy_policy_text = $translate->getTextByLanguage($privacy_policy_text);
 
     // Datum der Datenschutzrichtlinie formatieren
-    $date = $ds['date'];
+    $timestamp = strtotime($ds['date']);
+    $date = date('d.m.Y H:i:s', $timestamp);
 
     $data_array = [
         'page_title' => $hp_title,

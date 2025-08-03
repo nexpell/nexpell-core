@@ -154,7 +154,7 @@ $_database->query($query);
             VALUES ($userID, $dark_mode, $email_notifications)");
     }
 
-    header("Location: index.php?site=profile&userID=$userID");
+    header("Location: " . convertToSeoUrl("index.php?site=profile&userID=$userID"));
     exit;
 }
 

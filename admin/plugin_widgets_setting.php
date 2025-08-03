@@ -35,7 +35,7 @@ while ($row = $res->fetch_assoc()) {
     $pages[$row['modulname']] = $row['name'];
 }
 
-$exclude_plugins = ['navigation', 'carousel', 'error_404', 'footer_easy', 'login', 'register', 'lostpassword', 'profile', 'edit_profile', 'lastlogin', 'startpage']; // Plugins, die nicht angezeigt werden sollen
+$exclude_plugins = ['navigation', 'carousel', 'error_404', 'footer_easy', 'login', 'register', 'lostpassword', 'profile', 'edit_profile', 'lastlogin']; // Plugins, die nicht angezeigt werden sollen
 ?>
 
 

@@ -34,7 +34,14 @@ function get_mainContent() {
     }
     $ds = mysqli_fetch_array($settings);
 
-    $site = isset($_GET['site']) ? htmlspecialchars($_GET['site'], ENT_QUOTES, 'UTF-8') : $ds['startpage'];
+    #$site = isset($_GET['site']) ? htmlspecialchars($_GET['site'], ENT_QUOTES, 'UTF-8') : $ds['startpage'];
+
+    if (!isset($_GET['site']) || $_GET['site'] === 'index' || empty($_GET['site'])) {
+        $site = $ds['startpage'];
+    } else {
+        $site = getinput($_GET['site']);
+    }
+
     $site = preg_replace('/[^a-zA-Z0-9_-]/', '', $site);
 
     $module_dir = realpath(__DIR__ . '/../includes/modules');
@@ -72,8 +79,6 @@ function get_mainContent() {
 
     return "<h1>404 - Seite nicht gefunden</h1>";
 }
-
-
 
 
 // CKEditor Konfiguration (je nach Superadmin)

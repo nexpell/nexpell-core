@@ -151,5 +151,20 @@ if (isset($_SESSION['language'])) {
 
         return $data ?: null;
     }
+
+    public function parseMultilang(string $text): string
+    {
+        // Pattern für aktuellen Sprachblock, z.B. [[lang:de]]... bis [[lang:xx]] oder Ende
+        $pattern = '/\[\[lang:' . preg_quote($this->currentLanguage, '/') . '\]\](.*?)(?=(\[\[lang:|\z))/s';
+
+        if (preg_match($pattern, $text, $matches)) {
+            return trim($matches[1]);
+        }
+
+        // Falls kein Sprachblock gefunden wird, als Fallback den kompletten Text zurückgeben
+        return $text;
+    }
+
+
 }
 

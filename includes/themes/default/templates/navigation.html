@@ -36,9 +36,9 @@
         <img class="avatar_small" style="height: 21px;width: 28px;margin-left: -5px;" src="{l_avatar}" alt="{nickname}" title="{nickname}" data-toggle="tooltip" data-html="true" data-bs-placement="right" data-bs-original-title="{nickname}"/>&nbsp;{my_account}
     </a>
     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="servicesDropdown" style="margin-top: 0px;">
-        <li><a class="dropdown-item" href="index.php?site=profile&userID={userID}">&nbsp;{to_profil}</a></li>
-        {dashboard}
-        <li><a class="dropdown-item" href="index.php?site=logout">&nbsp;{lang_log_off}</a></li>
+        {profile}        
+        {dashboard}        
+        {logout}
     </ul>
 </li>
 <!-- END -->
@@ -50,7 +50,7 @@
 <!-- END -->
 
 <!-- navigation_login_login -->
-<li><a class="nav-link" href="index.php?site=login">{lang_login}</a></li>
+{login}
 <!-- END -->
 
 <!-- navigation_login_foot -->

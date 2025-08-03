@@ -47,14 +47,34 @@ if (!empty($updates)) {
     $data_array['changelog'] = "Keine weiteren Änderungen verfügbar.";
 }
 
-$update_text = "<strong>Folgende Updates sind verfügbar:</strong><ul>";
+/*$update_text = "<strong>Folgende Updates sind verfügbar:</strong><ul>";
 foreach ($updates as $update) {
     $update_text .= "<li><strong>Version:</strong> {$update['version']}<br>{$update['changelog']}</li>";
 }
-$update_text .= "</ul>";
+$update_text .= "</ul>";*/
 
-$data_array['update_status'] = $update_text;
-$data_array['show_button'] = !empty($updates);
+if (!empty($updates)) {
+    $update_text = "<strong>Folgende Updates sind verfügbar:</strong><ul>";
+    foreach ($updates as $update) {
+        $update_text .= "<li><strong>Version:</strong> {$update['version']}<br>{$update['changelog']}</li>";
+    }
+    $update_text .= "</ul>";
+
+    $data_array['update_status'] = $update_text;
+    $data_array['show_button'] = true;
+    $data_array['has_update'] = true;
+} else {
+    $data_array['update_status'] = "<div class=\"alert alert-success\">
+        <i class=\"bi bi-check-circle me-2\"></i>
+        Du verwendest bereits die neueste Version.
+    </div>";
+    $data_array['show_button'] = false;
+    $data_array['has_update'] = false;
+}
+
+
+#$data_array['update_status'] = $update_text;
+#$data_array['show_button'] = !empty($updates);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $steps_log = [];
@@ -128,6 +148,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $steps_log[] = "→ Überschriebene Dateien:<br><div class=\"alert alert-info\" role=\"alert\"><pre>" .
                     htmlspecialchars(implode("\n", $filtered_files)) .
                     "</pre></div>";
+            }
+        }
+
+        if (isset($update['delete_files']) && is_array($update['delete_files'])) {
+            foreach ($update['delete_files'] as $relativePath) {
+                $fullPath = $extract_path . '/' . $relativePath;
+                if (file_exists($fullPath)) {
+                    if (@unlink($fullPath)) {
+                        $steps_log[] = "→ Alte Datei gelöscht: <code>$relativePath</code>";
+                    } else {
+                        $steps_log[] = "<div class=\"alert alert-warning\">⚠️ Konnte <code>$relativePath</code> nicht löschen.</div>";
+                    }
+                }
             }
         }
 

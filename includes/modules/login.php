@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $_SESSION['error_message'] = $languageService->get('error_invalid_email');
-        header("Location: index.php?site=login");
+        header("Location: " . convertToSeoUrl('index.php?site=login'));
         exit;
     }
 
@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $updateStmt->execute();
 
                 $_SESSION['success_message'] = $languageService->get('success_login');
-                header("Location: index.php");
+                header("Location: /");
                 exit;
             }
         } else {
@@ -122,6 +122,9 @@ if ($isEmailBanned) {
     $isIpBanned = true;
 }
 
+$registerlink = '<a href="' . convertToSeoUrl('index.php?site=register') . '">' . $languageService->get('register_link') . '</a>';
+$lostpasswordlink = '<a href="' . convertToSeoUrl('index.php?site=lostpassword') . '">' . $languageService->get('lostpassword_link') . '</a>';
+
 $data_array = [
     'login_headline' => $languageService->get('title'),
     'email_label' => $languageService->get('email_label'),
@@ -131,7 +134,8 @@ $data_array = [
     'remember_me' => $languageService->get('remember_me'),
     'login_button' => $languageService->get('login_button'),
     'register_link' => $languageService->get('register_link'),
-    'lostpassword_link' => $languageService->get('lostpassword_link'),
+    'registerlink' => $registerlink,
+    'lostpasswordlink' => $lostpasswordlink,
     'error_message' => $message,
     'message_zusatz' => $message_zusatz,
     'isIpBanned' => $isIpBanned,

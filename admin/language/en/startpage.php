@@ -1,20 +1,14 @@
 <?php
 
-$language_array = Array(
-
-
-  'access_denied'                       => 'Access denied',
-  'startpage'                           => 'Start page',
-  'transaction_invalid'                 => 'Transaction ID invalid',
-  'update'                              => 'Update',
-  'text'                                => 'Text',
-  'title_head'                          => 'Heading',
-  'description'                         => 'Description / Info',
-  'editor_is_displayed'                 => 'Editor off / on'
+$language_array = array(
+    'access_denied' => 'Access denied',
+    'changes_successful' => 'Changes saved successfully',
+    'description' => 'Description / Info',
+    'editor_is_editor' => 'Toggle editor on/off:',
+    'startpage' => 'Startpage',
+    'text' => 'Text',
+    'title_head' => 'Title',
+    'transaction_invalid' => 'Invalid transaction ID',
+    'update' => 'Update',
 );
-
-
-
-
-
 

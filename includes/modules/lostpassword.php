@@ -27,7 +27,7 @@ if ($success && isset($_SESSION['success_message'])) {
         'title' => $languageService->module['title'],
         'forgotten_your_password' => $languageService->module['forgotten_your_password'],
         'message' => '<div class="alert alert-success" role="alert">' . $_SESSION['success_message'] . '</div>',
-        'return_to_login' => '<a href="index.php?site=login" class="btn btn-success">' . $languageService->module['login'] . '</a>'
+        'return_to_login' => '<a href="' . convertToSeoUrl('index.php?site=login') . '" class="btn btn-success">' . $languageService->module['login'] . '</a>'
     ];
     unset($_SESSION['success_message']);
     echo $tpl->loadTemplate("lostpassword", "success", $data_array, 'theme');
@@ -55,7 +55,7 @@ if (isset($_POST['submit'])) {
 
                 if ($pepper_plain === false || $pepper_plain === '') {
                     $_SESSION['error_message'] = '❌ Fehler beim Entschlüsseln des Peppers.';
-                    header("Location: index.php?site=lostpassword");
+                    header("Location: " . convertToSeoUrl('index.php?site=lostpassword'));
                     exit;
                 }
 
@@ -83,30 +83,30 @@ if (isset($_POST['submit'])) {
                 if ($sendmail['result'] === 'fail') {
                     // Fehler bei der E-Mail-Zustellung
                     $_SESSION['error_message'] = $languageService->module['email_failed'] . ' ' . $sendmail['error'];
-                    header("Location: index.php?site=lostpassword");
+                    header("Location: " . convertToSeoUrl('index.php?site=lostpassword'));
                     exit;
                 } else {
                     // Erfolgreiche Passwortzurücksetzung
                     $_SESSION['success_message'] = str_replace($vars, $repl, $languageService->module['successful']);
-                    header("Location: index.php?site=lostpassword&success=1");
+                    header("Location: " . convertToSeoUrl('index.php?site=lostpassword&success=1'));
                     exit;
                 }
             } else {
                 // Kein Pepper in der Datenbank vorhanden
                 $_SESSION['error_message'] = '❌ Kein Pepper in der Datenbank.';
-                header("Location: index.php?site=lostpassword");
+                header("Location: " . convertToSeoUrl('index.php?site=lostpassword'));
                 exit;
             }
         } else {
             // Benutzer nicht gefunden
             $_SESSION['error_message'] = $languageService->module['no_user_found'];
-            header("Location: index.php?site=lostpassword");
+            header("Location: " . convertToSeoUrl('index.php?site=lostpassword'));
             exit;
         }
     } else {
         // Keine E-Mail eingegeben
         $_SESSION['error_message'] = $languageService->module['no_mail_given'];
-        header("Location: index.php?site=lostpassword");
+        header("Location: " . convertToSeoUrl('index.php?site=lostpassword'));
         exit;
     }
 }
@@ -118,6 +118,10 @@ if (isset($_SESSION['error_message'])) {
     unset($_SESSION['error_message']);
 }
 
+$registerlink = '<a href="' . convertToSeoUrl('index.php?site=register') . '">' . $languageService->get('register_link') . '</a>';
+$loginlink = '<a href="' . convertToSeoUrl('index.php?site=login') . '">' . $languageService->get('login') . '</a>';
+
+
 // Formular anzeigen
 $data_array = [
     'title' => $languageService->module['title'],
@@ -128,13 +132,13 @@ $data_array = [
     'your_email' => $languageService->module['your_email'],
     'get_password' => $languageService->module['get_password'],
     'return_to' => $languageService->module['return_to'],
-    'login' => $languageService->module['login'],
+    'loginlink' => $loginlink,
     'email-address' => $languageService->module['email-address'],
     'reg' => $languageService->module['reg'],
     'need_account' => $languageService->module['need_account'],
     'error_message' => $message,
     'lastpassword_txt' => $languageService->module['lastpassword_txt'],
-    'register_link' =>  $languageService->module['register_link'],
+    'registerlink' =>  $registerlink,
     'welcome_back' =>  $languageService->module['welcome_back'],    
     'reg_text' =>  $languageService->module['reg_text'],
     'login_text' =>  $languageService->module['login_text'],

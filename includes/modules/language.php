@@ -1,61 +1,105 @@
 <?php
-// Session starten, falls noch nicht gestartet
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 global $_database;
 
-// Sprache aus Session oder URL bestimmen
-if (isset($_GET['new_lang'])) {
-    // Nur Kleinbuchstaben erlauben
-    $lang = preg_replace('/[^a-z]/', '', strtolower($_GET['new_lang']));
+$availableLangs = ['de', 'en', 'it'];
+
+// Sprache aus URL oder Session oder DB ermitteln
+if (isset($_GET['new_lang']) && in_array($_GET['new_lang'], $availableLangs)) {
+    $lang = $_GET['new_lang'];
     $_SESSION['language'] = $lang;
-} elseif (isset($_SESSION['language'])) {
+} elseif (isset($_SESSION['language']) && in_array($_SESSION['language'], $availableLangs)) {
     $lang = $_SESSION['language'];
 } else {
-    // Sprache aus DB auslesen
     $result = $_database->query("SELECT default_language FROM settings LIMIT 1");
     if ($result && $row = $result->fetch_assoc() && !empty($row['default_language'])) {
         $lang = $row['default_language'];
     } else {
-        $lang = 'de'; // Fallback
+        $lang = 'de';
     }
     $_SESSION['language'] = $lang;
 }
 
-// Aktive Sprachen aus DB laden
+// Aktueller Pfad
+#$currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+$currentPath = $_SERVER['REQUEST_URI'];
+
+// Funktion zum Ersetzen der Sprache im Pfad
+/*function replaceLangInUrl(string $url, string $newLang, array $allowedLangs): string {
+    $parsed = parse_url($url);
+    $path = $parsed['path'] ?? '/';
+
+    parse_str($parsed['query'] ?? '', $parsed);
+
+    $parsed['new_lang'] = $newLang;
+
+    $segments = explode('/', trim($path, '/'));
+
+    if (isset($segments[0]) && in_array($segments[0], $allowedLangs)) {
+        $segments[0] = $newLang;
+    } else {
+        array_unshift($segments, $newLang);
+    }
+
+    $newPath = '/' . implode('/', $segments);
+
+    $query = isset($parsed['query']) ? '?' . $parsed['query'] : '';
+
+    return $newPath . $query;
+}*/
+
+function replaceLangInUrl(string $url, string $newLang, array $allowedLangs): string {
+    $parsed = parse_url($url);
+
+    $path = $parsed['path'] ?? '/';
+    parse_str($parsed['query'] ?? '', $params);
+
+    $params['new_lang'] = $newLang;
+
+    // Wenn SEO aktiv
+    if (defined('USE_SEO_URLS') && USE_SEO_URLS) {
+        $segments = explode('/', trim($path, '/'));
+
+        if (isset($segments[0]) && in_array($segments[0], $allowedLangs)) {
+            $segments[0] = $newLang;
+        } else {
+            array_unshift($segments, $newLang);
+        }
+
+        $newPath = '/' . implode('/', $segments);
+        $query = http_build_query(array_diff_key($params, ['site' => '', 'action' => '', 'id' => '', 'page' => '', 'anchor' => '', 'fragment' => '']));
+
+        return $newPath . ($query ? '?' . $query : '');
+    }
+
+    // SEO aus: normaler Query-Link
+    return '/index.php?' . http_build_query($params);
+}
+
+
+
+
+
+// Sprachen aus DB laden
 $query = "SELECT iso_639_1, name_native, name_en, flag FROM settings_languages WHERE active = 1 ORDER BY name_en ASC";
 $result = $_database->query($query);
-
-if (!$result) {
-    die("Fehler bei der Abfrage: " . $_database->error);
-}
+if (!$result) die("Fehler bei der Abfrage: " . $_database->error);
 
 $lang_ok = '';
 $language_links = '';
 $flag_ok = '';
 
-// Aktueller Pfad (z. B. /contact, /about), ohne Query-String
-$currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-
 while ($row = $result->fetch_assoc()) {
     $short = $row['iso_639_1'];
-    $flag = $row['flag'];
-
-    if (empty($flag)) {
-        $flag = "/admin/images/flags/{$short}.png";
-    }
-
+    $flag = $row['flag'] ?: "/admin/images/flags/{$short}.png";
     $name = $row['name_native'] ?: ($row['name_en'] ?: ucfirst($short));
 
-    // Bestehende GET-Parameter übernehmen und 'new_lang' ersetzen
-    $params = $_GET;
-    unset($params['new_lang']);
-    $params['new_lang'] = $short;
-
-    $queryString = http_build_query($params);
-    $url = $currentPath . '?' . $queryString;
+    
+    $url = replaceLangInUrl($currentPath, $short, $availableLangs);
 
     if ($short === $lang) {
         $lang_ok = '<a class="dropdown-item active" href="' . htmlspecialchars($url) . '" title="' . htmlspecialchars($name) . '">'
@@ -69,12 +113,11 @@ while ($row = $result->fetch_assoc()) {
     }
 }
 
-// Daten für Template
+// Daten an Template übergeben
 $data_array = [
     'flag_ok' => $flag_ok,
     'languages_ok' => $lang_ok,
     'languages' => $language_links,
 ];
 
-// Template laden
 echo $tpl->loadTemplate("navigation", "languages", $data_array, 'theme');

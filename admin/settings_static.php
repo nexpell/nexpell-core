@@ -1,11 +1,12 @@
 <?php
 
-use webspell\LanguageService;
-
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+use nexpell\LanguageService;
+use nexpell\NavigationUpdater;// SEO Anpassung
 
 // Standard setzen, wenn nicht vorhanden
 $_SESSION['language'] = $_SESSION['language'] ?? 'de';
@@ -18,22 +19,29 @@ $languageService = new LanguageService($_database);
 // Admin-Modul laden
 $languageService->readModule('static', true);
 
-use webspell\AccessControl;
+use nexpell\AccessControl;
 // Den Admin-Zugriff für das Modul überprüfen
 AccessControl::checkAdminAccess('ac_static');
 
 if (isset($_POST['save'])) {
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
 
         // Eingabedaten sicherstellen
         $title = mysqli_real_escape_string($_database, $_POST['title']);
-        $content = mysqli_real_escape_string($_database, $_POST['message']);
+        $nameArray = $_POST['message'];
         $tags = $_POST['tags'];
         $editor = isset($_POST['editor']) ? '1' : '0';
         $date = time();
         $categoryID = (int)$_POST['categoryID'];
         $staticID = isset($_POST['staticID']) ? (int)$_POST['staticID'] : null;
+
+        // Mehrsprachigen Text zusammenbauen
+        $content = '';
+        foreach (['de', 'en', 'it'] as $lang) {
+            $text = $nameArray[$lang] ?? '';
+            $content .= "[[lang:$lang]]" . $text;
+        }
 
         // Rollen verarbeiten (Checkboxen)
         $access_roles = isset($_POST['access_roles']) ? $_POST['access_roles'] : [];
@@ -61,7 +69,7 @@ if (isset($_POST['save'])) {
 
             safe_query("
                 INSERT INTO navigation_website_sub (
-                    mnavID, name, modulname, url, sort, indropdown, themes_modulname
+                    mnavID, name, modulname, url, sort, indropdown, last_modified
                 ) VALUES (
                     '$categoryID',
                     '$title',
@@ -69,7 +77,7 @@ if (isset($_POST['save'])) {
                     'index.php?site=static&amp;staticID=$staticID',
                     1,
                     1,
-                    ''
+                     NOW()
                 )
             ");
         } else {
@@ -83,7 +91,7 @@ if (isset($_POST['save'])) {
             // Navigationsmenü-Eintrag erstellen
             safe_query("
                 INSERT INTO navigation_website_sub (
-                    mnavID, name, modulname, url, sort, indropdown, themes_modulname
+                    mnavID, name, modulname, url, sort, indropdown, last_modified
                 ) VALUES (
                     '$categoryID',
                     '$title',
@@ -91,13 +99,13 @@ if (isset($_POST['save'])) {
                     'index.php?site=static&amp;staticID=$staticID',
                     1,
                     1,
-                    ''
+                    NOW()
                 )
             ");
         }
 
         // Tags setzen
-        \webspell\Tags::setTags('static', $staticID, $tags);
+        \nexpell\Tags::setTags('static', $staticID, $tags);
 
         echo '<div class="alert alert-success" role="alert">' . $languageService->get('changes_successful') . '</div>';
         echo '<script type="text/javascript">
@@ -117,12 +125,12 @@ if (isset($_POST['save'])) {
 }
 
  elseif (isset($_GET['delete'])) {
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_GET['captcha_hash'])) {
 
         $staticID = (int)$_GET['staticID'];  // Sicher casten
 
-        \webspell\Tags::removeTags('static', $staticID);
+        \nexpell\Tags::removeTags('static', $staticID);
 
         // Navigationseintrag löschen (ohne &amp;)
         safe_query("DELETE FROM `navigation_website_sub` WHERE `url` LIKE 'index.php?site=static&amp;staticID=" . $staticID . "%'");
@@ -144,15 +152,12 @@ if (isset($_POST['save'])) {
 
 if (isset($_GET['action']) && $_GET['action'] == "add") {
     // CAPTCHA-Hash generieren
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
 
-    // Editor aktivieren, wenn Checkbox aktiviert war
-    $editor = '';
-    if (isset($editor) && $editor == 1) {
-        $editor = 'ckeditor';
-    }   
+    
+ 
 
     // Rollen aus DB laden
     $role_result = safe_query("SELECT role_name FROM user_roles ORDER BY role_name ASC");
@@ -187,6 +192,37 @@ if (isset($_GET['action']) && $_GET['action'] == "add") {
         }
         $i++;
     }
+
+    // Mehrsprachigen Text extrahieren
+    function extractLangText(?string $multiLangText, string $lang): string {
+        if (!$multiLangText) return '';
+        if (preg_match('/\[\[lang:' . preg_quote($lang, '/') . '\]\](.*?)(?=\[\[lang:|$)/s', $multiLangText, $matches)) {
+            return trim($matches[1]);
+        }
+        return '';
+    }
+
+    // Sprach-Array
+    $languages = [];
+
+    $query = "SELECT iso_639_1, name_de FROM settings_languages WHERE active = 1 ORDER BY id ASC";
+    $result = mysqli_query($_database, $query);
+
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            // $row['iso_639_1'] z.B. 'de', $row['name_de'] z.B. 'Deutsch'
+            $languages[$row['iso_639_1']] = $row['name_de'];
+        }
+    } else {
+        // Fallback falls Query nicht klappt
+        $languages = ['de' => 'Deutsch', 'en' => 'English', 'it' => 'Italiano'];
+    }
+
+    // Editor-Status
+    $editor_checked = ($ds['editor'] ?? 0) == 1 ? 'checked' : '';
+
+
+
 
     // Kategorien für Select laden
     $category_select = '<select name="categoryID" class="form-select">';
@@ -266,11 +302,25 @@ if (isset($_GET['action']) && $_GET['action'] == "add") {
                     </div>
                 </div>
 
-                <div class="mb-3 row">
-                    <div class="col-md-12"><span class="text-muted small"><em>
-                        <textarea class="ckeditor" id="ckeditor" name="message" rows="20" cols="" style="width: 100%;"></textarea>
-                    </div>
-                </div>
+                
+
+                <div class="alert alert-info" role="alert">
+                <label class="form-label"><h4>' . $languageService->get('text') . '</h4></label>';
+
+                foreach ($languages as $code => $label) {
+                    echo '
+                    <div class="mb-3 row">
+                        <label class="col-sm-2 col-form-label">' . $label . ':</label>
+                        <div class="col-sm-8"><textarea class="form-control lang-field" rows="6" id="editor_' . $code . '" name="message[' . $code . ']">'
+                            . htmlspecialchars(extractLangText($ds['name'] ?? '', $code)) . '</textarea>
+                        </div>
+                    </div>';
+                }
+
+        echo '</div>
+
+
+        
 
                 <div class="mb-3 row">
                     <div class="col-md-12">
@@ -285,26 +335,25 @@ if (isset($_GET['action']) && $_GET['action'] == "add") {
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const toggle = document.getElementById('toggle-editor');
-    const textarea = document.getElementById('ckeditor');
+    const editors = document.querySelectorAll('.lang-field');
 
-    // Funktion zum Editor aktivieren/deaktivieren
-    function toggleEditor() {
-        if (toggle.checked) {
-            if (!CKEDITOR.instances['ckeditor']) {
-                CKEDITOR.replace('ckeditor');
+    function toggleEditors() {
+        editors.forEach(textarea => {
+            const id = textarea.id;
+            if (toggle.checked) {
+                if (!CKEDITOR.instances[id]) {
+                    CKEDITOR.replace(id);
+                }
+            } else {
+                if (CKEDITOR.instances[id]) {
+                    CKEDITOR.instances[id].destroy(true);
+                }
             }
-        } else {
-            if (CKEDITOR.instances['ckeditor']) {
-                CKEDITOR.instances['ckeditor'].destroy(true);
-            }
-        }
+        });
     }
 
-    // Initialer Zustand (z. B. bei Seiten-Reload)
-    toggleEditor();
-
-    // Reaktion auf Umschalten
-    toggle.addEventListener('change', toggleEditor);
+    toggle.addEventListener('change', toggleEditors);
+    toggleEditors(); // Initialer Zustand
 });
 </script>
 <?php
@@ -316,15 +365,9 @@ document.addEventListener('DOMContentLoaded', function () {
     $ds = mysqli_fetch_array($ergebnis);
     $content = $ds['content'];
     $title = $ds['title'];
-    $tags = \webspell\Tags::getTags('static', $staticID);
+    $tags = \nexpell\Tags::getTags('static', $staticID);
 
-    // Editor aktivieren, wenn Checkbox aktiviert war
-    $editor = '';
-    if (isset($ds['editor']) && $ds['editor'] == 1) {
-        $editor = 'ckeditor';
-    }
-
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
 
@@ -361,6 +404,34 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         $i++;
     }
+
+    // Mehrsprachigen Text extrahieren
+    function extractLangText(?string $multiLangText, string $lang): string {
+        if (!$multiLangText) return '';
+        if (preg_match('/\[\[lang:' . preg_quote($lang, '/') . '\]\](.*?)(?=\[\[lang:|$)/s', $multiLangText, $matches)) {
+            return trim($matches[1]);
+        }
+        return '';
+    }
+
+    // Sprach-Array
+    $languages = [];
+
+    $query = "SELECT iso_639_1, name_de FROM settings_languages WHERE active = 1 ORDER BY id ASC";
+    $result = mysqli_query($_database, $query);
+
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            // $row['iso_639_1'] z.B. 'de', $row['name_de'] z.B. 'Deutsch'
+            $languages[$row['iso_639_1']] = $row['name_de'];
+        }
+    } else {
+        // Fallback falls Query nicht klappt
+        $languages = ['de' => 'Deutsch', 'en' => 'English', 'it' => 'Italiano'];
+    }
+
+    // Editor-Status
+    $editor_checked = ($ds['editor'] ?? 0) == 1 ? 'checked' : '';
 
     // Kategorien für Select laden
     $category_select = '<select name="categoryID" class="form-select">';
@@ -444,11 +515,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                 </div>
 
-                <div class="mb-3 row">
-                    <div class="col-md-12">
-                        <textarea class="' . $editor . '" id="ckeditor" name="message" rows="20" style="width: 100%;">' . htmlspecialchars($content) . '</textarea>
-                    </div>
-                </div>
+                <div class="alert alert-info" role="alert">
+                <label class="form-label"><h4>' . $languageService->get('text') . '</h4></label>';
+
+                foreach ($languages as $code => $label) {
+                    echo '
+                    <div class="mb-3 row">
+                        <label class="col-sm-2 col-form-label">' . $label . ':</label>
+                        <div class="col-sm-8"><textarea class="form-control lang-field" rows="6" id="editor_' . $code . '" name="message[' . $code . ']">'
+                            . htmlspecialchars(extractLangText($content ?? '', $code)) . '</textarea>
+                        </div>
+                    </div>';
+                }
+
+        echo '</div>
 
                 <div class="mb-3 row">
                     <div class="col-md-12">
@@ -467,26 +547,25 @@ document.addEventListener('DOMContentLoaded', function () {
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const toggle = document.getElementById('toggle-editor');
-    const textarea = document.getElementById('ckeditor');
+    const editors = document.querySelectorAll('.lang-field');
 
-    // Funktion zum Editor aktivieren/deaktivieren
-    function toggleEditor() {
-        if (toggle.checked) {
-            if (!CKEDITOR.instances['ckeditor']) {
-                CKEDITOR.replace('ckeditor');
+    function toggleEditors() {
+        editors.forEach(textarea => {
+            const id = textarea.id;
+            if (toggle.checked) {
+                if (!CKEDITOR.instances[id]) {
+                    CKEDITOR.replace(id);
+                }
+            } else {
+                if (CKEDITOR.instances[id]) {
+                    CKEDITOR.instances[id].destroy(true);
+                }
             }
-        } else {
-            if (CKEDITOR.instances['ckeditor']) {
-                CKEDITOR.instances['ckeditor'].destroy(true);
-            }
-        }
+        });
     }
 
-    // Initialer Zustand (z. B. bei Seiten-Reload)
-    toggleEditor();
-
-    // Reaktion auf Umschalten
-    toggle.addEventListener('change', toggleEditor);
+    toggle.addEventListener('change', toggleEditors);
+    toggleEditors(); // Initialer Zustand
 });
 </script>
 <?php
@@ -531,7 +610,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </thead>';
 
     $i = 1;
-    $CAPCLASS = new \webspell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
 

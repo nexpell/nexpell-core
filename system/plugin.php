@@ -5,12 +5,12 @@ use nexpell\LanguageService;
 
 global $languageService;
 
-global $modRewrite;
+/*global $modRewrite;
 if ($modRewrite && !empty($GLOBALS['site']))
 	$_SERVER['QUERY_STRING'] = 'site=' . $GLOBALS['site'];
 elseif ($modRewrite && empty($GLOBALS['site']))
 	$_SERVER['QUERY_STRING'] = 'site=startpage';
-
+*/
 
 class plugin_manager
 {
@@ -56,36 +56,36 @@ private $_debug = DEBUG;
     }
 
     public function plugin_check($data, $site)
-    {
-        $return = [];
+{
+    $return = [];
 
-        if ($data['activate'] == 1) {
-            if ($site) {
-                $tfiles = explode(",", $data['index_link']);
-                if (in_array($site, $tfiles)) {
-                    if (file_exists($data['path'] . $site . ".php")) {
-                        $return['status'] = 1;
-                        $return['data'] = $data['path'] . $site . ".php";
-                        return $return;
-                    } else {
-                        if (!file_exists(MODULE . $site . ".php")) {
-                            $site = "404";
-                        }
-                        $return['status'] = 1;
-                        $return['data'] = MODULE . $site . ".php";
-                        return $return;
-                    }
-                }
+    if ($data['activate'] == 1 && $site) {
+        $tfiles = array_map('trim', explode(",", $data['index_link']));
+
+        // Prüfen, ob $site in der Liste der Plugin-Links vorkommt
+        if (in_array($site, $tfiles)) {
+            $pluginFile = rtrim($data['path'], '/') . '/' . $site . ".php";
+
+            if (file_exists($pluginFile)) {
+                $return['status'] = 1;
+                $return['data'] = $pluginFile;
+                return $return;
             }
         }
-
-        if (!file_exists(MODULE . $site . ".php")) {
-            $site = "404";
-        }
-        $return['status'] = 1;
-        $return['data'] = MODULE . $site . ".php";
-        return $return;
     }
+
+    // Wenn kein Plugin oder Datei existiert → auf Modulpfad zurückfallen
+    $modulFile = MODULE . $site . ".php";
+    if (!file_exists($modulFile)) {
+        $site = "404";
+        $modulFile = MODULE . $site . ".php";
+    }
+
+    $return['status'] = 1;
+    $return['data'] = $modulFile;
+    return $return;
+}
+
 
     public function plugin_updatetitle($site)
     {

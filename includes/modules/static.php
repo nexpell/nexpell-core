@@ -16,14 +16,26 @@ $staticID = isset($_GET['staticID']) ? (int)$_GET['staticID'] : 0;
 
 $ds = mysqli_fetch_array(safe_query("SELECT * FROM `settings_static` WHERE `staticID`='" . $staticID . "'"));
 
+// Prüfen, ob Datensatz gefunden wurde
+if (!$ds) {
+    echo '<div class="alert alert-warning">Der angeforderte Inhalt wurde nicht gefunden.</div>';
+    exit;
+}
+
 // Titel übersetzen
-$title = $ds['title'];
+$title = $ds['title'] ?? '';
 $translate = new multiLanguage($lang);
-$translate->detectLanguages($title);
+
+// Nur wenn $title nicht leer ist, Sprachen erkennen
+if (!empty($title)) {
+    $translate->detectLanguages($title);
+} else {
+    $translate->detectLanguages('');
+}
 $title = $translate->getTextByLanguage($title);
 
 $config = mysqli_fetch_array(safe_query("SELECT selected_style FROM settings_headstyle_config WHERE id=1"));
-$class = htmlspecialchars($config['selected_style']);
+$class = htmlspecialchars($config['selected_style'] ?? '');
 
 // Header-Daten
 $data_array = [
@@ -47,8 +59,13 @@ if (empty($allowedRoles)) {
 
 if ($accessGranted) {
     // Inhalt übersetzen
-    $content = $ds['content'];
-    $translate->detectLanguages($content);
+    $content = $ds['content'] ?? '';
+
+    if (!empty($content)) {
+        $translate->detectLanguages($content);
+    } else {
+        $translate->detectLanguages('');
+    }
     $content = $translate->getTextByLanguage($content);
 
     $data_array = [

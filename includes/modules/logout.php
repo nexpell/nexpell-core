@@ -61,7 +61,7 @@ function logout() {
     setcookie('ws_session', '', time() - 3600, '/'); // Benutzerdefiniertes Cookie
 
     // Weiterleitung zur Start- oder Loginseite
-    header("Location: /index.php"); // Weiterleitung zur Login-Seite
+    header("Location: /"); // Weiterleitung zur Login-Seite
     exit;
 }
 

@@ -109,8 +109,6 @@ if (!empty($raw_birthday) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw_birthday))
     $birthday = $date->format('d.m.Y'); // deutsches Format
 }
 
-// Altersberechnung (nur wenn Geburtstag vorhanden und gültig)
-// Altersberechnung (nur wenn $raw_birthday im ISO-Format vorliegt)
 $age = '';
 if (!empty($raw_birthday) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw_birthday)) {
     $birthDate = date_create($raw_birthday);
@@ -119,43 +117,38 @@ if (!empty($raw_birthday) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw_birthday))
 }
 
 $gender_raw = $user_profile['gender'] ?? '';
-
 $gender_map = [
     'male'   => $languageService->get('about_gender_male'),
     'female' => $languageService->get('about_gender_female'),
     'other'  => $languageService->get('about_gender_other'),
     ''       => '-'
 ];
-
 $gender_display = $gender_map[$gender_raw] ?? '-';
 
-$signatur     = !empty($user_profile['signatur']) ? htmlspecialchars($user_profile['signatur']) : '<p class="text-muted fst-italic">„Keep coding & carry on.“</p>';
+$signatur = !empty($user_profile['signatur']) ? $user_profile['signatur'] : '<p class="text-muted fst-italic">„Keep coding & carry on.“</p>';
 
-// Social Media Links
 $facebook_url  = !empty($user_socials['facebook'])  ? htmlspecialchars($user_socials['facebook'])  : '';
 $twitter_url   = !empty($user_socials['twitter'])   ? htmlspecialchars($user_socials['twitter'])   : '';
 $instagram_url = !empty($user_socials['instagram']) ? htmlspecialchars($user_socials['instagram']) : '';
 $website_url   = !empty($user_socials['website'])   ? htmlspecialchars($user_socials['website'])   : '';
 $github_url    = !empty($user_socials['github'])    ? htmlspecialchars($user_socials['github'])    : '';
 
-
 $is_own_profile = ($_SESSION['userID'] ?? 0) === $userID;
-$edit_button = $is_own_profile ? '<a href="/edit_profile" class="btn btn-outline-primary mt-3"><i class="fas fa-user-edit"></i>' . $languageService->get('edit_profile_button') . '</a>' : '';
+$edit_button = $is_own_profile
+    ? '<a href="' . htmlspecialchars(convertToSeoUrl('index.php?site=edit_profile')) . '" class="btn btn-outline-primary mt-3">
+        <i class="fas fa-user-edit"></i> ' . $languageService->get('edit_profile_button') . '
+      </a>'
+    : '';
 
 $isLocked = isset($user_users['is_locked']) && (int)$user_users['is_locked'] === 1;
 
 $last_activity = (!empty($last_visit_raw) && strtotime($last_visit_raw) !== false) ? strtotime($last_visit_raw) : 0;
 $current_time = time();
+$online_time = ($last_activity > 0 && $last_activity <= $current_time)
+    ? floor(($current_time - $last_activity) / 3600) . " Stunden, " . floor((($current_time - $last_activity) % 3600) / 60) . " Minuten"
+    : "Keine Aktivität";
 
-if ($last_activity > 0 && $last_activity <= $current_time) {
-    $online_seconds = $current_time - $last_activity;
-    $online_hours = floor($online_seconds / 3600);
-    $online_minutes = floor(($online_seconds % 3600) / 60);
-    $online_time = "$online_hours Stunden, $online_minutes Minuten";
-} else {
-    $online_time = "Keine Aktivität";
-}
-
+// 1. Logins aus user_sessions zählen (wird immer gemacht)
 $stmt = $_database->prepare("SELECT COUNT(*) AS login_count FROM user_sessions WHERE userID = ?");
 $stmt->bind_param('i', $userID);
 $stmt->execute();
@@ -164,27 +157,17 @@ $stmt->fetch();
 $stmt->close();
 $logins = $logins_count > 0 ? $logins_count : 0;
 
+$counts = [];
 
-$articles  = getUserCount('plugins_articles', 'userID', $userID);
-$comments  = getUserCount('comments', 'userID', $userID);
-$rules     = getUserCount('plugins_rules', 'userID', $userID);
-$links     = getUserCount('plugins_links', 'userID', $userID);
-$partners  = getUserCount('plugins_partners', 'userID', $userID);
-$sponsors  = getUserCount('plugins_sponsors', 'userID', $userID);
-$forum     = getUserCount('plugins_forum_posts', 'userID', $userID);
-$download  = getUserCount('plugins_downloads_logs', 'userID', $userID);
-$points    = ($articles * 10) + ($comments * 2) + ($rules * 5) + ($links * 5) + ($partners * 5) + ($sponsors * 5) + ($forum * 2) + ($download * 2) + ($logins * 2);
-
-$level = floor($points / 100);
-$level_percent = $points % 100;
-
-
+function table_Exists($table) {
+    global $_database;
+    $result = $_database->query("SHOW TABLES LIKE '" . $_database->real_escape_string($table) . "'");
+    return $result && $result->num_rows > 0;
+}
 
 function getUserCount($table, $col, $userID) {
     global $_database;
-    if (!tableExists($table)) {
-        return 0;
-    }
+    if (!table_Exists($table)) return false;
     $stmt = $_database->prepare("SELECT COUNT(*) FROM `$table` WHERE `$col` = ?");
     $stmt->bind_param('i', $userID);
     $stmt->execute();
@@ -194,36 +177,53 @@ function getUserCount($table, $col, $userID) {
     return $count;
 }
 
-$post_type = '';
-$userID = $_GET['userID'] ?? 0;
-
 $tables = [
-    ['table' => 'plugins_articles', 'user_col' => 'userID', 'type' => 'Artikel'],
-    ['table' => 'comments', 'user_col' => 'userID', 'type' => 'Kommentare'],
-    ['table' => 'plugins_clan_rules', 'user_col' => 'userID', 'type' => 'Clan-Regeln'],
-    ['table' => 'plugins_partners', 'user_col' => 'userID', 'type' => 'Partners'],
-    ['table' => 'plugins_sponsors', 'user_col' => 'userID', 'type' => 'Sponsoren'],
-    ['table' => 'plugins_links', 'user_col' => 'userID', 'type' => 'Links'],
-    ['table' => 'plugins_forum_posts', 'user_col' => 'userID', 'type' => 'Forum'],
+    ['table' => 'plugins_articles',       'user_col' => 'userID', 'type' => 'Artikel'],
+    ['table' => 'comments',               'user_col' => 'userID', 'type' => 'Kommentare'],
+    ['table' => 'plugins_rules',          'user_col' => 'userID', 'type' => 'Clan-Regeln'],
+    ['table' => 'plugins_partners',       'user_col' => 'userID', 'type' => 'Partners'],
+    ['table' => 'plugins_sponsors',       'user_col' => 'userID', 'type' => 'Sponsoren'],
+    ['table' => 'plugins_links',          'user_col' => 'userID', 'type' => 'Links'],
+    ['table' => 'plugins_forum_posts',    'user_col' => 'userID', 'type' => 'Forum'],
     ['table' => 'plugins_downloads_logs', 'user_col' => 'userID', 'type' => 'Downloads'],
 ];
 
+// Plugins: nur wenn Tabelle existiert
 foreach ($tables as $table) {
-    $tableName = $table['table'];
-    $userCol = $table['user_col'];
-    $type = $table['type'] ?? ucfirst($tableName);
-
-    if (tableExists($tableName)) {
-        $counts[$type] = getUserCount($tableName, $userCol, $userID);
+    $count = getUserCount($table['table'], $table['user_col'], $userID);
+    if ($count !== false) {
+        $counts[$table['type']] = $count;
     }
 }
 
-#foreach ($counts as $type => $count) {
-#    $post_type .= "<p>$type: $count</p>";
-#}
+// Logins aus user_sessions immer anzeigen
+$counts['Logins'] = $logins;
+
+$weights = [
+    'Artikel'     => 10,
+    'Kommentare'  => 2,
+    'Clan-Regeln' => 5,
+    'Links'       => 5,
+    'Partners'    => 5,
+    'Sponsoren'   => 5,
+    'Forum'       => 2,
+    'Downloads'   => 2,
+    'Logins'      => 2
+];
+
+$total_points = 0;
+$post_type = '';
 foreach ($counts as $type => $count) {
-    $post_type .= '<tr><td>' . htmlspecialchars($type) . '</td><td>' . (int)$count . '</td></tr>';
+    $weight = $weights[$type] ?? 0;
+    $single_points = $count * $weight;
+    $total_points += $single_points;
+    $post_type .= '<tr><td>' . htmlspecialchars($type) . '</td><td>' . $single_points . '</td></tr>';
 }
+
+$level = floor($total_points / 100);
+$level_percent = $total_points % 100;
+
+
 
 if ($isLocked == 1 ) {
     $isrowLocked='<div class="alert alert-danger d-flex align-items-center" role="alert">
@@ -231,23 +231,17 @@ if ($isLocked == 1 ) {
     </div>';
 }
 
-
-
 $data_array = [
     'user_gender' => $gender_display,
     'username'        => $username,
     'avatar'          => $avatar,
     'user_role'       => $role_name,
-    'user_points'     => $points,
     'user_about'      => $about_me,
     'user_birthday'   => $birthday,
     'user_age'        => $age,
-    
-
     'user_signature'  => $signatur,
     'user_name'       => $firstname,
     'user_surname'    => $lastname,
-    
     'user_location'   => $location,
     'register_date'   => $register_date, 
     'user_activity'   => '<tr><td>Zuletzt online:</td><td>' . $last_visit . '</td></tr><tr><td>Online-Zeit:</td><td>' . $online_time . '</td></tr><tr><td>Logins:</td><td>' . $logins . '</td></tr>',
@@ -262,8 +256,7 @@ $data_array = [
     'edit_button'     => $edit_button,
     'user_posts'      => $post_type,
     'isLocked'        => $isrowLocked ?? '',
-
-    // Sprachvariablen ergänzen
+    // Sprachvariablen
     'lang_alt_profile_picture' => $languageService->get('alt_profile_picture'),
     'lang_points'              => $languageService->get('points'),
     'lang_level'               => $languageService->get('level'),
@@ -271,11 +264,9 @@ $data_array = [
     'lang_tooltip_twitter'     => $languageService->get('tooltip_twitter'),
     'lang_tooltip_instagram'   => $languageService->get('tooltip_instagram'),
     'lang_tooltip_website'     => $languageService->get('tooltip_website'),
-
     'lang_tab_about'           => $languageService->get('tab_about'),
     'lang_tab_posts'           => $languageService->get('tab_posts'),
     'lang_tab_activity'        => $languageService->get('tab_activity'),
-
     'lang_about_title'         => $languageService->get('about_title'),
     'lang_about_firstname'     => $languageService->get('about_firstname'),
     'lang_about_lastname'      => $languageService->get('about_lastname'),
@@ -286,19 +277,12 @@ $data_array = [
     'male'                     => $languageService->get('about_gender_male'),
     'gender_female'            => $languageService->get('about_gender_female'),
     'gender_other'             => $languageService->get('about_gender_other'),
-
-
     'lang_registered_since'    => $languageService->get('registered_since'),
     'lang_about_text'          => $languageService->get('about_text'),
     'lang_about_signature'     => $languageService->get('about_signature'),
-
     'lang_latest_posts'        => $languageService->get('latest_posts'),
     'lang_latest_activity'     => $languageService->get('latest_activity'),
-
-    
 ];
-
 
 // Ausgabe Template
 echo $tpl->loadTemplate("profile", "content", $data_array);
-

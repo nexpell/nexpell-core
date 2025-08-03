@@ -13,8 +13,8 @@ CKEDITOR.editorConfig = function(config) {
     config.encodeEntities = false;
     config.forceSimpleAmpersand = true;
     config.fillEmptyBlocks = false;
-    config.removePlugins = 'elementspath';
-    config.resize_enabled = false;
+    //config.removePlugins = 'elementspath';
+    //config.resize_enabled = false;
     config.FormatOutput = false;
 
     // Wichtig: Erlaube alle Inhalte inkl. Klassen, Styles etc.

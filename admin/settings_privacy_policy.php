@@ -1,115 +1,148 @@
 <?php
 
 use nexpell\LanguageService;
+use nexpell\AccessControl;
+use nexpell\Captcha;
 
-// Session absichern
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Standard setzen, wenn nicht vorhanden
 $_SESSION['language'] = $_SESSION['language'] ?? 'de';
 
-// Initialisieren
 global $languageService;
 $languageService = new LanguageService($_database);
-
-// Admin-Modul laden
 $languageService->readModule('privacy_policy', true);
 
-use nexpell\AccessControl;
-use nexpell\Captcha;
-
-// Zugriffskontrolle für Admin
+// Zugriff prüfen
 AccessControl::checkAdminAccess('ac_privacy_policy');
 
-// Initialisierung der Captcha-Klasse
-$CAPCLASS = new \nexpell\Captcha;
+$CAPCLASS = new Captcha;
 $tpl = new Template();
 
-// Verarbeitung und Speichern des Datenschutztexts
-// Wenn das Formular gesendet wurde
-if (isset($_POST['submit'])) {
-    // Datenschutztext und Editor aus dem Formular
-    $privacy_policy_text = $_POST['message'];
-    $current_datetime = date("Y-m-d H:i:s");
+// Sprachen
+$languages = [];
 
-    // Überprüfen, ob der Editor aktiviert wurde (Checkbox)
+$query = "SELECT iso_639_1, name_de FROM settings_languages WHERE active = 1 ORDER BY id ASC";
+$result = mysqli_query($_database, $query);
+
+if ($result) {
+    while ($row = mysqli_fetch_assoc($result)) {
+        // $row['iso_639_1'] z.B. 'de', $row['name_de'] z.B. 'Deutsch'
+        $languages[$row['iso_639_1']] = $row['name_de'];
+    }
+} else {
+    // Fallback falls Query nicht klappt
+    $languages = ['de' => 'Deutsch', 'en' => 'English', 'it' => 'Italiano'];
+}
+
+if (isset($_POST['submit'])) {
+    $current_datetime = date("Y-m-d H:i:s");
+    $nameArray = $_POST['privacy_policy_text'] ?? [];
     $editor = isset($_POST['editor']) ? '1' : '0';
 
-    // Überprüfen des Captchas
+    // Multilang zusammenbauen
+    $privacy_policy_text = '';
+    foreach ($languages as $code => $label) {
+        $text = $nameArray[$code] ?? '';
+        $privacy_policy_text .= "[[lang:$code]]" . $text;
+    }
+
     if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-        // Wenn bereits ein Eintrag in der Datenbank existiert, dann aktualisieren
         if (mysqli_num_rows(safe_query("SELECT * FROM settings_privacy_policy"))) {
             safe_query("UPDATE settings_privacy_policy SET date='" . $current_datetime . "', privacy_policy_text='" . $privacy_policy_text . "', editor='" . $editor . "'");
         } else {
-            // Wenn noch kein Eintrag existiert, dann einen neuen hinzufügen
             safe_query("INSERT INTO settings_privacy_policy (date, privacy_policy_text, editor) VALUES (NOW(), '" . $privacy_policy_text . "', '" . $editor . "')");
         }
-        echo '<div class="alert alert-success" role="alert">' . $languageService->module['changes_successful'] . '</div>';
-        echo '<script type="text/javascript">
-                setTimeout(function() {
-                    window.location.href = "admincenter.php?site=settings_privacy_policy";
-                }, 3000); // 3 Sekunden warten
-            </script>';
+        echo '<div class="alert alert-success">' . $languageService->module['changes_successful'] . '</div>';
+        echo '<script>setTimeout(() => window.location.href="admincenter.php?site=settings_privacy_policy", 3000);</script>';
     } else {
-        echo '<div class="alert alert-success" role="alert">' . $languageService->module['transaction_invalid'] . '</div>';
-        echo '<script type="text/javascript">
-                setTimeout(function() {
-                    window.location.href = "admincenter.php?site=settings_privacy_policy";
-                }, 3000); // 3 Sekunden warten
-            </script>';
+        echo '<div class="alert alert-danger">' . $languageService->module['transaction_invalid'] . '</div>';
+        echo '<script>setTimeout(() => window.location.href="admincenter.php?site=settings_privacy_policy", 3000);</script>';
     }
 }
 
-// Daten aus der Datenbank abrufen
-$ergebnis = safe_query("SELECT * FROM settings_privacy_policy");
-$ds = mysqli_fetch_array($ergebnis);
+// Datenbank holen
+$ds = mysqli_fetch_array(safe_query("SELECT * FROM settings_privacy_policy"));
 
-// Captcha vorbereiten
-$CAPCLASS->createTransaction();
-$hash = $CAPCLASS->getHash();
-
-// Den Wert des Editors aus der Datenbank überprüfen und die Checkbox entsprechend setzen
-$editor_checked = '';
-if (isset($ds['editor']) && $ds['editor'] == 1) {
-    $editor_checked = 'checked'; // Checkbox aktivieren, wenn Editor auf 1 gesetzt ist
+// Lang extrahieren
+function extractLangText(?string $multiLangText, string $lang): string {
+    if (!$multiLangText) return '';
+    if (preg_match('/\[\[lang:' . preg_quote($lang, '/') . '\]\](.*?)(?=\[\[lang:|$)/s', $multiLangText, $matches)) {
+        return trim($matches[1]);
+    }
+    return '';
 }
 
-// Template-Daten vorbereiten
-$data_array = [
-    'privacy_policy_label' => $languageService->module['privacy_policy'] ?? 'Datenschutzerklärung',
-    'privacy_policy_text' => htmlspecialchars($ds['privacy_policy_text'], ENT_QUOTES, 'UTF-8'),
-    'editor_is_editor' => $languageService->module['editor_is_editor'], // Label für "Editor anzeigen"
-    'editor_checked' => $editor_checked, // Checkbox für Editor-Status
-    'captcha_hash' => $hash,
-    'update_button_label' => $languageService->module['update'] ?? 'Aktualisieren'
-];
+$editor_checked = ($ds['editor'] ?? 0) == 1 ? 'checked' : '';
 
-echo $tpl->loadTemplate("privacy_policy", "content", $data_array, 'admin');
+$CAPCLASS->createTransaction();
+$hash = $CAPCLASS->getHash();
+?>
+
+
+<div class="card">
+    <div class="card-header">
+        <?= $languageService->module['privacy_policy'] ?>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb t-5 p-2 bg-light">
+            <li class="breadcrumb-item">
+                <a href="admincenter.php?site=settings_privacy_policy"><?= $languageService->module['privacy_policy'] ?></a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">New / Edit</li>
+        </ol>
+    </nav>
+
+    <div class="card-body">
+        <div class="container py-5">
+            <h3 class="mb-4"><?= $languageService->module['privacy_policy'] ?></h3>
+            <form method="post" action="admincenter.php?site=settings_privacy_policy">
+                <div class="mb-3 row">
+                    <label class="col-sm-2 col-form-label"><?= $languageService->module['editor_is_editor'] ?></label>
+                    <div class="col-sm-10">
+                        <input class="form-check-input" type="checkbox" id="toggle-editor" name="editor" value="1" <?= $editor_checked ?>>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <h4><?= $languageService->module['text'] ?></h4>
+                    <?php foreach ($languages as $code => $label): ?>
+                        <div class="mb-3">
+                            <label for="editor_<?= $code ?>" class="form-label"><?= $label ?></label>
+                            <textarea class="form-control lang-field" rows="6" id="editor_<?= $code ?>" name="privacy_policy_text[<?= $code ?>]"><?= htmlspecialchars(extractLangText($ds['privacy_policy_text'] ?? '', $code)) ?></textarea>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <input type="hidden" name="captcha_hash" value="<?= $hash ?>" />
+                <button type="submit" name="submit" class="btn btn-warning"><?= $languageService->module['update'] ?></button>
+            </form>
+        </div>
+    </div>
+</div>
 ?>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const toggle = document.getElementById('toggle-editor');
-    const textarea = document.getElementById('ckeditor');
+    const editors = document.querySelectorAll('.lang-field');
 
-    // Funktion zum Editor aktivieren/deaktivieren
-    function toggleEditor() {
-        if (toggle.checked) {
-            if (!CKEDITOR.instances['ckeditor']) {
-                CKEDITOR.replace('ckeditor');
+    function toggleEditors() {
+        editors.forEach(textarea => {
+            const id = textarea.id;
+            if (toggle.checked) {
+                if (!CKEDITOR.instances[id]) {
+                    CKEDITOR.replace(id);
+                }
+            } else {
+                if (CKEDITOR.instances[id]) {
+                    CKEDITOR.instances[id].destroy(true);
+                }
             }
-        } else {
-            if (CKEDITOR.instances['ckeditor']) {
-                CKEDITOR.instances['ckeditor'].destroy(true);
-            }
-        }
+        });
     }
 
-    // Initialer Zustand (z. B. bei Seiten-Reload)
-    toggleEditor();
-
-    // Reaktion auf Umschalten
-    toggle.addEventListener('change', toggleEditor);
+    toggle.addEventListener('change', toggleEditors);
+    toggleEditors(); // Initialer Zustand
 });
 </script>

@@ -4,7 +4,7 @@
 $language_array = array(
 
     'dashboard'         => 'Zugriff auf das Administrations-Dashboard von nexpell.',
-    'signup'            => 'Registrieren',
+    'login'            => 'Anmeldung!',
     'welcome2'          => 'Willkommen im nexpell Dashboard – Ihre moderne Verwaltungsplattform.',
     'insertmail'        => '<p>Bitte geben Sie Ihre registrierte E-Mail-Adresse und Ihr Passwort ein, um sich anzumelden.</p>
                       <p>Nach erfolgreicher Anmeldung werden Sie direkt zu Ihrem persönlichen Dashboard weitergeleitet.</p>

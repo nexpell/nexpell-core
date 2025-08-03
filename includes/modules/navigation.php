@@ -9,11 +9,25 @@ if (session_status() === PHP_SESSION_NONE) {
 global $languageService, $_database, $tpl;
 
 $lang = $languageService->detectLanguage();
-#$languageService->readModule('navigation');
+
+// SEO-Link-Erzeugung mit Dummy-Dateien
+#function convertToSeoUrl(string $site, string $lang): string {
+#    return "/{$lang}/{$site}";
+#}
+
+// Verfügbare Sprachen aus DB laden
+$availableLangs = [];
+$result = safe_query("SELECT iso_639_1 FROM settings_languages WHERE active = 1");
+while ($row = mysqli_fetch_assoc($result)) {
+    $availableLangs[] = $row['iso_639_1'];
+}
+
 $languageService->readModule('index');
 
 $loggedin = isset($_SESSION['userID']) && $_SESSION['userID'] > 0;
 $userID = $_SESSION['userID'] ?? 0;
+
+
 
 // Funktion zur Navigation ohne Dropdown
 function navigation_nodropdown($default_url) {
@@ -95,6 +109,16 @@ try {
                     $translate->detectLanguages($rox['name']);
                     $sub_name = $translate->getTextByLanguage($rox['name']);
                     $sub_url = $rox['url'];
+
+                    // Interne Links umwandeln
+                    if (strpos($sub_url, 'index.php?site=') === 0) {
+                        // komplette URL übergeben
+                        $sub_url = convertToSeoUrl($sub_url);
+                    } elseif (substr($sub_url, -4) === '.php' && !str_starts_with($sub_url, 'http')) {
+                        // umwandeln in vollständigen Link
+                        $sub_url = convertToSeoUrl('index.php?site=' . basename($sub_url, '.php'));
+                    }
+
                     $target = '';
                     if (strpos($sub_url, 'http://') === 0 || strpos($sub_url, 'https://') === 0) {
                         $target = '_blank';
@@ -108,6 +132,7 @@ try {
 
                     echo $tpl->loadTemplate("navigation", "sub_nav", $sub_array, 'theme');
                 }
+
 
                 echo $tpl->loadTemplate("navigation", "sub_close", [], 'theme');
                 echo $tpl->loadTemplate("navigation", "dd_foot", [], 'theme');
@@ -128,103 +153,45 @@ try {
 
 // Login + Forum + Messenger + Avatar
 if ($loggedin) {
-    #$dx = mysqli_fetch_array(safe_query("SELECT * FROM settings_plugins WHERE modulname='forum' AND activate=1"));
     $icon = '';
-
-    /*if ($dx['modulname'] == 'forum') {
-        $board_topics = [];
-        $q = safe_query("SELECT * FROM plugins_forum_topics");
-        while ($lp = mysqli_fetch_assoc($q)) {
-            $board_topics[] = $lp['topicID'];
-        }
-
-        $ergebnisz = safe_query("SELECT topics FROM user WHERE userID='$userID'");
-        $gv = mysqli_fetch_array($ergebnisz);
-
-        $icon = '<a data-toggle="tooltip" data-placement="bottom" title="' . $languageService->module['no_forum_post'] . '" href="index.php?site=forum">
-                    <span class="icon badge bg-light text-dark mt-0 position-relative">
-                        <i class="bi bi-chat"></i>
-                    </span>
-                 </a>';
-
-        if (!empty($gv['topics'])) {
-            $topic = explode("|", $gv['topics']);
-            if (is_array($topic)) {
-                $n = 1;
-                foreach ($topic as $topics) {
-                    if ($topics != "") {
-                        $badgeNumber = min($n, 10);
-                        $badgeLabel = ($badgeNumber == 10) ? "10+" : $badgeNumber;
-
-                        $icon = '<a data-toggle="tooltip" data-placement="bottom" title="' . $languageService->module['more_new_forum_post'] . '" href="index.php?site=forum">
-                                    <span class="badge bg-warning text-dark mt-0 position-relative">
-                                        <i class="bi bi-chat-dots"></i>
-                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                            ' . $badgeLabel . '
-                                            <span class="visually-hidden">unread messages</span>
-                                        </span>
-                                    </span>
-                                 </a>';
-                        $n++;
-                    }
-                }
-            }
-        }
-    }*/
-
     $l_avatar = getavatar($userID) ?: "noavatar.png";
 
-    /*$dx = mysqli_fetch_array(safe_query("SELECT * FROM settings_plugins WHERE modulname='messenger' AND activate=1"));
-    if ($dx['modulname'] == 'messenger') {
-        $newmessagesCount = getnewmessages($userID);
-        $badgeNumber = min($newmessagesCount, 10);
-        $badgeLabel = ($badgeNumber == 10) ? "10+" : $badgeNumber;
-
-        if ($newmessagesCount > 0) {
-            $newmessages = '<a data-toggle="tooltip" data-placement="bottom" title="' . ($newmessagesCount == 1 ? $languageService->module['one_new_message'] : $languageService->module['more_new_message']) . '" href="index.php?site=messenger">
-                                <span class="icon badge text-bg-success position-relative">
-                                    <i class="bi bi-envelope-check"></i>
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                        ' . $badgeLabel . '
-                                        <span class="visually-hidden">unread messages</span>
-                                    </span>
-                                </span>
-                            </a>';
-        } else {
-            $newmessages = '<a data-toggle="tooltip" data-placement="bottom" title="' . $languageService->module['no_new_messages'] . '" href="index.php?site=messenger">
-                                <span class="icon badge text-bg-light position-relative">
-                                    <i class="bi bi-envelope"></i>
-                                </span>
-                            </a>';
-        }
-    } else {
-        $newmessages = '';
-    }*/
-
     $dashboard = (checkUserRoleAssignment($userID, 1))
-        ? '<li><a class="dropdown-item" href="admin/admincenter.php" target="_blank">&nbsp;' . $languageService->module['admincenter'] . '</a></li>'
-        : '';
+    ? '<li><a class="dropdown-item" href="' . htmlspecialchars('/admin/admincenter.php') . '" target="_blank">&nbsp;' . ($languageService->module['admincenter'] ?? 'Admin Center') . '</a></li>'
+    : '';
 
-    $data_array = [
-        'modulepath' => substr(MODULE, 0, -1),
-        #'icon' => $icon,
-        #'newmessages' => $newmessages,
-        'userID' => $userID,
-        'l_avatar' => $l_avatar,
-        'nickname' => getusername($userID),
-        'dashboard' => $dashboard,
-        'lang_log_off' => $languageService->module['log_off'],
-        'lang_overview' => $languageService->module['overview'],
-        'to_profil' => $languageService->module['to_profil'],
-        'lang_edit_profile' => $languageService->module['edit_profile'],
-        'my_account' => $languageService->module['my_account']
-    ];
+
+    $urlString = 'index.php?site=profile&userID=' . intval($userID);
+    $profile = '<li><a class="dropdown-item" href="' . htmlspecialchars(convertToSeoUrl($urlString)) . '">&nbsp;' . $languageService->module['to_profil'] . '</a></li>';
+
+
+    $logout = '<li><a class="dropdown-item" href="' . htmlspecialchars(convertToSeoUrl('index.php?site=logout')) . '">&nbsp;' . $languageService->module['log_off'] . '</a></li>';
+
+
+$data_array = [
+    'modulepath' => substr(MODULE, 0, -1),
+    //'userID' => $userID,
+    'l_avatar' => $l_avatar,
+    'nickname' => getusername($userID),
+    'profile' => $profile,
+    'dashboard' => $dashboard,
+    'logout' => $logout,
+    //'lang_log_off' => $languageService->module['log_off'] ?? 'Abmelden',
+    'lang_overview' => $languageService->module['overview'] ?? 'Übersicht',
+    //'to_profil' => $languageService->module['to_profil'] ?? 'Zum Profil',
+    //'lang_edit_profile' => $languageService->module['edit_profile'] ?? 'Profil bearbeiten',
+    'my_account' => $languageService->module['my_account'] ?? 'Mein Konto',
+];
 
     echo $tpl->loadTemplate("navigation", "login_loggedin", $data_array, 'theme');
 } else {
+
+    $login = '<li><a class="nav-link" href="' . htmlspecialchars(convertToSeoUrl('index.php?site=login')) . '">' . $languageService->module['login'] . '</a></li>';
+
+
     $data_array = [
         'modulepath' => substr(MODULE, 0, -1),
-        'lang_login' => $languageService->get('login')
+        'login' => $login
     ];
 
     echo $tpl->loadTemplate("navigation", "login_login", $data_array, 'theme');

@@ -127,6 +127,14 @@ if (function_exists("gd_info")) {
     $get_gdtypes = '---';
 }
 
+$gd = gd_info();
+
+if (!empty($gd['FreeType Support']) && $gd['FreeType Support']) {
+    $freetype = '<font color="#008000">aktiviert</font>';
+} else {
+    $freetype = '<font color="#FF0000">nicht aktiviert</font>';
+}
+
 if (function_exists("apache_get_modules")) {
     $apache_modules = implode(", ", apache_get_modules());
 } else {
@@ -184,6 +192,7 @@ $db = $ret[ 0 ];
                 <tr><td>GD Graphics Library</td><td><em><?php echo $get_gd_info; ?></em></td></tr>
                 <tr><td><?php echo $languageService->module['supported_types']; ?></td><td><em><?php echo $get_gdtypes; ?></em></td></tr>
                 <tr><td>GD Lib <?php echo $languageService->module['version']; ?></td><td><em><?php echo $gdinfo['GD Version']; ?></em></td></tr>
+                <tr><td>FreeType</td><td><em><?php echo $freetype; ?></em></td></tr>
             </tbody>
         </table>
 

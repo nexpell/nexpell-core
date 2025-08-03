@@ -49,7 +49,6 @@ if (!$userID || !checkUserRoleAssignment($userID)) {
     die('<div class="alert alert-danger" role="alert">' . $languageService->get('no_role_assigned') . '</div>');
 }
 
-// Initialisierung der Rechte-Arrays
 $categoryRights = [];
 $moduleRights = [];
 
@@ -76,10 +75,8 @@ if (isset($_GET['roleID'])) {
         $categories[] = $row;
     }
 
-    // Bestehende Rechte laden
-    $stmt = $_database->prepare("SELECT type, modulname, accessID 
-                                 FROM user_role_admin_navi_rights 
-                                 WHERE roleID = ?");
+    // Bestehende Rechte laden (ohne accessID)
+    $stmt = $_database->prepare("SELECT type, modulname FROM user_role_admin_navi_rights WHERE roleID = ?");
     $stmt->bind_param('i', $roleID);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -91,7 +88,7 @@ if (isset($_GET['roleID'])) {
         }
     }
 
-    // Rechte speichern
+    // Rechte speichern (POST)
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['roleID']) && isset($_POST['save_rights'])) {
         if ($_POST['csrf_token'] !== $_SESSION['csrf_token']) {
             die('<div class="alert alert-danger" role="alert">' . $languageService->get('invalid_csrf') . '</div>');
@@ -99,48 +96,25 @@ if (isset($_GET['roleID'])) {
 
         $roleID = (int)$_POST['roleID'];
 
+        // Zuerst alle bestehenden Rechte dieser Rolle löschen (optional, wenn du nur neu setzt)
+        safe_query("DELETE FROM user_role_admin_navi_rights WHERE roleID = $roleID");
+
         // Module speichern
         $grantedModules = $_POST['modules'] ?? [];
-        if (!empty($grantedModules)) {
-            foreach ($grantedModules as $modulname) {
-                // linkID anhand des Modulnamens abrufen
-                $linkID = null;
-                foreach ($modules as $module) {
-                    if ($module['modulname'] === $modulname) {
-                        $linkID = $module['linkID'];
-                        break;
-                    }
-                }
-
-                if ($linkID !== null) {
-                    $query = "INSERT INTO user_role_admin_navi_rights (roleID, type, modulname, accessID) 
-                              VALUES ($roleID, 'link', '" . $_database->real_escape_string($modulname) . "', $linkID) 
-                              ON DUPLICATE KEY UPDATE accessID = $linkID";
-                    safe_query($query);
-                }
-            }
+        foreach ($grantedModules as $modulname) {
+            $modulnameEscaped = $_database->real_escape_string($modulname);
+            $query = "INSERT INTO user_role_admin_navi_rights (roleID, type, modulname) 
+                      VALUES ($roleID, 'link', '$modulnameEscaped')";
+            safe_query($query);
         }
 
         // Kategorien speichern
         $grantedCategories = $_POST['category'] ?? [];
-        if (!empty($grantedCategories)) {
-            foreach ($grantedCategories as $modulname) {
-                // catID anhand des Modulnamens abrufen
-                $catID = null;
-                foreach ($categories as $category) {
-                    if ($category['modulname'] === $modulname) {
-                        $catID = $category['catID'];
-                        break;
-                    }
-                }
-
-                if ($catID !== null) {
-                    $query = "INSERT INTO user_role_admin_navi_rights (roleID, type, modulname, accessID) 
-                              VALUES ($roleID, 'category', '" . $_database->real_escape_string($modulname) . "', $catID) 
-                              ON DUPLICATE KEY UPDATE accessID = $catID";
-                    safe_query($query);
-                }
-            }
+        foreach ($grantedCategories as $modulname) {
+            $modulnameEscaped = $_database->real_escape_string($modulname);
+            $query = "INSERT INTO user_role_admin_navi_rights (roleID, type, modulname) 
+                      VALUES ($roleID, 'category', '$modulnameEscaped')";
+            safe_query($query);
         }
 
         $_SESSION['success_message'] = $languageService->get('rights_updated');
@@ -148,6 +122,8 @@ if (isset($_GET['roleID'])) {
         exit;
     }
 }
+
+
 
 ?>
 
@@ -229,16 +205,17 @@ if (isset($_GET['roleID'])) {
 require_once("../system/config.inc.php");
 require_once("../system/functions.php");
 
+
+
 if (isset($_GET['userID'])) {
     $userID = (int)$_GET['userID'];
 
-    // Benutzername und Rolle abfragen
     $query = "
         SELECT u.username, r.role_name AS name
         FROM users u
         JOIN user_role_assignments ur ON u.userID = ur.userID
         JOIN user_roles r ON ur.roleID = r.roleID
-        WHERE u.userID = '$userID'
+        WHERE u.userID = $userID
     ";
 
     $result = safe_query($query);
@@ -246,20 +223,18 @@ if (isset($_GET['userID'])) {
         $username = htmlspecialchars($row['username'] ?? '');
         $role_name = htmlspecialchars($row['name']);
 
-        // Modul-/Kategorie-Rechte der Rolle abfragen + Anzeigename holen
         $rights_query = "
             SELECT ar.type, ar.modulname, ndl.name
             FROM user_role_admin_navi_rights ar
             JOIN user_role_assignments ur ON ar.roleID = ur.roleID
-            JOIN navigation_dashboard_links ndl ON ar.accessID = ndl.linkID
-            WHERE ur.userID = '$userID'
+            JOIN navigation_dashboard_links ndl ON ar.modulname = ndl.modulname
+            WHERE ur.userID = $userID
             ORDER BY ar.type, ar.modulname
         ";
         $rights_result = safe_query($rights_query);
-        $role_rights_table = '';
 
         if (mysqli_num_rows($rights_result)) {
-            $role_rights_table .= '
+            $role_rights_table = '
                 <table class="table table-bordered table-striped bg-white shadow-sm">
                     <thead class="table-light">
                         <tr>
@@ -270,21 +245,25 @@ if (isset($_GET['userID'])) {
                     </thead>
                     <tbody>
             ';
+
+            $translate = new multiLanguage($lang);
+
             while ($r = mysqli_fetch_assoc($rights_result)) {
                 $type = $r['type'] === 'category' ? $languageService->get('category') : $languageService->get('module');
                 $modulname = htmlspecialchars($r['modulname']);
-                $name = htmlspecialchars($r['name']);
-                $translate = new multiLanguage($lang);
-                $translate->detectLanguages($name);
-                $side_name = $translate->getTextByLanguage($name);
+
+                $translate->detectLanguages($r['name']);
+                $displayName = htmlspecialchars($translate->getTextByLanguage($r['name']));
+
                 $role_rights_table .= "
                     <tr>
                         <td>$type</td>
                         <td>$modulname</td>
-                        <td>$side_name</td>
+                        <td>$displayName</td>
                     </tr>
                 ";
             }
+
             $role_rights_table .= '</tbody></table>';
         } else {
             $role_rights_table = '<p class="text-muted">' . $languageService->get('no_rights') . '</p>';
@@ -299,6 +278,9 @@ if (isset($_GET['userID'])) {
     echo $languageService->get('no_user_selected');
     exit;
 }
+
+
+
 ?>
 
 <div class="card">
@@ -614,11 +596,11 @@ if (isset($_SESSION['csrf_error'])): ?>
             $email = $user['email'];
 
             if ($user['is_active'] != 1) {
-                echo "Benutzerkonto ist noch nicht aktiviert.";
+                echo "<div class=\"alert alert-warning\" role=\"alert\">Benutzerkonto ist noch nicht aktiviert.</div>";
                 exit();
             }
         } else {
-            echo "Benutzer nicht gefunden.";
+            echo "<div class=\"alert alert-info\" role=\"alert\">Benutzer nicht gefunden.</div>";
             exit();
         }
 
@@ -750,7 +732,7 @@ if (isset($_SESSION['csrf_error'])): ?>
                         <div class="col-md-6">
                             <label for="password" class="form-label"><?= $languageService->get('set_password_manually') ?? 'Neues Passwort manuell setzen (optional)' ?></label>
                             <input type="password" id="password" name="password" class="form-control">
-                            <div class="form-text"><?= $languageService->get('manual_password_info') ?? 'Nur ausfüllen, wenn du selbst ein neues Passwort setzen möchtest.' ?></div>
+                            <div class="alert alert-info" role="alert"><?= $languageService->get('manual_password_info') ?? 'Nur ausfüllen, wenn du selbst ein neues Passwort setzen möchtest.' ?></div>
                         </div>
 
                         <div class="col-md-6 d-flex align-items-end">
@@ -929,9 +911,9 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete_user' && isset($_GET['u
         // Jetzt den Benutzer aus der user Tabelle löschen
         safe_query("DELETE FROM users WHERE userID = '$userID'");
 
-        $_SESSION['success_message'] = "Benutzer wurde erfolgreich gelöscht.";
+        $_SESSION['success_message'] = "<div class=\"alert alert-success\" role=\"alert\">Benutzer wurde erfolgreich gelöscht.</div>";
     } else {
-        $_SESSION['error_message'] = "Benutzer nicht gefunden.";
+        $_SESSION['error_message'] = "<div class=\"alert alert-info\" role=\"alert\">Benutzer nicht gefunden.</div>";
     }
 
     // Weiterleitung zurück zur Benutzerverwaltung
@@ -946,9 +928,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ban_user'])) {
     // Bann den Benutzer (Setze das Feld 'is_locked' auf 1)
     $query = "UPDATE users SET is_locked = 1 WHERE userID = $userID";
     if (safe_query($query)) {
-        $_SESSION['success_message'] = "Benutzer wurde erfolgreich gebannt.";
+        $_SESSION['success_message'] = "<div class=\"alert alert-success\" role=\"alert\">Benutzer wurde erfolgreich gebannt.</div>";
     } else {
-        $_SESSION['error_message'] = "Fehler beim Bann des Benutzers.";
+        $_SESSION['error_message'] = "<div class=\"alert alert-info\" role=\"alert\">Fehler beim Bann des Benutzers.</div>";
     }
 
     // Weiterleitung oder Fehleranzeige
@@ -964,15 +946,48 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['unban_user'])) {
     // Hebe den Bann des Benutzers auf (Setze das Feld 'is_locked' auf 0)
     $query = "UPDATE users SET is_locked = 0 WHERE userID = $userID";
     if (safe_query($query)) {
-        $_SESSION['success_message'] = "Benutzer wurde erfolgreich entbannt.";
+        $_SESSION['success_message'] = "<div class=\"alert alert-success\" role=\"alert\">Benutzer wurde erfolgreich entbannt.</div>";
     } else {
-        $_SESSION['error_message'] = "Fehler beim Entbannen des Benutzers.";
+        $_SESSION['error_message'] = "<div class=\"alert alert-info\" role=\"alert\">Fehler beim Entbannen des Benutzers.</div>";
     }
 
     // Weiterleitung oder Fehleranzeige
     header("Location: admincenter.php?site=user_roles");
     exit();
 }
+
+
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['deactivate_user'])) {
+    $userID = intval($_POST['userID']); // Sicherheit: Umwandlung in eine ganze Zahl
+
+    // Deaktiviere den Benutzer (Setze das Feld 'is_active' auf 0)
+    $query = "UPDATE users SET is_active = 0 WHERE userID = $userID";
+    if (safe_query($query)) {
+        $_SESSION['success_message'] = "<div class=\"alert alert-success\" role=\"alert\">Benutzer wurde erfolgreich deaktiviert.</div>";
+    } else {
+        $_SESSION['error_message'] = "<div class=\"alert alert-info\" role=\"alert\">Fehler beim Deaktivieren des Benutzers.</div>";
+    }
+
+    header("Location: admincenter.php?site=user_roles");
+    exit();
+}
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['activate_user'])) {
+    $userID = intval($_POST['userID']); // Sicherheit: Umwandlung in eine ganze Zahl
+
+    // Aktiviere den Benutzer (Setze das Feld 'is_active' auf 1)
+    $query = "UPDATE users SET is_active = 1 WHERE userID = $userID";
+    if (safe_query($query)) {
+        $_SESSION['success_message'] = "<div class=\"alert alert-success\" role=\"alert\">Benutzer wurde erfolgreich aktiviert.</div>";
+    } else {
+        $_SESSION['error_message'] = "<div class=\"alert alert-info\" role=\"alert\">Fehler beim Aktivieren des Benutzers.</div>";
+    }
+
+    header("Location: admincenter.php?site=user_roles");
+    exit();
+}
+
 
 
 // Abfrage der Benutzer für die aktuelle Seite
@@ -1016,6 +1031,7 @@ $users = safe_query("SELECT * FROM users ORDER BY userID LIMIT $offset, $users_p
                     <th><?= $languageService->get('username') ?></th>
                     <th><?= $languageService->get('email') ?></th>
                     <th><?= $languageService->get('registered_on') ?></th>
+                    <th><?= $languageService->get('activated') ?></th>
                     <th width="350"><?= $languageService->get('actions') ?></th>
                 </tr>
             </thead>
@@ -1026,7 +1042,28 @@ $users = safe_query("SELECT * FROM users ORDER BY userID LIMIT $offset, $users_p
                         <td><?= htmlspecialchars($user['username']) ?></td>
                         <td><?= htmlspecialchars($user['email']) ?></td>
                         <td><?= date('d.m.Y H:i:s', strtotime($user['registerdate'])) ?></td>
+                        <td><?= $user['is_active'] ? '✔️' : '❌' ?>
+
+                            <?php if (!$user['is_active']) : ?>
+    <form method="POST" action="" class="d-inline">
+        <input type="hidden" name="userID" value="<?= $user['userID'] ?>">
+        <button type="submit" name="activate_user" class="btn btn-success btn-sm">
+            <?= $languageService->get('activate_user') ?>
+        </button>
+    </form>
+<?php else : ?>
+    <form method="POST" action="" class="d-inline">
+        <input type="hidden" name="userID" value="<?= $user['userID'] ?>">
+        <button type="submit" name="deactivate_user" class="btn btn-warning btn-sm">
+            <?= $languageService->get('deactivate_user') ?>
+        </button>
+    </form>
+<?php endif; ?>
+
+</td>
                         <td>
+
+
                             <?php if ($user['is_locked']) : ?>
                                 <form method="POST" action="" class="d-inline">
                                     <input type="hidden" name="userID" value="<?= $user['userID'] ?>">

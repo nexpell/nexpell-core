@@ -1,23 +1,26 @@
 /* =================================
 ------------------------------------
-  Webspell-RM Template
+  nexpell Template
 ------------------------------------ 
 ====================================*/
 
 body, .sticky-footer-wrapper {
-  min-height:100vh;
-  
+  min-height:100vh;  
 } 
 
 .flex-fill {
   flex:1 1 auto;
 }
 
+.footer-top {
+  margin-top: 40px;
+}
+
 /* Öffnet Dropdown-Menü bei Hover */
-  .dropdown:hover .dropdown-menu {
-    display: block;
-    margin-top: 0; /* optional: verhindert Sprung */
-  }
+.dropdown:hover .dropdown-menu {
+  display: block;
+  margin-top: 0; /* optional: verhindert Sprung */
+}
 
 
 .page-link {
@@ -34,14 +37,11 @@ body, .sticky-footer-wrapper {
   border: 1px solid rgba(var(--bs-card-border-color-rgb), 1);
 }
 
-
-
 .avatar_small {
   vertical-align: middle;
   width: 32px;
     height: 32px;
   border-radius: var(--bs-border-radius);
-
   box-shadow:0 .46875rem 2.1875rem rgba(90,97,105,0.1),0 .9375rem 1.40625rem rgba(90,97,105,.1),0 .25rem .53125rem rgba(90,97,105,.12),0 .125rem .1875rem rgba(90,97,105,.1);
 }
 
@@ -50,7 +50,6 @@ body, .sticky-footer-wrapper {
   width: auto;
   height: 120px;
   border-radius: var(--bs-border-radius);
-
   box-shadow:0 .46875rem 2.1875rem rgba(90,97,105,0.1),0 .9375rem 1.40625rem rgba(90,97,105,.1),0 .25rem .53125rem rgba(90,97,105,.12),0 .125rem .1875rem rgba(90,97,105,.1);
 }
 
@@ -59,13 +58,11 @@ body, .sticky-footer-wrapper {
   width: 250px;
   height: 250px;
   border-radius: var(--bs-border-radius);
-
   box-shadow:0 .46875rem 2.1875rem rgba(90,97,105,0.1),0 .9375rem 1.40625rem rgba(90,97,105,.1),0 .25rem .53125rem rgba(90,97,105,.12),0 .125rem .1875rem rgba(90,97,105,.1);
 }
 
 .bi-color {
-
-    color: rgba(var(--bs-primary-rgb), 1);
+  color: rgba(var(--bs-primary-rgb), 1);
 }
 
 .login,
@@ -74,11 +71,12 @@ body, .sticky-footer-wrapper {
 }
 
 .sign_pic_bg {
-background-image: url('/images/login_bg.jpg');
-background-position: center center;
+  background-image: url('/images/login_bg.jpg');
+  background-position: center center;
   background-size: cover;
   min-height: 59.5vh;
 }
+
 .bg-image {
   background-image: url('/images/login_bg.jpg');
   background-position: center center;
@@ -89,8 +87,7 @@ background-position: center center;
   color: rgba(var(--bs-primary-rgb), 1);
 }
 
-.signup-greeting {
-  
+.signup-greeting {  
   padding: 20px;
   text-align: center;
 }
