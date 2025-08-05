@@ -11,46 +11,24 @@ $availableLangs = ['de', 'en', 'it'];
 if (isset($_GET['new_lang']) && in_array($_GET['new_lang'], $availableLangs)) {
     $lang = $_GET['new_lang'];
     $_SESSION['language'] = $lang;
-} elseif (isset($_SESSION['language']) && in_array($_SESSION['language'], $availableLangs)) {
-    $lang = $_SESSION['language'];
-} else {
-    $result = $_database->query("SELECT default_language FROM settings LIMIT 1");
-    if ($result && $row = $result->fetch_assoc() && !empty($row['default_language'])) {
-        $lang = $row['default_language'];
-    } else {
-        $lang = 'de';
-    }
-    $_SESSION['language'] = $lang;
+
+    // Nach Sprachwahl -> Weiterleitung auf gleiche URL ohne `new_lang`
+    $redirectUrl = $_SERVER['REQUEST_URI'];
+
+    // `new_lang` aus Query entfernen
+    $redirectUrl = preg_replace('/([&?])new_lang=' . $lang . '(&|$)/', '$1', $redirectUrl);
+    $redirectUrl = rtrim($redirectUrl, '?&'); // trailing ? oder & entfernen
+
+    header("Location: $redirectUrl");
+    exit;
 }
+
+
 
 // Aktueller Pfad
 #$currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 $currentPath = $_SERVER['REQUEST_URI'];
-
-// Funktion zum Ersetzen der Sprache im Pfad
-/*function replaceLangInUrl(string $url, string $newLang, array $allowedLangs): string {
-    $parsed = parse_url($url);
-    $path = $parsed['path'] ?? '/';
-
-    parse_str($parsed['query'] ?? '', $parsed);
-
-    $parsed['new_lang'] = $newLang;
-
-    $segments = explode('/', trim($path, '/'));
-
-    if (isset($segments[0]) && in_array($segments[0], $allowedLangs)) {
-        $segments[0] = $newLang;
-    } else {
-        array_unshift($segments, $newLang);
-    }
-
-    $newPath = '/' . implode('/', $segments);
-
-    $query = isset($parsed['query']) ? '?' . $parsed['query'] : '';
-
-    return $newPath . $query;
-}*/
 
 function replaceLangInUrl(string $url, string $newLang, array $allowedLangs): string {
     $parsed = parse_url($url);
@@ -58,28 +36,32 @@ function replaceLangInUrl(string $url, string $newLang, array $allowedLangs): st
     $path = $parsed['path'] ?? '/';
     parse_str($parsed['query'] ?? '', $params);
 
+    // Immer neue Sprache setzen
     $params['new_lang'] = $newLang;
 
-    // Wenn SEO aktiv
-    if (defined('USE_SEO_URLS') && USE_SEO_URLS) {
+    // SEO aktiviert und kein direkter index.php-Aufruf
+    if (
+        defined('USE_SEO_URLS') && USE_SEO_URLS &&
+        strpos($path, 'index.php') === false
+    ) {
+        // Sprachpräfix im Pfad ersetzen
         $segments = explode('/', trim($path, '/'));
-
-        if (isset($segments[0]) && in_array($segments[0], $allowedLangs)) {
-            $segments[0] = $newLang;
+        if (in_array($segments[0], $allowedLangs)) {
+            $segments[0] = $newLang; // vorhandene Sprache ersetzen
         } else {
-            array_unshift($segments, $newLang);
+            array_unshift($segments, $newLang); // Sprache voranstellen
         }
 
         $newPath = '/' . implode('/', $segments);
-        $query = http_build_query(array_diff_key($params, ['site' => '', 'action' => '', 'id' => '', 'page' => '', 'anchor' => '', 'fragment' => '']));
+        $query = http_build_query($params);
+        $fragment = isset($parsed['fragment']) ? '#' . $parsed['fragment'] : '';
 
-        return $newPath . ($query ? '?' . $query : '');
+        return $newPath . ($query ? '?' . $query : '') . $fragment;
     }
 
-    // SEO aus: normaler Query-Link
+    // Wenn index.php verwendet wird: klassisch weiterleiten
     return '/index.php?' . http_build_query($params);
 }
-
 
 
 
