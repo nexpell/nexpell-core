@@ -338,7 +338,7 @@ echo '
                                 <div class="row align-items-center mt-3">
                                     <div class="col-md-5 fw-semibold">' . htmlspecialchars($languageService->get('seo_url_setting')) . ':</div>
                                         <div class="col-md-7">
-                                            <a href="admin_seo_meta.php" class="btn btn-primary mt-2" role="button" title="SEO Meta Einstellungen bearbeiten">
+                                            <a href="admincenter.php?site=admin_seo_meta" class="btn btn-primary mt-2" role="button" title="SEO Meta Einstellungen bearbeiten">
                                                 SEO Meta Einstellungen bearbeiten
                                             </a>
                                         </div>
