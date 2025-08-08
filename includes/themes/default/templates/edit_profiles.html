@@ -9,6 +9,9 @@
 <!-- END -->
 
 <!-- edit_profiles_content -->
+ <!-- Cropper.js CDN -->
+<link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
 <div class="card">
   <div class="card-body">
     <div class="container my-4">
@@ -31,8 +34,6 @@
           <input type="text" class="form-control" id="location" name="location" value="{location}">
         </div>
 
-        
-
         <div class="mb-3">
           <label for="birthday" class="form-label">{label_birthday}</label>
           <input type="date" class="form-control" id="birthday" name="birthday" value="{birthday}">
@@ -41,11 +42,11 @@
         <div class="mb-3">
           <label for="gender" class="form-label">{label_gender}</label>
           <select name="gender" class="form-select">
-  <option value="" {gender_select_empty}>{select_gender}</option>
-  <option value="male" {gender_select_male}>{gender_male}</option>
-  <option value="female" {gender_select_female}>{gender_female}</option>
-  <option value="other" {gender_select_other}>{gender_other}</option>
-</select>
+          <option value="" {gender_select_empty}>{select_gender}</option>
+          <option value="male" {gender_select_male}>{gender_male}</option>
+          <option value="female" {gender_select_female}>{gender_female}</option>
+          <option value="other" {gender_select_other}>{gender_other}</option>
+        </select>
         </div>
 
         <div class="mb-3">
@@ -60,13 +61,14 @@
 
         <div class="mb-3">
           <label for="avatar" class="form-label">{label_avatar}</label><br>
-          <?php if (!empty($avatar_url)): ?>
-            <img src="{avatar_url}" alt="Avatar" class="mb-2 rounded" style="max-height: 100px;"><br>
-          <?php endif; ?>
-          <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*">
+          <img id="avatar-preview" src="{avatar_url}" alt="Avatar Vorschau" class="mb-2 rounded" style="max-height: 100px; {avatar_url:empty ? 'display:none;' : ''}">
+          <input type="file" class="form-control" id="avatarInput" name="avatarInput" accept="image/*">
+          <input type="hidden" id="croppedAvatar" name="croppedAvatar">
+          <div id="cropper-container" style="max-width: 400px; margin-top:10px; display:none;">
+            <img id="cropper-image" style="max-width:100%;"/>
+            <button type="button" id="cropAvatarBtn" class="btn btn-sm btn-primary mt-2">{btn_crop}</button>
+          </div>
         </div>
-
-
         <hr>
 
         <h5>{title_social_networks}</h5>
@@ -92,9 +94,7 @@
             <input type="text" class="form-control" id="instagram" name="instagram" value="{instagram}">
           </div>
         </div>
-
         <hr>
-
         <h5>{title_settings}</h5>
         <div class="form-check mb-2">
           <input class="form-check-input" type="checkbox" id="dark_mode" name="dark_mode" {dark_mode_checked}>
@@ -110,6 +110,56 @@
     </div>
   </div>
 </div>
+<script>
+  let cropper;
+  const avatarInput = document.getElementById('avatarInput');
+  const cropperContainer = document.getElementById('cropper-container');
+  const cropperImage = document.getElementById('cropper-image');
+  const croppedAvatar = document.getElementById('croppedAvatar');
+  const avatarPreview = document.getElementById('avatar-preview');
 
+  avatarInput.addEventListener('change', function(e) {
+    if(e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const url = URL.createObjectURL(file);
 
+      cropperImage.src = url;
+      cropperContainer.style.display = 'block';
+
+      if(cropper) {
+        cropper.destroy();
+      }
+      cropper = new Cropper(cropperImage, {
+        aspectRatio: 1,
+        viewMode: 1,
+        background: false,
+        movable: true,
+        zoomable: true,
+        rotatable: false,
+        scalable: false,
+      });
+    }
+  });
+  document.getElementById('cropAvatarBtn').addEventListener('click', function() {
+    if(cropper) {
+      cropper.getCroppedCanvas({
+      width: 400,        // Größere Dimension
+      height: 400,
+      fillColor: '#fff', // Weißer Hintergrund, falls transparent
+      imageSmoothingQuality: 'high'
+      }).toBlob(function(blob) {
+          const reader = new FileReader();
+          reader.readAsDataURL(blob);
+          reader.onloadend = function() {
+            croppedAvatar.value = reader.result;
+            avatarPreview.src = reader.result;
+            avatarPreview.style.display = 'block';
+            cropper.destroy();
+            cropperContainer.style.display = 'none';
+            avatarInput.value = ''; // Reset File Input nach Zuschnitt
+          }
+      }, 'image/jpeg', 0.95); // JPEG mit 95% Qualität
+    }
+  });
+</script>
 <!-- END -->
