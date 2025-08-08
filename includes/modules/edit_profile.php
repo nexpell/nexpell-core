@@ -62,38 +62,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $birthday = $_POST['birthday'] ?? '';
     $gender = $_POST['gender'] ?? '';
     $signatur = $_POST['signatur'] ?? '';
-
     $twitter = $_POST['twitter'] ?? '';
     $facebook = $_POST['facebook'] ?? '';
     $website = $_POST['website'] ?? '';
     $github = $_POST['github'] ?? '';
     $instagram = $_POST['instagram'] ?? '';
 
+    // Neues Feld für zugeschnittenes Bild
+    $croppedAvatar = $_POST['croppedAvatar'] ?? null;
+    $avatar_url = null;
+
     $dark_mode = isset($_POST['dark_mode']) ? 1 : 0;
     $email_notifications = isset($_POST['email_notifications']) ? 1 : 0;
 
-    $avatar_url = null;
-    if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
+    if ($croppedAvatar) {
+        // Base64-Daten parsen (erwartet data:image/png;base64,...)
+        if (preg_match('/^data:image\/(\w+);base64,/', $croppedAvatar, $type)) {
+            $data = substr($croppedAvatar, strpos($croppedAvatar, ',') + 1);
+            $data = base64_decode($data);
+            if ($data === false) {
+                die('Base64-Dekodierung fehlgeschlagen.');
+            }
+            $ext = strtolower($type[1]) === 'jpeg' ? 'jpg' : $type[1];
+            $uploadDir = 'images/avatars/';
+            if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+            $avatarFileName = "avatar_user{$userID}_" . time() . '.' . $ext;
+            $avatarPath = $uploadDir . $avatarFileName;
+            if (file_put_contents($avatarPath, $data) === false) {
+                die('Speichern des zugeschnittenen Bildes fehlgeschlagen.');
+            }
+            $avatar_url = $avatarPath;
+        } else {
+            die('Ungültiges Bildformat.');
+        }
+    } else if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
+        // Falls noch altes Uploadverfahren benutzt wird (Backup)
         $fileTmpPath = $_FILES['avatar']['tmp_name'];
         $fileName = basename($_FILES['avatar']['name']);
         $fileType = mime_content_type($fileTmpPath);
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-
         if (!in_array($fileType, $allowedTypes)) {
             die('Ungültiger Dateityp.');
         }
-
-        $uploadDir = 'images/avatars/';
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-
         $ext = pathinfo($fileName, PATHINFO_EXTENSION);
         $newName = "avatar_user{$userID}_" . time() . '.' . $ext;
         $avatarPath = $uploadDir . $newName;
-
         if (!move_uploaded_file($fileTmpPath, $avatarPath)) {
             die('Upload fehlgeschlagen.');
         }
-
         $avatar_url = $avatarPath;
     }
 
@@ -127,7 +144,6 @@ if ($result->num_rows > 0) {
 }
 
 $_database->query($query);
-
 
     $result = $_database->query("SELECT userID FROM user_socials WHERE userID = $userID");
     if ($result->num_rows > 0) {
@@ -187,8 +203,6 @@ $gender_options = [
 ];
 
 $data_array = [
-
-  
     // Userdaten mit htmlspecialchars zur Sicherheit
     'userID' => htmlspecialchars($userID ?? ''),
     'firstname' => htmlspecialchars($firstname ?? ($user['firstname'] ?? '')),
@@ -197,16 +211,11 @@ $data_array = [
     'about_me' => htmlspecialchars($about_me ?? ($user['about_me'] ?? '')),
     'birthday' => htmlspecialchars($birthday ?? ($user['birthday'] ?? '')),
     'age'      => isset($user['birthday']) ? (date_diff(date_create($user['birthday']), date_create('today'))->y) : '',
-    
-
     'gender' => $gender,
     'gender_select_empty'  => $gender_options['gender_selected_empty'],
     'gender_select_male'   => $gender_options['gender_selected_male'],
     'gender_select_female' => $gender_options['gender_selected_female'],
     'gender_select_other'  => $gender_options['gender_selected_other'],
-
-
-
     'signatur' => htmlspecialchars($signatur ?? ($user['signatur'] ?? '')),
     
     // Avatar-URL: wenn $avatar gesetzt, sonst aus $user['avatar']
@@ -241,6 +250,7 @@ $data_array = [
     'label_dark_mode' => $languageService->get('label_dark_mode'),
     'label_email_notifications' => $languageService->get('label_email_notifications'),
     'btn_save' => $languageService->get('btn_save'),
+    'btn_crop' => $languageService->get('btn_crop'),
     'label_birthday'    => $languageService->get('label_birthday'),
     'label_gender'      => $languageService->get('label_gender'),
     'select_gender'     => $languageService->get('select_gender'),
@@ -248,8 +258,5 @@ $data_array = [
     'gender_female'     => $languageService->get('gender_female'),
     'gender_other'      => $languageService->get('gender_other'),
 ];
-
-
-
 echo $tpl->loadTemplate("edit_profiles", "content", $data_array, 'theme');
 ?>
