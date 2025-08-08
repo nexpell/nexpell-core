@@ -18,5 +18,5 @@ $language_array = array(
     'label_dark_mode' => 'Enable Dark Mode',
     'label_email_notifications' => 'Receive Email Notifications',
     'btn_save' => 'Save',
+    'btn_crop' => 'crop image',
 );
-
