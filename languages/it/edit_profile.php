@@ -18,5 +18,5 @@ $language_array = array(
     'label_dark_mode' => 'Attiva modalità scura',
     'label_email_notifications' => 'Ricevi notifiche via email',
     'btn_save' => 'Salva',
+    'btn_crop' => 'ritagliare',
 );
-
