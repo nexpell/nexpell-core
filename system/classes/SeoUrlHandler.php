@@ -12,7 +12,7 @@ class SeoUrlHandler {
     if (isset($segments[0]) && preg_match('/^[a-z]{2}$/i', $segments[0])) {
         // SEO-URL mit Sprachsegment /de/...
         $_GET['lang'] = strtolower($segments[0]);
-        $_GET['site'] = $segments[1] ?? 'start';
+        $_GET['site'] = $segments[1] ?? 'index';
         $_GET['action'] = $segments[2] ?? null;
 
         for ($i = 3; $i < count($segments); $i += 2) {
