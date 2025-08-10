@@ -351,6 +351,14 @@ function checkforempty($valuearray)
     return true;
 }
 
+$result = $_database->query("SELECT use_seo_urls FROM settings LIMIT 1");
+$row = $result ? $result->fetch_assoc() : null;
+$seoEnabled = $row ? (int)$row['use_seo_urls'] : 0;
+
+if (!defined('USE_SEO_URLS')) {
+    define('USE_SEO_URLS', $seoEnabled === 1);
+}
+
 
 // -- CAPTCHA -- //
 if(file_exists('classes/Captcha.php')) { 
@@ -464,6 +472,18 @@ if (file_exists('classes/DatabaseMigrationHelper.php')) {
     systeminc('classes/DatabaseMigrationHelper');
 } else {
     systeminc('../system/classes/DatabaseMigrationHelper');
+}
+
+#if (file_exists('classes/SeoUrlBuilder.php')) {
+    #systeminc('classes/SeoUrlBuilder');
+#} else {
+#    systeminc('../system/classes/SeoUrlBuilder.php');
+#}
+
+if (file_exists('classes/SeoUrlHandler.php')) {
+    systeminc('classes/SeoUrlHandler');
+} else {
+    systeminc('../system/classes/SeoUrlHandler');
 }
 
 
@@ -638,15 +658,7 @@ function get_all_settings() {
 // Konstante zur Steuerung von SEO-URLs
 //define('USE_SEO_URLS', true);
 // SEO-Einstellung laden
-$result = $_database->query("SELECT use_seo_urls FROM settings LIMIT 1");
-$seoEnabled = 0;
-if ($result) {
-    $row = $result->fetch_assoc();
-    $seoEnabled = (int)$row['use_seo_urls'];
-}
 
-// Konstante setzen
-define('USE_SEO_URLS', $seoEnabled === 1);
 /**
  * Konvertiert interne Links zu SEO-URLs (z. B. /de/forum/thread/3/page/2#post17).
  * Unterstützt Eingabe als URL-String oder Array mit Parametern.
@@ -655,56 +667,174 @@ define('USE_SEO_URLS', $seoEnabled === 1);
  * @return string SEO-URL oder Original-URL, wenn deaktiviert
  */
 
-function convertToSeoUrl($input): string {
+/*function convertToSeoUrl($input): string {
     if (!USE_SEO_URLS) {
         return is_array($input) ? 'index.php?' . http_build_query($input) : $input;
     }
 
     $lang = $_SESSION['language'] ?? 'de';
 
-    // Wenn ein Array übergeben wurde
     if (is_array($input)) {
-        $site    = $input['site']    ?? 'start';
-        $action  = $input['action']  ?? null;
-        $id      = $input['id']      ?? null;
-        $page    = $input['page']    ?? null;
-        $userID  = $input['userID']  ?? null;
-        $anchor  = $input['anchor']  ?? null;
+        $site     = $input['site']     ?? 'start';
+        $action   = $input['action']   ?? null;
+        $id       = $input['id']       ?? null;
+        $page     = $input['page']     ?? null;
+        $userID   = $input['userID']   ?? null;
+        $postID   = $input['postID']   ?? null;
+        $threadID = $input['threadID'] ?? null;
+        $anchor   = $input['anchor']   ?? null;
 
         $url = "/$lang/" . urlencode($site);
-        if ($action) $url .= '/' . urlencode($action);
-        if ($id)     $url .= '/' . urlencode($id);
-        if ($userID) $url .= '/user/' . urlencode($userID);
-        if ($page)   $url .= '/page/' . urlencode($page);
-        if ($anchor) $url .= '#' . urlencode($anchor);
+        if ($action)   $url .= '/' . urlencode($action);
+        if ($id)       $url .= '/' . urlencode($id);
+        if ($postID)   $url .= '/post/' . urlencode($postID);
+        if ($threadID) $url .= '/thread/' . urlencode($threadID);
+        if ($userID)   $url .= '/user/' . urlencode($userID);
+        if ($page)     $url .= '/page/' . urlencode($page);
+        if ($anchor)   $url .= '#' . rawurlencode($anchor);
 
         return $url;
     }
 
-    // Wenn ein String übergeben wurde
     if (is_string($input) && stripos($input, 'index.php') !== false) {
         $parts = parse_url($input);
         parse_str($parts['query'] ?? '', $params);
 
-        $site    = $params['site']    ?? 'start';
-        $action  = $params['action']  ?? null;
-        $id      = $params['id']      ?? null;
-        $userID  = $params['userID']  ?? null;
-        $page    = $params['page']    ?? null;
+        $site     = $params['site']     ?? 'start';
+        $action   = $params['action']   ?? null;
+        $id       = $params['id']       ?? null;
+        $userID   = $params['userID']   ?? null;
+        $postID   = $params['postID']   ?? null;
+        $threadID = $params['threadID'] ?? null;
+        $page     = $params['page']     ?? null;
 
         $url = "/$lang/" . urlencode($site);
-        if ($action) $url .= '/' . urlencode($action);
-        if ($id)     $url .= '/' . urlencode($id);
-        if ($userID) $url .= '/user/' . urlencode($userID);
-        if ($page)   $url .= '/page/' . urlencode($page);
+        if ($action)   $url .= '/' . urlencode($action);
+        if ($id)       $url .= '/' . urlencode($id);
+        if ($postID)   $url .= '/post/' . urlencode($postID);
+        if ($threadID) $url .= '/thread/' . urlencode($threadID);
+        if ($userID)   $url .= '/user/' . urlencode($userID);
+        if ($page)     $url .= '/page/' . urlencode($page);
 
         if (!empty($parts['fragment'])) {
-            $url .= '#' . urlencode($parts['fragment']);
+            $url .= '#' . rawurlencode($parts['fragment']);
         }
 
         return $url;
     }
 
     return $input;
+}*/
+/*function convertToSeoUrl($input): string {
+    if (!USE_SEO_URLS) {
+        return is_array($input) ? 'index.php?' . http_build_query($input) : $input;
+    }
+
+    if (!is_array($input)) {
+        return is_string($input) ? $input : '';
+    }
+
+    $lang     = $input['lang']     ?? $_SESSION['language'] ?? 'de';
+    $site     = $input['site']     ?? 'start';
+    $action   = $input['action']   ?? null;
+    $id       = $input['id']       ?? null;
+    $page     = $input['page']     ?? null;
+    $userID   = $input['userID']   ?? null;
+    $postID   = $input['postID']   ?? null;
+    $threadID = $input['threadID'] ?? null;
+    $anchor   = $input['anchor']   ?? null;
+
+    // Start der URL
+    $url = "/$lang/" . urlencode($site);
+
+    // Forumspezifische Struktur
+    if ($site === 'forum') {
+        if ($action) {
+            $url .= '/' . urlencode($action);
+        }
+
+        // Spezielle Reihenfolge für Thread/Posts
+        if ($threadID) {
+            $url .= '/thread/' . urlencode($threadID);
+        }
+        if ($postID) {
+            $url .= '/post/' . urlencode($postID);
+        }
+        if ($page) {
+            $url .= '/page/' . urlencode($page);
+        }
+    } 
+    // Standardstruktur für andere Module
+    else {
+        if ($id)     $url .= '/' . urlencode($id);
+        if ($postID) $url .= '/post/' . urlencode($postID);
+        if ($threadID) $url .= '/thread/' . urlencode($threadID);
+        if ($userID) $url .= '/user/' . urlencode($userID);
+        if ($page)   $url .= '/page/' . urlencode($page);
+    }
+
+    // Anker hinzufügen
+    if ($anchor) {
+        $url .= '#' . rawurlencode($anchor);
+    }
+
+    return $url;
 }
 
+function parseSeoUrl(string $uri): array {
+    $parts = parse_url($uri);
+    $path = $parts['path'] ?? '';
+    $fragment = $parts['fragment'] ?? '';
+
+    $segments = explode('/', trim($path, '/'));
+    $params = [];
+
+    if (isset($segments[0]) && preg_match('/^[a-z]{2}$/i', $segments[0])) {
+        $params['lang'] = strtolower($segments[0]);
+    } else {
+        $params['lang'] = 'de';
+    }
+
+    $params['site'] = $segments[1] ?? 'start';
+
+    // Rest ab Index 2
+    $rest = array_slice($segments, 2);
+
+    // action = erstes Segment im Rest (falls vorhanden)
+    $params['action'] = $rest[0] ?? null;
+
+    // Key-Value-Paare ab Index 1, 2
+    for ($i = 1; $i < count($rest); $i += 2) {
+        $key = $rest[$i] ?? null;
+        $val = $rest[$i + 1] ?? null;
+        if (!$key || !$val) continue;
+
+        switch (strtolower($key)) {
+            case 'thread':
+                $params['threadID'] = $val;
+                if ($params['action'] === 'quote' || $params['action'] === 'thread') {
+                    $params['id'] = $val;  // id passend setzen
+                }
+                break;
+            case 'post':
+                $params['postID'] = $val;
+                break;
+            case 'page':
+                $params['page'] = $val;
+                break;
+            case 'user':
+                $params['userID'] = $val;
+                break;
+            default:
+                $params[$key] = $val;
+                break;
+        }
+    }
+
+    if ($fragment) {
+        $params['anchor'] = $fragment;
+    }
+
+    return $params;
+}
+*/

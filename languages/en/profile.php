@@ -23,7 +23,7 @@ $language_array = array(
     'user_sponsors'       => 'Sponsors',
     'user_links'          => 'Links',
 
-    // General
+    // Allgemein
     'profile_title' => 'Profile',
     'edit_profile_button' => 'Edit profile',
     'points' => 'Points',
@@ -38,17 +38,21 @@ $language_array = array(
     'tab_posts' => 'Posts',
     'tab_activity' => 'Activity',
 
-    // Section: Profile info
-    'about_title' => 'Profile info',
+    // Abschnitt: Steckbrief
+    'about_title' => 'Profile',
     'about_firstname' => 'First name',
     'about_lastname' => 'Last name',
     'about_age' => 'Age',
     'about_location' => 'Location',
-    'about_sexuality' => 'Sexuality',
+    'about_birthday' => 'Birthday',
+    'about_gender' => 'Gender',
+    'about_gender_male' => 'Male',
+    'about_gender_female' => 'Female',
+    'about_gender_other' => 'Other',
     'about_text' => 'About me',
     'about_signature' => 'Signature',
 
-    // Section: Posts & Activity
+    // Abschnitt: Beiträge & Aktivität
     'latest_posts' => 'Latest posts',
     'latest_activity' => 'Latest activity',
 

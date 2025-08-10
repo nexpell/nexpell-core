@@ -102,14 +102,18 @@ if (isset($_POST["use_seo_urls_edit"])) {
         if ($affected > 0) {
             if ($newValue === 1) {
                 echo '<div class="alert alert-success" role="alert">' . $languageService->get('seo_urls_activated') . '</div>';
+                redirect("admincenter.php?site=settings", '', 3);
             } else {
                 echo '<div class="alert alert-danger" role="alert">' . $languageService->get('seo_urls_deactivated') . '</div>';
+                redirect("admincenter.php?site=settings", '', 3);
             }
         } else {
             echo '<div class="alert alert-danger" role="alert">' . $languageService->get('transaction_invalid') . '</div>';
+            redirect("admincenter.php?site=settings", '', 3);
         }
     } else {
         echo '<div class="alert alert-danger" role="alert">' . $languageService->get('transaction_invalid') . '</div>';
+        redirect("admincenter.php?site=settings", '', 3);
     }
 
     #$_database->close();
@@ -144,7 +148,7 @@ $hash = $CAPCLASS->getHash();
 
 echo '
         
-            <form class="form-horizontal" method="post" id="post" name="post" action="admincenter.php?site=settings" onsubmit="return chkFormular();">
+            <form method="post" action="">
 
                
                         <div class="row align-items-stretch">
@@ -305,11 +309,11 @@ echo '
                                 <div class="row align-items-center mt-3">
                                   <div class="col-md-5 fw-semibold">' . htmlspecialchars($languageService->get('seo_url_setting')) . ':</div>
                                   <div class="col-md-7">
-                                    <form method="post" action="">
+                                    <!--<form method="post" action="">-->
                                       <button type="submit" name="use_seo_urls_edit" class="btn btn-' . $btnClass . '">
                                         ' . htmlspecialchars($btnText) . '
                                       </button>
-                                    </form>
+                                    <!--</form>-->
                                   </div>
                                 </div>
 
@@ -322,9 +326,9 @@ echo '
                                 <div class="row align-items-center mt-3">
                                   <div class="col-md-5 fw-semibold">' . htmlspecialchars($languageService->get('sitemap_last_update')) . ': <strong>' . htmlspecialchars($lastUpdate) . '</strong></div>
                                   <div class="col-md-7">
-                                    <form method="post">
+                                    <!--<form method="post">-->
                                       <button type="submit" name="generate" class="btn btn-info">' . htmlspecialchars($languageService->get('sitemap_regenerate')) . '</button>
-                                    </form>
+                                    <!--</form>-->
                                   </div>
                                 </div>
 
@@ -413,17 +417,22 @@ echo '
                             </div>
                         </div>
 
-                    
+                
 
             <div class="mb-3 row">
                 <div class="col-md-12"><br>
-                    <input type="hidden" name="captcha_hash" value="' . $hash . '">
-                    <button class="btn btn-warning" type="submit" name="submit">
-                        <i class="bi bi-box-arrow-down"></i> ' . $languageService->get('update') . '
-                    </button>
+                    
+                    
+              
+        <input type="hidden" name="captcha_hash" value="' . $hash . '">
+    <button class="btn btn-warning" type="submit" name="submit">
+        <i class="bi bi-box-arrow-down"></i> '.$languageService->get('update').'
+    </button>
+</form>
+
                 </div>
             </div>
-            </form>
+           
 
             
        
@@ -431,14 +440,14 @@ echo '
 </div>
 ';
 
-
+}
 
 
 #==== Social Einstellungen=============#
 
 #==== Social Einstellungen=============#
 
-} elseif ($action == "social_setting") {
+ elseif ($action == "social_setting") {
 
 echo '<div class="card">
         <div class="card-header">

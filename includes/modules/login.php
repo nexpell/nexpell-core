@@ -6,6 +6,7 @@ $message = '';
 
 use nexpell\LoginSecurity;
 use nexpell\LanguageService;
+use nexpell\SeoUrlHandler;
 
 // Initialisieren
 global $_database, $languageService;
@@ -27,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $_SESSION['error_message'] = $languageService->get('error_invalid_email');
-        header("Location: " . convertToSeoUrl('index.php?site=login'));
+        header("Location: " . SeoUrlHandler::convertToSeoUrl('index.php?site=login'));
         exit;
     }
 
@@ -122,8 +123,8 @@ if ($isEmailBanned) {
     $isIpBanned = true;
 }
 
-$registerlink = '<a href="' . convertToSeoUrl('index.php?site=register') . '">' . $languageService->get('register_link') . '</a>';
-$lostpasswordlink = '<a href="' . convertToSeoUrl('index.php?site=lostpassword') . '">' . $languageService->get('lostpassword_link') . '</a>';
+$registerlink = '<a href="' . SeoUrlHandler::convertToSeoUrl('index.php?site=register') . '">' . $languageService->get('register_link') . '</a>';
+$lostpasswordlink = '<a href="' . SeoUrlHandler::convertToSeoUrl('index.php?site=lostpassword') . '">' . $languageService->get('lostpassword_link') . '</a>';
 
 $data_array = [
     'login_headline' => $languageService->get('title'),

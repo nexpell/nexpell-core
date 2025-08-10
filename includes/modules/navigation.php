@@ -1,6 +1,9 @@
 <?php
 
 use nexpell\LanguageService;
+use nexpell\SeoUrlHandler;
+
+
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -9,6 +12,8 @@ if (session_status() === PHP_SESSION_NONE) {
 global $languageService, $_database, $tpl;
 
 $lang = $languageService->detectLanguage();
+
+
 
 // SEO-Link-Erzeugung mit Dummy-Dateien
 #function convertToSeoUrl(string $site, string $lang): string {
@@ -110,14 +115,14 @@ try {
                     $sub_name = $translate->getTextByLanguage($rox['name']);
                     $sub_url = $rox['url'];
 
-                    // Interne Links umwandeln
                     if (strpos($sub_url, 'index.php?site=') === 0) {
-                        // komplette URL übergeben
-                        $sub_url = convertToSeoUrl($sub_url);
-                    } elseif (substr($sub_url, -4) === '.php' && !str_starts_with($sub_url, 'http')) {
-                        // umwandeln in vollständigen Link
-                        $sub_url = convertToSeoUrl('index.php?site=' . basename($sub_url, '.php'));
-                    }
+    // URL ist bereits im Query-Format, einfach in SEO-URL umwandeln
+    $sub_url = SeoUrlHandler::convertToSeoUrl($sub_url);
+} elseif (substr($sub_url, -4) === '.php' && !str_starts_with($sub_url, 'http')) {
+    // URL endet auf ".php" und ist kein externer Link,
+    // z.B. "forum.php" -> "index.php?site=forum" -> SEO-URL
+    $sub_url = SeoUrlHandler::convertToSeoUrl('index.php?site=' . basename($sub_url, '.php'));
+}
 
                     $target = '';
                     if (strpos($sub_url, 'http://') === 0 || strpos($sub_url, 'https://') === 0) {
@@ -162,10 +167,14 @@ if ($loggedin) {
 
 
     $urlString = 'index.php?site=profile&userID=' . intval($userID);
-    $profile = '<li><a class="dropdown-item" href="' . htmlspecialchars(convertToSeoUrl($urlString)) . '">&nbsp;' . $languageService->module['to_profil'] . '</a></li>';
+    $profile = '<li><a class="dropdown-item" href="' . 
+    htmlspecialchars(SeoUrlHandler::convertToSeoUrl($urlString)) . 
+    '">&nbsp;' . $languageService->module['to_profil'] . '</a></li>';
 
-
-    $logout = '<li><a class="dropdown-item" href="' . htmlspecialchars(convertToSeoUrl('index.php?site=logout')) . '">&nbsp;' . $languageService->module['log_off'] . '</a></li>';
+$logoutUrl = 'index.php?' . http_build_query(['site' => 'logout']);
+$logout = '<li><a class="dropdown-item" href="' . 
+    htmlspecialchars(SeoUrlHandler::convertToSeoUrl($logoutUrl)) . 
+    '">&nbsp;' . $languageService->module['log_off'] . '</a></li>';
 
 
 $data_array = [
@@ -186,7 +195,7 @@ $data_array = [
     echo $tpl->loadTemplate("navigation", "login_loggedin", $data_array, 'theme');
 } else {
 
-    $login = '<li><a class="nav-link" href="' . htmlspecialchars(convertToSeoUrl('index.php?site=login')) . '">' . $languageService->module['login'] . '</a></li>';
+    $login = '<li><a class="nav-link" href="' . htmlspecialchars(SeoUrlHandler::convertToSeoUrl('index.php?site=login')) . '">' . $languageService->module['login'] . '</a></li>';
 
 
     $data_array = [
