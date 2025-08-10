@@ -10,123 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 use webspell\LanguageService;
-
-/*
-
-$availableLangs = ['de', 'en', 'it'];
-
-// Sprache aus URL-Teil oder Session
-$requestUri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
-$segments = explode('/', $requestUri);
-
-$lang = in_array($segments[0] ?? '', $availableLangs) ? $segments[0] : 'de';
-$_SESSION['language'] = $lang;
-
-$site = $segments[1] ?? 'start';
-$action = $segments[2] ?? null;
-$id = $segments[3] ?? null;
-
-$params = [];
-for ($i = 4; $i < count($segments); $i += 2) {
-    $key = $segments[$i] ?? null;
-    $value = $segments[$i + 1] ?? null;
-    if ($key && $value) {
-        $params[$key] = $value;
-    }
-}
-
-// Alternative mit Query-Parametern priorisieren
-if (isset($_GET['site'])) {
-    $site = $_GET['site'];
-    $action = $_GET['action'] ?? null;
-    $id = $_GET['id'] ?? null;
-
-    // alle weiteren $_GET-Parameter außer site, action, id als $params
-    foreach ($_GET as $k => $v) {
-        if (!in_array($k, ['site', 'action', 'id'])) {
-            $params[$k] = $v;
-        }
-    }
-}
-/*
-define('BASE_PATH', realpath(__DIR__ . '/../../..'));
-// Plugin oder Modul einbinden
-$siteFile = BASE_PATH . "/includes/plugins/{$site}/{$site}.php";
-$moduleFile = BASE_PATH . "/includes/modules/{$site}.php";
-
-if (file_exists($siteFile)) {
-    include $siteFile;
-} elseif (file_exists($moduleFile)) {
-    include $moduleFile;
-} else {
-    die("Seite {$site} nicht gefunden!");
-}
-
-
-
-// Sprachdatei laden (ggf. Plugin-Pfad prüfen)
-/*define('BASE_PATH', realpath(__DIR__ . '/../../..'));
-$langfile = BASE_PATH . "/languages/{$lang}/{$site}.php";
-if (!file_exists($langfile)) {
-    $pluginLangFile = BASE_PATH . "/includes/plugins/{$site}/languages/{$lang}/{$site}.php";
-    if (file_exists($pluginLangFile)) {
-        $langfile = $pluginLangFile;
-    } else {
-        die("Sprachdatei {$lang}/{$site}.php fehlt!");
-    }
-}*/
-#include $langfile;
-
-// Beispielhafte Ausgabe
-/*if ($site === 'forum' && $action === 'thread' && $id !== null) {
-    echo "Forum Thread: $id (Sprache: $lang)";
-} elseif ($site === 'about') {
-    echo "Über uns (Sprache: $lang)";
-} else {
-    echo "Startseite (Sprache: $lang)";
-}*/
-
-/*function convertToSeoUrl(string $url): string {
-    // Sprache aus Session oder Fallback
-    $lang = $_SESSION['language'] ?? 'de';
-
-    // Zerlege URL in Pfad und Query
-    $parts = parse_url($url);
-    parse_str($parts['query'] ?? '', $params);
-
-    // Spezialfall: Forum-Thread mit Seite
-    if (
-        isset($params['site'], $params['action'], $params['id']) &&
-        $params['site'] === 'forum' &&
-        $params['action'] === 'thread'
-    ) {
-        $threadId = intval($params['id']);
-        $page = isset($params['page']) ? intval($params['page']) : null;
-        $anchor = $parts['fragment'] ?? '';
-
-        $seo = "/$lang/forum/thread/$threadId";
-        if ($page) {
-            $seo .= "/page/$page";
-        }
-        if ($anchor) {
-            $seo .= "#$anchor";
-        }
-
-        return $seo;
-    }
-
-    // Allgemeiner Fallback (z. B. index.php?site=about)
-    if (isset($params['site'])) {
-        $seo = "/$lang/{$params['site']}";
-        if (isset($parts['fragment'])) {
-            $seo .= "#{$parts['fragment']}";
-        }
-        return $seo;
-    }
-
-    // Wenn nichts passt, gib Original zurück
-    return $url;
-}*/
+use nexpell\SeoUrlHandler;
 
 // Sprache aus Session laden oder Standard setzen
 if (isset($_SESSION['language'])) {
@@ -143,12 +27,10 @@ $languageService->setLanguage($currentLang);
 if (!isset($languageService)) {
     $languageService = new LanguageService($_database);
 }
-#$languageService->setLanguage($currentLang);
 $languageService->setLanguage($lang);
 $_language = $languageService;
 
 // Aktuelle Seite bestimmen
-#$page = $segments[1] ?? 'index';
 $page = $_GET['site'] ?? ($segments[1] ?? 'index');
 
 // Theme laden
@@ -184,10 +66,9 @@ if (!empty($positions)) {
 
 loadPluginHeadAssets();
 
-    require_once __DIR__ . '/../../../system/seo_meta_helper.php';
+require_once __DIR__ . '/../../../system/seo_meta_helper.php';
 $site = $_GET['site'] ?? 'home';
 $meta = getSeoMeta($site);
-
 
 // Header-Kompatibilität
 header('X-UA-Compatible: IE=edge');
