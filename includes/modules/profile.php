@@ -4,6 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 use nexpell\LanguageService;
+use nexpell\SeoUrlHandler;
 
 global $_database, $languageService;
 
@@ -135,7 +136,7 @@ $github_url    = !empty($user_socials['github'])    ? htmlspecialchars($user_soc
 
 $is_own_profile = ($_SESSION['userID'] ?? 0) === $userID;
 $edit_button = $is_own_profile
-    ? '<a href="' . htmlspecialchars(convertToSeoUrl('index.php?site=edit_profile')) . '" class="btn btn-outline-primary mt-3">
+    ? '<a href="' . htmlspecialchars(SeoUrlHandler::convertToSeoUrl('index.php?site=edit_profile')) . '" class="btn btn-outline-primary mt-3">
         <i class="fas fa-user-edit"></i> ' . $languageService->get('edit_profile_button') . '
       </a>'
     : '';

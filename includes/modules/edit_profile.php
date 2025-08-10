@@ -5,6 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 use nexpell\LanguageService;
+use nexpell\SeoUrlHandler;
 
 global $_database,$languageService;
 
@@ -170,7 +171,7 @@ $_database->query($query);
             VALUES ($userID, $dark_mode, $email_notifications)");
     }
 
-    header("Location: " . convertToSeoUrl("index.php?site=profile&userID=$userID"));
+    header("Location: " . SeoUrlHandler::convertToSeoUrl("index.php?site=profile&userID=$userID"));
     exit;
 }
 
