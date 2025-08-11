@@ -53,6 +53,7 @@ include_once("system/multi_language.php");
 include_once("system/classes/track_visitor.php");
 include_once("system/init_language.php"); // setzt $languageService
 include_once("system/classes/Template.php");
+include_once("system/classes/SeoUrlHandler.php");
 
 // === Globale Variablen ===
 global $tpl;
