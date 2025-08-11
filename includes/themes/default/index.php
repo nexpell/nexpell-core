@@ -11,6 +11,9 @@ if (session_status() === PHP_SESSION_NONE) {
 
 use webspell\LanguageService;
 use nexpell\SeoUrlHandler;
+// Jetzt kannst du SeoUrlHandler verwenden, z.B.
+SeoUrlHandler::route();
+
 
 // Sprache aus Session laden oder Standard setzen
 if (isset($_SESSION['language'])) {
@@ -20,8 +23,6 @@ if (isset($_SESSION['language'])) {
     $_SESSION['language'] = $currentLang;
 }
 $languageService->setLanguage($currentLang);
-
-
 
 // LanguageService initialisieren
 if (!isset($languageService)) {
@@ -69,6 +70,11 @@ loadPluginHeadAssets();
 require_once __DIR__ . '/../../../system/seo_meta_helper.php';
 $site = $_GET['site'] ?? 'home';
 $meta = getSeoMeta($site);
+// Ausgabe $_GET zum Debug
+/*var_dump($_GET);
+echo '<pre>';
+print_r($_GET);
+echo '</pre>';*/
 
 // Header-Kompatibilität
 header('X-UA-Compatible: IE=edge');

@@ -20,7 +20,7 @@ $language_array = array(
     'pass_text' => 'The password must be at least 8 characters long and contain a number and an uppercase letter.',
 
     // Terms / notes
-    'terms_of_use_text' => 'I accept the',
+    'terms_of_use_text' => 'I accept the terms of use',
     'terms_of_use' => 'terms of use',
 
     // Buttons

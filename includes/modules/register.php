@@ -8,8 +8,7 @@ require_once "system/config.inc.php";
 use nexpell\LoginSecurity;
 use nexpell\Email;
 use nexpell\LanguageService;
-
-#require_once __DIR__ . '/../../system/config.inc.php';
+use nexpell\SeoUrlHandler;
 
 global $_database, $languageService;
 
@@ -204,8 +203,8 @@ unset($_SESSION['error_message']);
 $successmessage = $_SESSION['success_message'] ?? '';
 unset($_SESSION['success_message']);
 
-$termsofuse = '<a href="' . convertToSeoUrl('index.php?site=privacy_policy') . '">' . $languageService->get('terms_of_use') . '</a>';
-$loginlink = '<a href="' . convertToSeoUrl('index.php?site=login') . '">' . $languageService->get('login_link') . '</a>';
+$termsofuse = '<a href="' . SeoUrlHandler::convertToSeoUrl('index.php?site=privacy_policy') . '">' . $languageService->get('terms_of_use') . '</a>';
+$loginlink = '<a href="' . SeoUrlHandler::convertToSeoUrl('index.php?site=login') . '">' . $languageService->get('login_link') . '</a>';
 
 $data_array = [
 

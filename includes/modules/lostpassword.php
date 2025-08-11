@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 use nexpell\LoginSecurity;
 use nexpell\Email;
 use nexpell\LanguageService;
+use nexpell\SeoUrlHandler;
 
 global $_database,$languageService;
 
@@ -118,8 +119,8 @@ if (isset($_SESSION['error_message'])) {
     unset($_SESSION['error_message']);
 }
 
-$registerlink = '<a href="' . convertToSeoUrl('index.php?site=register') . '">' . $languageService->get('register_link') . '</a>';
-$loginlink = '<a href="' . convertToSeoUrl('index.php?site=login') . '">' . $languageService->get('login') . '</a>';
+$registerlink = '<a href="' . SeoUrlHandler::convertToSeoUrl('index.php?site=register') . '">' . $languageService->get('register_link') . '</a>';
+$loginlink = '<a href="' . SeoUrlHandler::convertToSeoUrl('index.php?site=login') . '">' . $languageService->get('login') . '</a>';
 
 
 // Formular anzeigen

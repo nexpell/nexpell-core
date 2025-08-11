@@ -20,7 +20,7 @@ $language_array = array(
     'pass_text' => 'La password deve essere lunga almeno 8 caratteri e contenere un numero e una lettera maiuscola.',
 
     // Termini / note
-    'terms_of_use_text' => 'Accetto i',
+    'terms_of_use_text' => "Accetto i termini di utilizzo",
     'terms_of_use' => 'termini di utilizzo',
 
     // Pulsanti

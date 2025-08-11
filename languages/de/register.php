@@ -20,7 +20,7 @@ $language_array = array(
     'pass_text' => 'Das Passwort muss mindestens 8 Zeichen lang sein, eine Zahl und einen Großbuchstaben enthalten.',
 
     // Terms / Hinweise
-    'terms_of_use_text' => 'Ich akzeptiere die',
+    'terms_of_use_text' => 'Ich akzeptiere die Nutzungsbedingungen',
     'terms_of_use' => 'Nutzungsbedingungen',
 
     // Buttons

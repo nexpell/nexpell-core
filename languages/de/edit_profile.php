@@ -2,7 +2,7 @@
 
 $language_array = array(
 
-    'title' => 'Edit Profil',
+    'edit_text' => 'Edit Profil',
     'edit_profile_title' => 'Profil bearbeiten',
     'label_firstname' => 'Vorname',
     'label_lastname' => 'Nachname',

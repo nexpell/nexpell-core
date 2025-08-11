@@ -203,7 +203,14 @@ $gender_options = [
     'gender_selected_empty'  => $gender === '' ? 'selected' : '',
 ];
 
+$edit_password = '<a type="button" class="btn btn-warning" href="' . SeoUrlHandler::convertToSeoUrl("index.php?site=edit_password") . '">Edit Passwort</a>';
+$edit_email    = '<a type="button" class="btn btn-warning" href="' . SeoUrlHandler::convertToSeoUrl("index.php?site=edit_email") . '">Edit eMail</a>';
+
+
 $data_array = [
+
+    'edit_password' => $edit_password,
+    'edit_email' => $edit_email,
     // Userdaten mit htmlspecialchars zur Sicherheit
     'userID' => htmlspecialchars($userID ?? ''),
     'firstname' => htmlspecialchars($firstname ?? ($user['firstname'] ?? '')),
