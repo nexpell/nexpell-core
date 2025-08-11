@@ -75,7 +75,7 @@ class SeoUrlHandler {
 
     // Sprache, Site, Action auslesen oder Default setzen
     $lang = $query['lang'] ?? 'de';
-    $site = $query['site'] ?? 'start';
+    $site = $query['site'] ?? 'index';
     $action = $query['action'] ?? null;
 
     $segments = [$lang, $site];
@@ -118,7 +118,7 @@ class SeoUrlHandler {
     $params['lang'] = $segments[0] ?? 'de';
 
     // Site
-    $params['site'] = $segments[1] ?? 'start';
+    $params['site'] = $segments[1] ?? 'index';
 
     // Action
     if (isset($segments[2]) && !is_numeric($segments[2])) {
