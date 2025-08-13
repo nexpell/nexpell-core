@@ -62,5 +62,28 @@ $language_array = array(
     'tooltip_instagram' => 'Instagram',
     'tooltip_website' => 'Website',
 
+    'last_online' => 'Zuletzt online',
+    'current_session' => 'Aktuelle Session',
+    'user_offline' => 'Benutzer ist offline',
+    'total_online_time' => 'Gesamt Onlinezeit',
+    'logins' => 'Logins',
+
+    'hour' => 'Stunde',
+    'hours_suffix' => 'n',
+    'minute' => 'Minute',
+    'minutes_suffix' => 'n',
+
+    'user' => 'Benutzer',
+    'unknown' => 'Unbekannt',
+    'not_specified' => 'Nicht angegeben',
+    'no_information_about_me' => 'Keine Informationen über mich.',
+    'never_visited' => 'Nie besucht',
+    'unknown_location' => 'Unbekannter Ort',
+
+    'this_profile_is_locked.' => 'Dieses Profil ist gesperrt.',
+    'number'   => 'Nummer',
+    'activity' => 'Aktivität',
+    'typ'     => 'Typ',
+
 );
 

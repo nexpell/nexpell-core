@@ -79,30 +79,39 @@ $sql = "
 $result = $_database->query($sql);
 if ($result && $row = $result->fetch_assoc()) {
     $username = htmlspecialchars($row['username']);
-    $role_name = !empty($row['roles']) ? htmlspecialchars($row['roles']) : 'Benutzer';
+    $role_name = !empty($row['roles']) 
+        ? htmlspecialchars($row['roles']) 
+        : $languageService->get('user'); // Default role
     $register_date_raw = $row['registerdate'];
     $last_visit_raw = $row['lastlogin'];
 } else {
-    $username = 'Unbekannt';
-    $role_name = 'Benutzer';
+    $username = $languageService->get('unknown');
+    $role_name = $languageService->get('user');
     $register_date_raw = null;
     $last_visit_raw = null;
 }
 
-$firstname    = htmlspecialchars($user_profile['firstname'] ?? 'Nicht angegeben');
-$lastname     = htmlspecialchars($user_profile['lastname'] ?? 'Nicht angegeben');
-$about_me     = !empty($user_profile['about_me']) ? htmlspecialchars($user_profile['about_me']) : '<p class="text-muted fst-italic">„Keine Informationen über mich.“</p>';
+$firstname = htmlspecialchars($user_profile['firstname'] ?? $languageService->get('not_specified'));
+$lastname  = htmlspecialchars($user_profile['lastname'] ?? $languageService->get('not_specified'));
+
+$about_me = !empty($user_profile['about_me']) 
+    ? htmlspecialchars($user_profile['about_me']) 
+    : '<p class="text-muted fst-italic">"' . $languageService->get('no_information_about_me') . '"</p>';
+
 $register_date = (!empty($register_date_raw) && strtotime($register_date_raw) !== false)
     ? date('d.m.Y', strtotime($register_date_raw))
-    : 'Unbekannt';
+    : $languageService->get('unknown');
 
 $last_visit = (!empty($last_visit_raw) && strtotime($last_visit_raw) !== false)
     ? date('d.m.Y H:i', strtotime($last_visit_raw))
-    : 'Nie besucht';
+    : $languageService->get('never_visited');
 
 $avatar = getavatar($userID);
 
-$location = !empty($user_profile['location']) ? htmlspecialchars($user_profile['location']) : 'Unbekannter Ort';
+$location = !empty($user_profile['location']) 
+    ? htmlspecialchars($user_profile['location']) 
+    : $languageService->get('unknown_location');
+
 
 $raw_birthday = $user_profile['birthday'] ?? '';
 $birthday = '';
@@ -197,12 +206,20 @@ if ($viewUserID > 0) {
 
 
 // 3️⃣ Zeitformat-Funktion
+
 function formatTime($seconds) {
+    global $languageService;
+
     $h = floor($seconds / 3600);
     $m = floor(($seconds % 3600) / 60);
-    return $h . " Stunde" . ($h !== 1 ? "n" : "") . ", " .
-           $m . " Minute" . ($m !== 1 ? "n" : "");
+
+    return $h . " " . $languageService->get('hour') . ($h !== 1 ? $languageService->get('hours_suffix') : "") . ", " .
+           $m . " " . $languageService->get('minute') . ($m !== 1 ? $languageService->get('minutes_suffix') : "");
 }
+
+
+
+
 
 
 if ($is_online): ?>
@@ -210,11 +227,18 @@ if ($is_online): ?>
 let currentSessionSeconds = <?php echo $current_session_seconds; ?>;
 let totalSeconds = <?php echo $sum_seconds; ?>;
 
+const lang = {
+    hour: "<?= $languageService->get('hour') ?>",
+    hours_suffix: "<?= $languageService->get('hours_suffix') ?>",
+    minute: "<?= $languageService->get('minute') ?>",
+    minutes_suffix: "<?= $languageService->get('minutes_suffix') ?>"
+};
+
 function formatTimeJS(sec) {
     let h = Math.floor(sec / 3600);
     let m = Math.floor((sec % 3600) / 60);
-    return h + " Stunde" + (h !== 1 ? "n" : "") + ", " +
-           m + " Minute" + (m !== 1 ? "n" : "");
+    return h + " " + lang.hour + (h !== 1 ? lang.hours_suffix : "") + ", " +
+           m + " " + lang.minute + (m !== 1 ? lang.minutes_suffix : "");
 }
 
 function updateTimers() {
@@ -227,6 +251,7 @@ function updateTimers() {
 setInterval(updateTimers, 1000);
 </script>
 <?php endif; ?>
+
 
 <?php
 
@@ -326,8 +351,8 @@ $level_percent = $total_points % 100;        // 329 % 100 = 29
 //echo "<strong>Fortschritt im Level:</strong> $level_percent %<br>";
 
 if ($isLocked == 1 ) {
-    $isrowLocked='<div class="alert alert-danger d-flex align-items-center" role="alert">
-        <i class="bi bi-lock-fill me-2"></i> Dieses Profil ist gesperrt.
+    $isrowLocked = '<div class="alert alert-danger d-flex align-items-center" role="alert">
+        <i class="bi bi-lock-fill me-2"></i> ' . $languageService->get('this_profile_is_locked') . '
     </div>';
 }
 
@@ -344,28 +369,19 @@ $data_array = [
     'user_surname'    => $lastname,
     'user_location'   => $location,
     'register_date'   => $register_date, 
-    'user_activity'   => '<tr><td>Zuletzt online:</td><td>' . $last_visit . '</td></tr>
-
-
-
-    <tr>
-    <td>Aktuelle Session:</td>
-    <td>' . 
-        ($is_online 
+    'user_activity' => 
+    '<tr><td>' . $languageService->get('last_online') . ':</td><td>' . $last_visit . '</td></tr>
+    <tr><td>' . $languageService->get('current_session') . ':</td><td>' . ($is_online 
             ? '<span id="current-session">' . formatTime($current_session_seconds) . '</span>'
-            : '<span id="current-session">Benutzer ist offline</span>'
+            : '<span id="current-session">' . $languageService->get('user_offline') . '</span>'
         ) . 
-    '</td>
-</tr>
-<tr>
-    <td>Gesamt Onlinezeit:</td>
-    <td><span id="total-online">' . formatTime($sum_seconds) . '</span></td>
-</tr>
+    '</td></tr>
+    <tr>
+        <td>' . $languageService->get('total_online_time') . ':</td>
+        <td><span id="total-online">' . formatTime($sum_seconds) . '</span></td>
+    </tr>
 
-
-
-
-    <tr><td>Logins:</td><td>' . $logins . '</td></tr>',
+    <tr><td>' . $languageService->get('logins') . ':</td><td>' . $logins . '</td></tr>',
     'github_url'      => $github_url,
     'twitter_url'     => $twitter_url,
     'facebook_url'    => $facebook_url,
@@ -404,6 +420,9 @@ $data_array = [
     'lang_about_signature'     => $languageService->get('about_signature'),
     'lang_latest_posts'        => $languageService->get('latest_posts'),
     'lang_latest_activity'     => $languageService->get('latest_activity'),
+    'number'                   => $languageService->get('number'),
+    'activity'                 => $languageService->get('activity'),
+    'typ'                      => $languageService->get('typ'),
 ];
 
 // Ausgabe Template

@@ -61,4 +61,28 @@ $language_array = array(
     'tooltip_twitter' => 'Twitter',
     'tooltip_instagram' => 'Instagram',
     'tooltip_website' => 'Sito web',
+
+    'last_online' => 'Ultimo accesso',
+    'current_session' => 'Sessione attuale',
+    'user_offline' => 'Utente offline',
+    'total_online_time' => 'Tempo totale online',
+    'logins' => 'Accessi',
+
+    'hour' => 'ora',
+    'hours_suffix' => 'e',
+    'minute' => 'minuto',
+    'minutes_suffix' => 'i',
+
+    'User' => 'Utente',
+    'Unknown' => 'Sconosciuto',
+    'Not specified' => 'Non specificato',
+    'No information about me' => 'Nessuna informazione su di me.',
+    'Never visited' => 'Mai visitato',
+    'Unknown location' => 'Luogo sconosciuto',
+
+    'this_profile_is_locked' => 'Questo profilo è bloccato.',
+    'number'   => 'Numero',
+    'activity' => 'Attività',
+    'typ'     => 'Tipo',
+
 );

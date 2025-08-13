@@ -61,5 +61,30 @@ $language_array = array(
     'tooltip_twitter' => 'Twitter',
     'tooltip_instagram' => 'Instagram',
     'tooltip_website' => 'Website',
+
+    'last_online' => 'Last online',
+    'current_session' => 'Current session',
+    'user_offline' => 'User is offline',
+    'total_online_time' => 'Total online time',
+    'logins' => 'Logins',
+
+    'hour' => 'hour',
+    'hours_suffix' => 's',
+    'minute' => 'minute',
+    'minutes_suffix' => 's',
+
+    'user' => 'User',
+    'unknown' => 'Unknown',
+    'not_specified' => 'Not specified',
+    'no_information_about_me' => 'No information about me.',
+    'never_visited' => 'Never visited',
+    'unknown_location' => 'Unknown location',
+    'this_profile_is_locked' => 'This profile is locked.',
+
+    'this_profile_is_locked' => 'This profile is locked.',
+    'number'   => 'Number',
+    'activity' => 'Activity',
+    'typ'     => 'Type',
+    
 );
 

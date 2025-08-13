@@ -121,7 +121,7 @@ $hash = $CAPCLASS->getHash();
         </div>
     </div>
 </div>
-?>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const toggle = document.getElementById('toggle-editor');
