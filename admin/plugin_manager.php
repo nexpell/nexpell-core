@@ -101,7 +101,6 @@ if (isset($_POST['add']) && empty($_POST['id'])) {
     $website_cat_id     = (int)($_POST['nav_website_cat'] ?? 0);
     $admin_title        = escape($_POST['nav_admin_title']);
     $website_title      = escape($_POST['nav_website_title']);
-    $themes_modulname   = "default";
     $admin_file_url     = "admincenter.php?site=" . escape($_POST['admin_file']);
     $index_file_url     = "index.php?site=" . escape($_POST['index']);
 
@@ -133,14 +132,13 @@ if (isset($_POST['add']) && empty($_POST['id'])) {
         // Website-Navigation
         if ($website_title && $index_file_url && $website_cat_id > 0) {
             safe_query("
-                INSERT INTO navigation_website_sub (mnavID, name, modulname, url, sort, indropdown, themes_modulname) VALUES (
+                INSERT INTO navigation_website_sub (mnavID, name, modulname, url, sort, indropdown) VALUES (
                     $website_cat_id,
                     '$website_title',
                     '$modulname',
                     '$index_file_url',
                     1,
-                    1,
-                    '$themes_modulname'
+                    1
                 )
             ");
         }
@@ -250,7 +248,6 @@ if (isset($_POST['edit']) && isset($_POST['id']) && is_numeric($_POST['id'])) {
     $website_cat_id     = (int)($_POST['nav_website_cat'] ?? 0);
     $admin_title        = escape($_POST['nav_admin_title']);
     $website_title      = escape($_POST['nav_website_title']);
-    $themes_modulname   = "default";
     $admin_file_url     = "admincenter.php?site=" . escape($_POST['admin_file']);
     $index_file_url     = "index.php?site=" . escape($_POST['index']);
 
@@ -304,20 +301,18 @@ if (isset($_POST['edit']) && isset($_POST['id']) && is_numeric($_POST['id'])) {
                     UPDATE navigation_website_sub SET
                         mnavID = $website_cat_id,
                         name = '$website_title',
-                        url = '$index_file_url',
-                        themes_modulname = '$themes_modulname'
+                        url = '$index_file_url'
                     WHERE modulname = '$modulname'
                 ");
             } else {
                 safe_query("
-                    INSERT INTO navigation_website_sub (mnavID, name, modulname, url, sort, indropdown, themes_modulname) VALUES (
+                    INSERT INTO navigation_website_sub (mnavID, name, modulname, url, sort, indropdown) VALUES (
                         $website_cat_id,
                         '$website_title',
                         '$modulname',
                         '$index_file_url',
                         1,
-                        1,
-                        '$themes_modulname'
+                        1
                     )
                 ");
             }

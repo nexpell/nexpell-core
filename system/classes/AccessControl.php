@@ -26,21 +26,131 @@ class AccessControl
         return $row['access_count'] > 0;
     }
 
-    public static function checkAdminAccess($modulname)
+    public static function checkAdminAccess($modulname, bool $apiMode = false)
     {
         global $userID, $languageService;
 
+        $logFile = __DIR__ . '/../../admin/logs/access_control.log';
+
+        if (!$userID || !self::hasAdminAccess($modulname)) {
+            http_response_code(403);
+
+            if ($apiMode) {
+                echo json_encode(['error' => 'Zugriff verweigert']);
+                exit;
+            }
+
+            $modulnameDisplay = htmlspecialchars($modulname);
+
+            // Rolle holen
+            $roleName = '';
+            if ($userID) {
+                $query = "
+                    SELECT r.`role_name`
+                    FROM `user_role_admin_navi_rights` ar
+                    JOIN `user_role_assignments` ur ON ar.`roleID` = ur.`roleID`
+                    JOIN `user_roles` r ON ur.`roleID` = r.`roleID`
+                    WHERE ur.`userID` = '" . (int)$userID . "'
+                      AND ar.`modulname` = '" . self::escape($modulname) . "'
+                    LIMIT 1
+                ";
+                $result = safe_query($query);
+                if ($row = mysqli_fetch_assoc($result)) {
+                    $roleName = htmlspecialchars($row['role_name']);
+                }
+            }
+
+            // Linkname aus DB holen
+            $linkName = 'Unbekannter Link';
+            $linkQuery = "
+                SELECT `name`
+                FROM `navigation_dashboard_links`
+                WHERE `modulname` = '" . self::escape($modulname) . "'
+                LIMIT 1
+            ";
+            $linkResult = safe_query($linkQuery);
+            if ($linkRow = mysqli_fetch_assoc($linkResult)) {
+                $linkName = $linkRow['name'];
+            }
+
+            // Sprache ermitteln (z.B. 'de', 'en', 'it')
+            $lang = $languageService->detectLanguage();
+
+            // Nur den Text für die aktuelle Sprache extrahieren
+            $translatedName = self::extractTextByLanguage($linkName, $lang);
+
+            // Fehlermeldung bauen
+            $errorMessage = "<b>Zugriff verweigert:</b> Keine Berechtigung für das Modul '<i>$modulnameDisplay</i>'.<br>";
+            $errorMessage .= "<b>Linkname:</b> " . htmlspecialchars($translatedName) . "<br>";
+            if ($roleName !== '') {
+                $errorMessage .= "<b>Ihre Rolle:</b> $roleName<br>";
+            }
+
+            $logEntry = sprintf(
+                "[%s] Zugriff verweigert: Modul='%s', UserID=%s, Rolle='%s', IP=%s\n",
+                date('Y-m-d H:i:s'),
+                $modulname,
+                $userID ?? 'nicht angemeldet',
+                $roleName ?: 'Keine Rolle',
+                $_SERVER['REMOTE_ADDR'] ?? 'Unbekannt'
+            );
+
+            @file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
+            error_log($logEntry);
+
+            echo "<div class='alert alert-danger' role='alert'>$errorMessage</div>";
+            exit;
+        }
+    }
+
+    // Hilfsfunktion zum Extrahieren des Texts der aktuellen Sprache
+    private static function extractTextByLanguage(string $multiLangString, string $lang): string
+    {
+        preg_match_all('/\[\[lang:(\w{2})\]\](.*?)(?=(\[\[lang:\w{2}\]\])|$)/s', $multiLangString, $matches, PREG_SET_ORDER);
+
+        foreach ($matches as $match) {
+            if ($match[1] === $lang) {
+                return trim($match[2]);
+            }
+        }
+
+        // Fallback: Wenn Sprache nicht gefunden, gesamten String zurückgeben
+        return $multiLangString;
+    }
+
+    // Escape-Funktion, falls noch nicht definiert
+    private static function escape(string $str): string
+    {
+        global $dbConnection; // Falls du eine DB-Verbindung hast
+
+        if (function_exists('mysqli_real_escape_string') && isset($dbConnection)) {
+            return mysqli_real_escape_string($dbConnection, $str);
+        }
+
+        return addslashes($str);
+    }
+
+
+/*    public static function checkAdminAccess($modulname)
+    {
+        global $userID, $languageService;
+
+        // Wenn kein Login vorhanden → Weiterleitung wie bisher
         if (!$userID) {
             header('Location: login.php');
             exit;
         }
 
+        // Berechtigungsprüfung
         if (!self::hasAdminAccess($modulname)) {
+            // HTTP-Status 403 senden
+            http_response_code(403);
+
             $modulnameDisplay = htmlspecialchars($modulname);
             $errorMessage = "<b>Zugriff verweigert:</b> Keine Berechtigung für das Modul '<i>$modulnameDisplay</i>'.<br>";
 
-            // Protokoll für Diagnose
-            error_log("AccessControl Fehler: Modul '$modulnameDisplay' nicht erlaubt für userID $userID");
+            // Protokoll ins PHP-Errorlog
+            error_log("AccessControl Fehler: Modul '$modulnameDisplay' nicht erlaubt für userID $userID | IP: " . $_SERVER['REMOTE_ADDR']);
 
             // Versuche, den Linknamen zu holen
             $linkQuery = "
@@ -67,6 +177,7 @@ class AccessControl
             exit;
         }
     }
+*/
 
 
 /*

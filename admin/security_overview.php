@@ -70,7 +70,7 @@ if ($totalPages > 1) {
     for ($i = 1; $i <= $totalPages; $i++) {
         $activeClass = ($i == $page) ? 'active' : '';
         echo '<li class="page-item ' . $activeClass . '">
-                  <a class="page-link" href="?site=admin_security&regpage=' . $i . '">' . $i . '</a>
+                  <a class="page-link" href="?site=security_overview&regpage=' . $i . '">' . $i . '</a>
               </li>';
     }
     echo '</ul></nav>';
@@ -130,7 +130,7 @@ if ($totalPages > 1) {
     for ($i = 1; $i <= $totalPages; $i++) {
         $activeClass = ($i == $page) ? 'active' : '';
         echo '<li class="page-item ' . $activeClass . '">
-                  <a class="page-link" href="?site=admin_security&userpage=' . $i . '">' . $i . '</a>
+                  <a class="page-link" href="?site=security_overview&userpage=' . $i . '">' . $i . '</a>
               </li>';
     }
     echo '</ul></nav>';
@@ -140,21 +140,24 @@ if ($totalPages > 1) {
 
 // ------------------------------------
 
-if (isset($_POST['session_id'])) {
-    $sessionID = $_POST['session_id'];
+// Mehrfach-Löschung
+if (isset($_POST['delete_selected']) && !empty($_POST['selected_sessions'])) {
+    $ids = array_map('trim', $_POST['selected_sessions']);
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
 
-    $deleteQuery = $_database->prepare("DELETE FROM user_sessions WHERE session_id = ?");
-    $deleteQuery->bind_param('s', $sessionID);
-    $deleteQuery->execute();
+    $stmt = $_database->prepare("DELETE FROM user_sessions WHERE session_id IN ($placeholders)");
+    $stmt->bind_param(str_repeat('s', count($ids)), ...$ids);
+    $stmt->execute();
+    $stmt->close();
 
-    header("Location: /admin/admincenter.php?site=admin_security&deleted=true");
+    header("Location: ?deleted=1");
     exit;
 }
-
 // Erfolgsmeldung (wird nur bei vollem Seitenaufruf angezeigt)
 if (isset($_GET['deleted'])) {
     echo '<div class="alert alert-success">Session wurde erfolgreich gelöscht.</div>';
 }
+
 
 // Pagination-Einstellungen
 $limit = 10; // Maximal 10 Sessions pro Seite
@@ -179,10 +182,12 @@ $getSessions = $_database->query("
 
 
 ?>
+<div class="container py-5">
+    <h4>Aktive Sessions</h4>
 
-
-        <h4>Aktive Sessions</h4>
-        
+    <!-- Formular für Mehrfach-Löschung -->
+    <form method="POST" action="" onsubmit="return confirm('Ausgewählte Sessions wirklich löschen?');">
+        <div id="session-table-container">
             <table class="table table-bordered table-striped bg-white shadow-sm">
                 <thead class="table-light">
                     <tr>
@@ -191,7 +196,9 @@ $getSessions = $_database->query("
                         <th>IP</th>
                         <th>Letzte Aktion</th>
                         <th>Browser</th>
-                        <th>Aktion</th>
+                        <th>
+                            <input type="checkbox" id="select-all">
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -204,52 +211,71 @@ $getSessions = $_database->query("
                     }
                     $sessionTime = date("d.m.Y H:i", $lastActivityTimestamp);
 
-                    echo '<tr>
+                    echo '<tr>                        
                         <td>' . htmlspecialchars($ds['session_id']) . '</td>
                         <td>' . htmlspecialchars($username) . '</td>
                         <td>' . htmlspecialchars($ds['user_ip']) . '</td>
                         <td>' . $sessionTime . '</td>
-                        <td>' . htmlspecialchars(substr($ds['browser'], 0, 40)) . '...</td>
+                        <td>' . htmlspecialchars(substr($ds['browser'], 0, 40)) . '...</td>                        
                         <td>
-                            <form method="POST" action="" onsubmit="return confirm(\'Session wirklich löschen?\');" class="d-inline">
-                                <input type="hidden" name="session_id" value="' . htmlspecialchars($ds['session_id']) . '">
-                                <button type="submit" class="btn btn-danger btn-sm">Löschen</button>
-                            </form>
+                            <input type="checkbox" name="selected_sessions[]" value="' . htmlspecialchars($ds['session_id']) . '">
                         </td>
                     </tr>';
                 }
                 ?>
                 </tbody>
             </table>
-      
+        </div> <!-- session-table-container -->
 
-        <?php if ($totalPages > 1) : ?>
-            <nav>
-                <ul id="pagination-container" class="pagination justify-content-center">
-                    <?php for ($i = 1; $i <= $totalPages; $i++) :
-                        $activeClass = ($i == $page) ? 'active' : '';
-                    ?>
-                        <li class="page-item <?= $activeClass ?>">
-                            <a class="page-link" href="javascript:void(0);" onclick="loadPage(<?= $i ?>)"><?= $i ?></a>
-                        </li>
-                    <?php endfor; ?>
-                </ul>
-            </nav>
-        <?php endif; ?>
-   
+        <!-- Mehrfach-Löschbutton -->
+        <div class="text-end mt-2">
+            <button type="submit" name="delete_selected" class="btn btn-danger">
+                Ausgewählte löschen
+            </button>
+        </div>
+    </form>
+
+    <?php if ($totalPages > 1) : ?>
+        <nav>
+            <ul id="pagination-container" class="pagination justify-content-center">
+                <?php for ($i = 1; $i <= $totalPages; $i++) :
+                    $activeClass = ($i == $page) ? 'active' : '';
+                ?>
+                    <li class="page-item <?= $activeClass ?>">
+                        <a class="page-link" href="javascript:void(0);" onclick="loadPage(<?= $i ?>)"><?= $i ?></a>
+                    </li>
+                <?php endfor; ?>
+            </ul>
+        </nav>
+    <?php endif; ?>
+</div>
+
+<script>
+// "Alle auswählen" Checkbox
+document.getElementById('select-all').addEventListener('click', function() {
+    let checkboxes = document.querySelectorAll('input[name="selected_sessions[]"]');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+});
+</script>
+
+
 
 <script>
 // AJAX-Funktion für das Nachladen der Sessions
 function loadPage(page) {
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', '/admin/admincenter.php?site=admin_security&page=' + page + '&ajax=1', true);
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState == 4 && xhr.status == 200) {
-            // Antwort erwartet nur neuen Tabelleninhalt + Pagination
-            var response = JSON.parse(xhr.responseText);
-
-            document.getElementById('session-table-container').innerHTML = response.table;
-            document.getElementById('pagination-container').innerHTML = response.pagination;
+    xhr.open('GET', '/admin/admincenter.php?site=security_overview&page=' + page + '&ajax=1', true);
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            try {
+                var response = JSON.parse(xhr.responseText);
+                document.getElementById('session-table-container').innerHTML = response.table;
+                document.getElementById('pagination-container').innerHTML = response.pagination;
+            } catch (e) {
+                console.error("JSON-Parsing fehlgeschlagen", e, xhr.responseText);
+            }
+        } else {
+            console.error("Fehler beim Laden", xhr.status);
         }
     };
     xhr.send();
@@ -409,7 +435,7 @@ if ($totalPages > 1) {
     for ($i = 1; $i <= $totalPages; $i++) {
         $activeClass = ($i == $page) ? 'active' : '';
         echo '<li class="page-item ' . $activeClass . '">
-                  <a class="page-link" href="?site=admin_security&failpage=' . $i . '">' . $i . '</a>
+                  <a class="page-link" href="?site=security_overview&failpage=' . $i . '">' . $i . '</a>
               </li>';
     }
     echo '</ul></nav>';
@@ -524,7 +550,7 @@ if ($totalPages > 1) {
     for ($i = 1; $i <= $totalPages; $i++) {
         $activeClass = ($i == $page) ? 'active' : '';
         echo '<li class="page-item ' . $activeClass . '">
-                  <a class="page-link" href="?site=admin_security&banpage=' . $i . '">' . $i . '</a>
+                  <a class="page-link" href="?site=security_overview&banpage=' . $i . '">' . $i . '</a>
               </li>';
     }
     echo '</ul></nav>';

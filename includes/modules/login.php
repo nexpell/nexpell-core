@@ -56,7 +56,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['email'] = $user['email'];
 
+                // Rolle auslesen (Beispiel mit Tabelle user_role_assignments)
+                $stmtRole = $_database->prepare("SELECT roleID FROM user_role_assignments WHERE userID = ? LIMIT 1");
+                $stmtRole->bind_param("i", $user['userID']);
+                $stmtRole->execute();
+                $resultRole = $stmtRole->get_result();
+                if ($resultRole && $rowRole = $resultRole->fetch_assoc()) {
+                    $_SESSION['roleID'] = (int)$rowRole['roleID'];
+                } else {
+                    // Keine Rolle gefunden, evtl. default Rolle setzen oder null
+                    $_SESSION['roleID'] = null;
+                }
+
                 LoginSecurity::saveSession($user['userID']);
+
+                // Login erfolgreich → Login-Zeit und Online-Status aktualisieren
+                $login_time = date('Y-m-d H:i:s');
+$is_online  = 1;
+
+$updateStmt = $_database->prepare("
+    UPDATE users 
+    SET login_time = ?, is_online = ? 
+    WHERE userID = ?
+");
+$updateStmt->bind_param("sii", $login_time, $is_online, $user['userID']);
+$updateStmt->execute();
 
                 $now = date('Y-m-d H:i:s');
                 $updateStmt = $_database->prepare("UPDATE users SET lastlogin = ? WHERE userID = ?");

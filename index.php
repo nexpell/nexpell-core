@@ -38,6 +38,19 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+include_once("system/logSuspiciousAccess.php");
+
+// Prüfe und logge verdächtige Eingaben
+$suspiciousGet = detectSuspiciousInput($_GET);
+if ($suspiciousGet !== null) {
+    logSuspiciousAccess('Verdächtige Eingabe in GET-Parametern', $suspiciousGet);
+}
+
+$suspiciousPost = detectSuspiciousInput($_POST);
+if ($suspiciousPost !== null) {
+    logSuspiciousAccess('Verdächtige Eingabe in POST-Parametern', $suspiciousPost);
+}
+
 // === Sprachsystem vorbereiten ===
 $_SESSION['language'] = $_SESSION['language'] ?? 'de';
 

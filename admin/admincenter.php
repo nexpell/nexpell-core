@@ -27,102 +27,91 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-// Session starten, falls noch nicht gestartet
+
+// Session starten (nur einmal)
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-use nexpell\RoleManager;
+// Absolute Pfade definieren (anpassen falls nötig)
+define('BASE_PATH', __DIR__ . '/../');
+define('SYSTEM_PATH', BASE_PATH . 'system/');
 
-// Überprüfen, ob ein Login-Versuch gemacht wurde
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ws_user'], $_POST['password'])) {
+// Wichtige Systemdateien einbinden
+include SYSTEM_PATH . 'config.inc.php';
+include SYSTEM_PATH . 'settings.php';
+include SYSTEM_PATH . 'functions.php';
+include SYSTEM_PATH . 'plugin.php';
+include SYSTEM_PATH . 'widget.php';
+include SYSTEM_PATH . 'multi_language.php';
+include SYSTEM_PATH . 'classes/Template.php';
+include SYSTEM_PATH . 'classes/TextFormatter.php';
+
+// Namespaces importieren
+use nexpell\RoleManager;
+use nexpell\LanguageService;
+use nexpell\AccessControl;
+
+// Plugin-Manager laden und Sprachmodul für Admincenter initialisieren
+$load = new plugin_manager();
+
+global $languageService;
+$languageService = new LanguageService($_database);
+$languageService->readModule('admincenter', true);
+
+// Sprache in Session setzen (Standard 'de')
+if (!isset($_SESSION['language'])) {
+    $_SESSION['language'] = 'de';
+}
+
+// Login-Verarbeitung
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ws_user'], $_POST['password'])) {
     $ws_user = trim($_POST['ws_user']);
     $password = $_POST['password'];
 
-    // loginCheck-Funktion aufrufen, die den Benutzer validiert
+    // loginCheck() muss in einer der includes definiert sein
     $result = loginCheck($ws_user, $password);
 
-    if ($result->state == "success") {
-        // Erfolgreiches Login, setze die Session und leite weiter
-        $_SESSION['userID'] = $result->userID; // Setze die Benutzer-ID (falls nötig)
-        $_SESSION['username'] = $result->username; // Setze den Benutzernamen
-        $_SESSION['email'] = $result->email; // Setze die E-Mail (falls nötig)
+    if ($result->state === "success") {
+        $_SESSION['userID']   = $result->userID;
+        $_SESSION['username'] = $result->username;
+        $_SESSION['email']    = $result->email;
 
-        // Weiterleitung zur entsprechenden Seite
-        $redirect_url = isset($_SESSION['login_redirect']) ? $_SESSION['login_redirect'] : '/admin/admincenter.php'; // Standard zu admincenter.php
-        unset($_SESSION['login_redirect']); // Lösche den Referrer, um Endlosschleifen zu vermeiden
+        // Redirect nur zu internen Pfaden erlauben (Vermeidung von Open Redirects)
+        $redirect_url = $_SESSION['login_redirect'] ?? '/admin/admincenter.php';
+        unset($_SESSION['login_redirect']);
+        if (!preg_match('#^/admin/#', $redirect_url)) {
+            $redirect_url = '/admin/admincenter.php';
+        }
+
         header("Location: " . $redirect_url);
         exit;
     } else {
-        // Fehlermeldung anzeigen, wenn Login fehlgeschlagen ist
-        echo "<div class='alert alert-warning'>" . $result->message . "</div>";
+        // Fehlermeldung sicher ausgeben (Escaping)
+        echo "<div class='alert alert-warning'>" . htmlspecialchars($result->message) . "</div>";
     }
 }
 
-// Fehlernachricht anzeigen, falls aus admincheck.php weitergeleitet wurde
+// Fehlerhinweis, falls von admincheck.php weitergeleitet wurde
 if (isset($_GET['error']) && $_GET['error'] === 'login_required') {
     echo "<div class='alert alert-warning'>Bitte melde dich zuerst an.</div>";
 }
 
-// Einbindung wichtiger Systemdateien
-chdir('../');
-include('system/config.inc.php');
-include('system/settings.php');
-include('system/functions.php');
-include('system/plugin.php');
-include('system/widget.php');
-include('system/multi_language.php');
-include('system/classes/Template.php');
-include('system/classes/TextFormatter.php');
-chdir('admin');
-
-
-// Plugin-Manager laden und Sprachmodul für Admincenter einbinden
-$load = new plugin_manager();
-
-use nexpell\LanguageService;
-use nexpell\AccessControl;
-// Session absichern
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Standard setzen, wenn nicht vorhanden
-$_SESSION['language'] = $_SESSION['language'] ?? 'de';
-
-// Initialisieren
-global $languageService;
-$languageService = new LanguageService($_database);
-
-// Admin-Modul laden
-$languageService->readModule('admincenter', true);
-#$languageService->readModule('admincenter'); 
-
-// Site-Parameter festlegen, falls vorhanden
-$site = isset($_GET['site']) ? $_GET['site'] : (isset($site) ? $site : null);
-
-// Cookie für Adminrechte prüfen
-$cookievalueadmin = 'false';
-if (isset($_COOKIE['ws_cookie'])) {
-    $cookievalueadmin = 'accepted';
-}
-
-// Überprüfen, ob der Benutzer eine gültige Rolle hat und eingeloggt ist
+// Admin-Zugriffsprüfung: Nutzer muss eingeloggt und Rolle zugewiesen sein
 if (!isset($_SESSION['userID']) || !checkUserRoleAssignment($_SESSION['userID'])) {
-    // Fehlerseite anzeigen, wenn der Benutzer keine Rolle zugewiesen hat oder nicht eingeloggt ist
-    echo '
+    ?>
     <div style="
         background-color: #e74c3c;
         color: white;
         padding: 20px;
         border-radius: 8px;
         font-family: Arial, sans-serif;
-        max-width: 600px;
+        max-width: 800px;
         margin: 50px auto;
         text-align: center;
         box-shadow: 0 0 10px rgba(0,0,0,0.2);
     ">
-        <img src="images/rm.png" alt="Logo" style="
+        <img src="images/logo.png" alt="Logo" style="
             width: 400px;
             height: auto;
             margin-bottom: 20px;
@@ -133,108 +122,108 @@ if (!isset($_SESSION['userID']) || !checkUserRoleAssignment($_SESSION['userID'])
         <p>Bitte wenden Sie sich an einen Administrator, um Ihre Zugriffsrechte zu prüfen.</p>
         <p style="margin-top: 20px;">Sie werden in <strong>10 Sekunden</strong> automatisch zur Login-Seite weitergeleitet...</p>
     </div>
-
     <script>
         setTimeout(function() {
             window.location.href = "login.php";
         }, 10000);
     </script>
-    ';
+    <?php
     exit;
 }
 
-$userID = $_SESSION['userID'];
-
+// $_SERVER['REQUEST_URI'] absichern (normalerweise vorhanden)
 if (!isset($_SERVER['REQUEST_URI'])) {
-	$arr = explode('/', $_SERVER['PHP_SELF']);
-	$_SERVER['REQUEST_URI'] = '/' . $arr[count($arr) - 1];
-	if ($_SERVER['argv'][0] != '') {
-		$_SERVER['REQUEST_URI'] .= '?' . $_SERVER['argv'][0];
-	}
-}
-
-function getplugincatID($catname)
-{
-    // Bereite die SQL-Anfrage vor, um SQL-Injection zu verhindern
-    $stmt = $_database->prepare("SELECT * FROM `navigation_dashboard_categories` WHERE name LIKE ?");
-    $searchTerm = '%' . $catname . '%';
-    $stmt->bind_param('s', $searchTerm);  // 's' für String
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    // Prüfen, ob eine Kategorie gefunden wurde
-    if ($ds = $result->fetch_assoc()) {
-        // Kategorie gefunden, nun Links überprüfen
-        $stmt2 = $_database->prepare("SELECT * FROM `navigation_dashboard_links` WHERE catID = ?");
-        $stmt2->bind_param('i', $ds['catID']);  // 'i' für Integer
-        $stmt2->execute();
-        $result2 = $stmt2->get_result();
-
-        // Wenn Links vorhanden sind, zurückgeben, dass Links existieren
-        if ($result2->num_rows >= 1) {
-            return true;
-        } else {
-            return false; // Keine Links in der Kategorie
-        }
-    } else {
-        // Keine Kategorie mit diesem Namen gefunden
-        return false;
+    $arr = explode('/', $_SERVER['PHP_SELF']);
+    $_SERVER['REQUEST_URI'] = '/' . end($arr);
+    if (!empty($_SERVER['argv'][0])) {
+        $_SERVER['REQUEST_URI'] .= '?' . $_SERVER['argv'][0];
     }
 }
 
+// Jetzt kannst du mit $userID, $languageService, etc. weiterarbeiten
+$userID = $_SESSION['userID'];
 
+
+#echo '<pre>';
+#var_dump($_SESSION);
+#echo '</pre>';
+
+#var_dump($_SESSION['roleID']);
 
 function dashnavi() {
-    global $userID,$languageService;
-
+    global $_database; // mysqli-Objekt
     $links = '';
     $current_query = $_GET['site'] ?? '';
     $lang = $_SESSION['language'] ?? 'de';
-    $translate = new multiLanguage($lang);
+    $roleID = (int)($_SESSION['roleID'] ?? 0);
+    if (!$roleID) {
+        return '<li>Keine Rolle gefunden, Zugriff verweigert.</li>';
+    }
 
-    $categories = safe_query("SELECT * FROM navigation_dashboard_categories ORDER BY sort");
+    $categoriesResult = $_database->query("SELECT * FROM navigation_dashboard_categories ORDER BY sort");
+    if (!$categoriesResult) {
+        return '<li>Fehler beim Laden der Kategorien.</li>';
+    }
 
-    while ($cat = mysqli_fetch_array($categories)) {
+    while ($cat = $categoriesResult->fetch_assoc()) {
         $catID = (int)$cat['catID'];
-        
+
+        // Rechtecheck Kategorie
+        $sqlCatRight = "SELECT 1 FROM user_role_admin_navi_rights 
+                WHERE roleID = $roleID AND type = 'category' 
+                AND modulname = '" . $cat['modulname'] . "' 
+                LIMIT 1";
+        $catRightResult = $_database->query($sqlCatRight);
+        if (!$catRightResult || $catRightResult->num_rows === 0) {
+            continue; // keine Rechte für diese Kategorie
+        }
+
         $translateCat = new multiLanguage($lang);
         $translateCat->detectLanguages($cat['name']);
         $catName = $translateCat->getTextByLanguage($cat['name']);
-
         $fa_name = $cat['fa_name'];
 
-        $catLinks = safe_query("SELECT * FROM navigation_dashboard_links WHERE catID='" . $catID . "' ORDER BY sort");
+        $linksResult = $_database->query("SELECT * FROM navigation_dashboard_links WHERE catID = $catID ORDER BY sort");
+        if (!$linksResult) {
+            continue;
+        }
 
         $cat_active = false;
         $cat_links_html = '';
 
-        while ($link = mysqli_fetch_array($catLinks)) {
-            $modulname = $link['modulname'];
-            $url = $link['url'];
+        while ($link = $linksResult->fetch_assoc()) {
+            $linkID = (int)$link['linkID'];
 
-            // MultiLanguage-Instanz für den Kategorienamen erstellen und Sprach-Tags erkennen
-            $translateCat = new multiLanguage($lang);
-            $translateCat->detectLanguages($link['name']);
-            $linkName = $translateCat->getTextByLanguage($link['name']);
-
-            if (AccessControl::hasAdminAccess($modulname)) {
-                $url_parts = parse_url($url);
-                parse_str($url_parts['query'] ?? '', $url_query);
-
-                $is_active = ($url_query['site'] ?? '') === $current_query;
-                if ($is_active) {
-                    $cat_active = true;
-                }
-
-                $active_class = $is_active ? 'active' : '';
-                $icon_class = $is_active ? 'bi bi-arrow-right' : 'bi bi-plus-lg';
-
-                $cat_links_html .= '<li class="' . $active_class . '">'
-                    . '<a href="' . $url . '">'
-                    . '<i class="' . $icon_class . ' ac-link"></i> ' 
-                    . $linkName 
-                    . '</a></li>';
+            // Rechtecheck Link
+            $sqlLinkRight = "SELECT 1 FROM user_role_admin_navi_rights
+                 WHERE roleID = $roleID AND type = 'link' 
+                 AND modulname = '" . $link['modulname'] . "' 
+                 LIMIT 1";
+            $linkRightResult = $_database->query($sqlLinkRight);
+            if (!$linkRightResult || $linkRightResult->num_rows === 0) {
+                continue; // keine Rechte für diesen Link
             }
+
+            $translateLink = new multiLanguage($lang);
+            $translateLink->detectLanguages($link['name']);
+            $linkName = $translateLink->getTextByLanguage($link['name']);
+
+            $url = $link['url'];
+            $url_parts = parse_url($url);
+            parse_str($url_parts['query'] ?? '', $url_query);
+            $is_active = ($url_query['site'] ?? '') === $current_query;
+            if ($is_active) {
+                $cat_active = true;
+            }
+
+            $active_class = $is_active ? 'active' : '';
+            $icon_class = $is_active ? 'bi bi-arrow-right' : 'bi bi-plus-lg';
+
+            $cat_links_html .= '<li class="' . $active_class . '">'
+                . '<a href="' . htmlspecialchars($url) . '">'
+                . '<i class="' . $icon_class . ' ac-link"></i> '
+                . htmlspecialchars($linkName)
+                . '</a></li>';
         }
 
         if (!empty($cat_links_html)) {
@@ -242,19 +231,26 @@ function dashnavi() {
             $aria_expanded = $cat_active ? 'true' : 'false';
             $show_class = $cat_active ? 'style="display:block;"' : '';
 
-            $links .= '<li class="' . $expand_class . '">
-                <a class="has-arrow" aria-expanded="' . $aria_expanded . '" href="#">
-                    <i class="' . $fa_name . '" style="font-size: 1rem;"></i> ' . $catName . '
-                </a>
-                <ul class="nav nav-third-level" ' . $show_class . '>
-                    ' . $cat_links_html . '
-                </ul>
-            </li>';
+            $links .= '<li class="' . $expand_class . '">'
+                . '<a class="has-arrow" aria-expanded="' . $aria_expanded . '" href="#">'
+                . '<i class="' . htmlspecialchars($fa_name) . '" style="font-size: 1rem;"></i> ' . htmlspecialchars($catName)
+                . '</a><ul class="nav nav-third-level" ' . $show_class . '>'
+                . $cat_links_html
+                . '</ul></li>';
         }
     }
 
     return $links ?: '<li>Keine zugriffsberechtigten Links gefunden.</li>';
 }
+
+
+
+
+
+
+
+
+
 
 
 

@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Fehler vorhanden? Dann Rückgabe
     if (!empty($errors)) {
         $_SESSION['error_message'] = implode("<br>", $errors);
-        header("Location: " . convertToSeoUrl('index.php?site=register'));
+        header("Location: " . SeoUrlHandler::convertToSeoUrl('index.php?site=register'));
         exit;
     }
 

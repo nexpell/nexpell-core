@@ -65,15 +65,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $stmt->get_result()->fetch_assoc();
 
         if ($user) {
-            if ((int)$user['is_locked'] === 1) {
-                $message = 'Dein Konto wurde gesperrt. Bitte kontaktiere den Support.';
+            if (!empty($user['is_locked']) && (int)$user['is_locked'] === 1) {
+                $message = '<div class="alert alert-danger" role="alert">' . $languageService->get('error_account_locked') . '</div>';
                 $isIpBanned = true;
             } else {
                 $_SESSION['userID'] = (int)$user['userID'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['email'] = $user['email'];
 
+                // Rolle auslesen (Beispiel mit Tabelle user_role_assignments)
+                $stmtRole = $_database->prepare("SELECT roleID FROM user_role_assignments WHERE userID = ? LIMIT 1");
+                $stmtRole->bind_param("i", $user['userID']);
+                $stmtRole->execute();
+                $resultRole = $stmtRole->get_result();
+                if ($resultRole && $rowRole = $resultRole->fetch_assoc()) {
+                    $_SESSION['roleID'] = (int)$rowRole['roleID'];
+                } else {
+                    // Keine Rolle gefunden, evtl. default Rolle setzen oder null
+                    $_SESSION['roleID'] = null;
+                }
+
                 LoginSecurity::saveSession($user['userID']);
+
+                $now = date('Y-m-d H:i:s');
+                $updateStmt = $_database->prepare("UPDATE users SET lastlogin = ? WHERE userID = ?");
+                $updateStmt->bind_param("si", $now, $user['userID']);
+                $updateStmt->execute();
 
                 $_SESSION['success_message'] = "Login erfolgreich!";
                 header("Location: admincenter.php");

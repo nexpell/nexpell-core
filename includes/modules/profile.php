@@ -67,17 +67,19 @@ $sql = "
         u.username,
         u.registerdate,
         u.lastlogin,
-        r.role_name
+        GROUP_CONCAT(r.role_name ORDER BY r.role_name SEPARATOR ', ') AS roles
     FROM users u
     LEFT JOIN user_role_assignments ura ON u.userID = ura.userID
     LEFT JOIN user_roles r ON ura.roleID = r.roleID
     WHERE u.userID = $userID
+    GROUP BY u.userID
     LIMIT 1
 ";
+
 $result = $_database->query($sql);
 if ($result && $row = $result->fetch_assoc()) {
     $username = htmlspecialchars($row['username']);
-    $role_name = !empty($row['role_name']) ? htmlspecialchars($row['role_name']) : 'Benutzer';
+    $role_name = !empty($row['roles']) ? htmlspecialchars($row['roles']) : 'Benutzer';
     $register_date_raw = $row['registerdate'];
     $last_visit_raw = $row['lastlogin'];
 } else {
@@ -143,11 +145,93 @@ $edit_button = $is_own_profile
 
 $isLocked = isset($user_users['is_locked']) && (int)$user_users['is_locked'] === 1;
 
-$last_activity = (!empty($last_visit_raw) && strtotime($last_visit_raw) !== false) ? strtotime($last_visit_raw) : 0;
-$current_time = time();
-$online_time = ($last_activity > 0 && $last_activity <= $current_time)
-    ? floor(($current_time - $last_activity) / 3600) . " Stunden, " . floor((($current_time - $last_activity) % 3600) / 60) . " Minuten"
-    : "Keine Aktivität";
+#$last_activity = (!empty($last_visit_raw) && strtotime($last_visit_raw) !== false) ? strtotime($last_visit_raw) : 0;
+#$current_time = time();
+#$online_time = ($last_activity > 0 && $last_activity <= $current_time)
+#    ? floor(($current_time - $last_activity) / 3600) . " Stunden, " . floor((($current_time - $last_activity) % 3600) / 60) . " Minuten"
+#    : "Keine Aktivität";
+
+//////////////////////
+
+$current_session_seconds = 0;
+$sum_seconds = 0;
+$is_online = false;
+
+// 1️⃣ Profil-User bestimmen: erst GET, dann SESSION
+// 1️⃣ Profil-User bestimmen
+if (!empty($_GET['userID'])) {
+    $viewUserID = (int)$_GET['userID']; // Fremdes Profil
+} elseif (!empty($_GET['id'])) {
+    $viewUserID = (int)$_GET['id']; // Alternative GET-ID
+} elseif (!empty($_SESSION['userID'])) {
+    $viewUserID = (int)$_SESSION['userID']; // Eigenes Profil
+} else {
+    $viewUserID = 0; // Kein Benutzer
+}
+
+// 2️⃣ Nur abfragen, wenn ID > 0
+if ($viewUserID > 0) {
+    $sql = "SELECT login_time, total_online_seconds FROM users WHERE userID = ?";
+    $stmt = $_database->prepare($sql);
+    $stmt->bind_param("i", $viewUserID);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+    $stmt->close();
+
+    if ($user) {
+        $total_online_seconds = (int)$user['total_online_seconds'];
+        $login_time = $user['login_time'];
+        $login_timestamp = $login_time ? strtotime($login_time) : 0;
+
+        $is_online = ($login_timestamp > 0);
+        $current_session_seconds = $is_online ? (time() - $login_timestamp) : 0;
+
+        $sum_seconds = $total_online_seconds + $current_session_seconds;
+    }
+} else {
+    $sum_seconds = 0;
+    $current_session_seconds = 0;
+    $is_online = false;
+}
+
+
+// 3️⃣ Zeitformat-Funktion
+function formatTime($seconds) {
+    $h = floor($seconds / 3600);
+    $m = floor(($seconds % 3600) / 60);
+    return $h . " Stunde" . ($h !== 1 ? "n" : "") . ", " .
+           $m . " Minute" . ($m !== 1 ? "n" : "");
+}
+
+
+if ($is_online): ?>
+<script>
+let currentSessionSeconds = <?php echo $current_session_seconds; ?>;
+let totalSeconds = <?php echo $sum_seconds; ?>;
+
+function formatTimeJS(sec) {
+    let h = Math.floor(sec / 3600);
+    let m = Math.floor((sec % 3600) / 60);
+    return h + " Stunde" + (h !== 1 ? "n" : "") + ", " +
+           m + " Minute" + (m !== 1 ? "n" : "");
+}
+
+function updateTimers() {
+    currentSessionSeconds++;
+    totalSeconds++;
+    document.getElementById("current-session").innerText = formatTimeJS(currentSessionSeconds);
+    document.getElementById("total-online").innerText = formatTimeJS(totalSeconds);
+}
+
+setInterval(updateTimers, 1000);
+</script>
+<?php endif; ?>
+
+<?php
+
+
+//////////////////////////
 
 // 1. Logins aus user_sessions zählen (wird immer gemacht)
 $stmt = $_database->prepare("SELECT COUNT(*) AS login_count FROM user_sessions WHERE userID = ?");
@@ -260,7 +344,28 @@ $data_array = [
     'user_surname'    => $lastname,
     'user_location'   => $location,
     'register_date'   => $register_date, 
-    'user_activity'   => '<tr><td>Zuletzt online:</td><td>' . $last_visit . '</td></tr><tr><td>Online-Zeit:</td><td>' . $online_time . '</td></tr><tr><td>Logins:</td><td>' . $logins . '</td></tr>',
+    'user_activity'   => '<tr><td>Zuletzt online:</td><td>' . $last_visit . '</td></tr>
+
+
+
+    <tr>
+    <td>Aktuelle Session:</td>
+    <td>' . 
+        ($is_online 
+            ? '<span id="current-session">' . formatTime($current_session_seconds) . '</span>'
+            : '<span id="current-session">Benutzer ist offline</span>'
+        ) . 
+    '</td>
+</tr>
+<tr>
+    <td>Gesamt Onlinezeit:</td>
+    <td><span id="total-online">' . formatTime($sum_seconds) . '</span></td>
+</tr>
+
+
+
+
+    <tr><td>Logins:</td><td>' . $logins . '</td></tr>',
     'github_url'      => $github_url,
     'twitter_url'     => $twitter_url,
     'facebook_url'    => $facebook_url,

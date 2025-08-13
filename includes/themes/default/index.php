@@ -96,17 +96,17 @@ header('X-UA-Compatible: IE=edge');
     <meta name="keywords" content="<?= htmlspecialchars($keywords, ENT_QUOTES, 'UTF-8'); ?>">
     <meta name="robots" content="index, follow">
     <meta name="language" content="<?= htmlspecialchars($currentLang, ENT_QUOTES, 'UTF-8'); ?>">
-    <meta name="abstract" content="Anpasser an Webspell-RM">
+    <meta name="abstract" content="Anpasser an nexpell">
 
     <!-- Meta Copyright -->
-    <meta name="author" content="webspell-rm.de">
-    <meta name="copyright" content="Copyright © 2018-2025 by webspell-rm.de">
-    <meta name="publisher" content="webspell-rm.de">
+    <meta name="author" content="nexpell.de">
+    <meta name="copyright" content="Copyright © 2018-2025 by nexpell.de">
+    <meta name="publisher" content="nexpell.de">
     <meta name="distribution" content="global">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="<?= htmlspecialchars(get_sitetitle(), ENT_QUOTES, 'UTF-8'); ?>">
-    <meta property="og:description" content="<?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8'); ?>">
+    <meta property="og:title" content="<?= htmlspecialchars($meta['title']) ?>">
+    <meta property="og:description" content="<?= htmlspecialchars($meta['description']); ?>">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://<?= htmlspecialchars($_SERVER['HTTP_HOST'], ENT_QUOTES, 'UTF-8'); ?>">
     <meta property="og:image" content="https://<?= htmlspecialchars($_SERVER['HTTP_HOST'], ENT_QUOTES, 'UTF-8'); ?>/includes/themes/<?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/images/og-image.jpg">

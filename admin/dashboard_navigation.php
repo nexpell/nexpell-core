@@ -880,7 +880,7 @@ while ($ds = mysqli_fetch_array($ergebnis)) {
     );
 
     if ($ds[ 'sort_art' ] == 1) {
-        $sort = '<b>' . $ds[ 'sort' ] . '</b>';
+        $sort = '<b>' . $ds[ 'sort_art' ] . '</b>';
         $catactions = '';
         @$name = htmlspecialchars($ds[ 'name' ]);
     } else {
