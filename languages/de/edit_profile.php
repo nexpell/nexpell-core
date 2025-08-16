@@ -23,6 +23,7 @@ $language_array = array(
     'label_birthday' => 'Geburtstag',
     'label_gender' => 'Geschlecht',
     'select_gender' => '-- Bitte wählen --',
+    'title' => 'Profil bearbeiten',
     'gender_male' => 'Männlich',
     'gender_female' => 'Weiblich',
     'gender_other' => 'Divers',

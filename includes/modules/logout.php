@@ -7,15 +7,12 @@ if (session_status() === PHP_SESSION_NONE) {
 
 global $_database;
 
-// Cache verhindern
-header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
-
-// --- 1. Onlinezeit speichern ---
 if (!empty($_SESSION['userID'])) {
-    $userID = $_SESSION['userID'];
+    $userID = (int)$_SESSION['userID'];
 
-    $sql = "SELECT login_time, total_online_seconds, is_online FROM users WHERE userID = ?";
+    // Aktuelle Userdaten laden
+    $sql = "SELECT login_time, total_online_seconds, is_online 
+            FROM users WHERE userID = ?";
     $stmt = $_database->prepare($sql);
     $stmt->bind_param("i", $userID);
     $stmt->execute();
@@ -25,11 +22,14 @@ if (!empty($_SESSION['userID'])) {
 
     if ($user && $user['is_online'] && !empty($user['login_time'])) {
         $current_session_seconds = time() - strtotime($user['login_time']);
+        if ($current_session_seconds < 0) {
+            $current_session_seconds = 0; // falls Serverzeit mal spinnt
+        }
         $new_total = $user['total_online_seconds'] + $current_session_seconds;
 
-        // Onlinezeit in DB speichern
+        // Onlinezeit speichern und User abmelden
         $sql = "UPDATE users 
-                SET total_online_seconds = ?, login_time = NULL, is_online = 0 
+                SET total_online_seconds = ?, login_time = NULL, is_online = 0, last_activity = NULL
                 WHERE userID = ?";
         $stmt = $_database->prepare($sql);
         $stmt->bind_param("ii", $new_total, $userID);
@@ -38,7 +38,7 @@ if (!empty($_SESSION['userID'])) {
     }
 }
 
-// --- 2. Session + Cookies löschen ---
+// --- Session + Cookies löschen ---
 $_SESSION = [];
 if (ini_get("session.use_cookies")) {
     $params = session_get_cookie_params();
@@ -47,20 +47,12 @@ if (ini_get("session.use_cookies")) {
 session_destroy();
 
 if (class_exists(LoginCookie::class)) {
-    LoginCookie::clear('ws_auth'); // Name anpassen
+    LoginCookie::clear('ws_auth');
 }
 
 setcookie('ws_session', '', time() - 3600, '/');
 setcookie('ws_cookie', '', time() - 3600, '/');
 
-// --- 3. Weiterleiten ---
+// --- Redirect ---
 header("Location: /");
 exit;
-
-// --- Hilfsfunktion (optional für Anzeige vor Logout) ---
-function formatTime($seconds) {
-    $h = floor($seconds / 3600);
-    $m = floor(($seconds % 3600) / 60);
-    return $h . " Stunde" . ($h !== 1 ? "n" : "") . ", " .
-           $m . " Minute" . ($m !== 1 ? "n" : "");
-}

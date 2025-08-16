@@ -48,3 +48,11 @@ $data_array = array_merge([
 
 // ausgeben
 echo $tpl->loadTemplate("footer_easy", "content", $data_array, 'plugin');
+?>
+<script>
+setInterval(function() {
+    fetch('/system/heartbeat.php')
+        .then(res => console.log("Heartbeat OK", res.status))
+        .catch(err => console.error("Heartbeat error:", err));
+}, 60000); // alle 60 Sekunden
+</script>

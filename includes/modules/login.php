@@ -52,9 +52,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = '<div class="alert alert-danger" role="alert">' . $languageService->get('error_account_locked') . '</div>';
                 $isIpBanned = true;
             } else {
-                $_SESSION['userID'] = (int)$user['userID'];
+                // Session setzen
+                $_SESSION['userID']   = (int)$user['userID'];
                 $_SESSION['username'] = $user['username'];
-                $_SESSION['email'] = $user['email'];
+                $_SESSION['email']    = $user['email'];
 
                 // Rolle auslesen (Beispiel mit Tabelle user_role_assignments)
                 $stmtRole = $_database->prepare("SELECT roleID FROM user_role_assignments WHERE userID = ? LIMIT 1");
@@ -64,36 +65,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($resultRole && $rowRole = $resultRole->fetch_assoc()) {
                     $_SESSION['roleID'] = (int)$rowRole['roleID'];
                 } else {
-                    // Keine Rolle gefunden, evtl. default Rolle setzen oder null
-                    $_SESSION['roleID'] = null;
+                    $_SESSION['roleID'] = null; // oder Default-Rolle
                 }
+                $stmtRole->close();
 
+                // Session absichern
                 LoginSecurity::saveSession($user['userID']);
 
-                // Login erfolgreich → Login-Zeit und Online-Status aktualisieren
+                // --- Login erfolgreich → Zeitstempel setzen ---
                 $login_time = date('Y-m-d H:i:s');
-$is_online  = 1;
+                $is_online  = 1;
 
-$updateStmt = $_database->prepare("
-    UPDATE users 
-    SET login_time = ?, is_online = ? 
-    WHERE userID = ?
-");
-$updateStmt->bind_param("sii", $login_time, $is_online, $user['userID']);
-$updateStmt->execute();
-
-                $now = date('Y-m-d H:i:s');
-                $updateStmt = $_database->prepare("UPDATE users SET lastlogin = ? WHERE userID = ?");
-                $updateStmt->bind_param("si", $now, $user['userID']);
+                $updateStmt = $_database->prepare("
+                    UPDATE users 
+                    SET login_time = ?, is_online = ?, last_activity = ?
+                    WHERE userID = ?
+                ");
+                $updateStmt->bind_param("sisi", $login_time, $is_online, $login_time, $user['userID']);
                 $updateStmt->execute();
+                $updateStmt->close();
 
+                // Erfolgsmeldung
                 $_SESSION['success_message'] = $languageService->get('success_login');
+
+                // Weiterleitung
                 header("Location: /");
                 exit;
             }
         } else {
             $message = '<div class="alert alert-danger" role="alert">' . $languageService->get('error_not_found') . '</div>';
         }
+
     } else {
         $userID = null;
         $stmt = $_database->prepare("SELECT userID, is_active FROM users WHERE email = ?");
