@@ -16,119 +16,233 @@ $languageService->readModule('info', true);
 // Angemeldeter Benutzer
 $userID = (int)$_SESSION['userID'];
 
-// Benutzerdaten laden
-$statement = $_database->prepare("SELECT username, lastlogin FROM users WHERE userID = ?");
-$statement->bind_param('i', $userID);
-$statement->execute();
-$statement->bind_result($username, $lastlogin);
-$statement->fetch();
-$statement->close();
 
-$lastlogin_formatted = (new DateTime($lastlogin))->format('d.m.Y \u\m H:i \U\h\r');
-
-// Dashboard-Mockdaten
-$nexpell_version = '1.0.3';
-$update_available = true;
-
-
-
-
-
-
-
-
-
-$latest_system_messages = [
-    ['type' => 'warning', 'message' => 'Speicherplatz knapp!'],
-    ['type' => 'info', 'message' => 'Backup erfolgreich abgeschlossen.']
+// Beispiel-Dummy-Daten (ersetzte das mit echten Abfragen)
+$adminName = $_SESSION['username'] ?? 'Admin';
+$activeUsers = 124;
+$pendingTickets = 3;
+$unpublishedPosts = 5;
+$lastBackups = 'vor 2 Tagen';
+$latestUsers = [
+    ['name'=>'Anna', 'when'=>'10 Min', 'role'=>'Editor'],
+    ['name'=>'Max', 'when'=>'1 Std', 'role'=>'Admin'],
+    ['name'=>'Lena', 'when'=>'3 Std', 'role'=>'Gast'],
 ];
-$visitor_today = 123;
-$visitor_last7days = 890;
-$new_registrations = 5;
-$active_users = 12;
-$latest_comments = [
-    ['user' => 'Anna', 'comment' => 'Tolles Update!', 'date' => '2025-07-04'],
-    ['user' => 'Markus', 'comment' => 'Bug im Forum gemeldet', 'date' => '2025-07-03']
+$recentLogs = [
+    '2025-08-01 12:12 - Login: userID=1 ip=1.2.3.4',
+    '2025-08-01 11:55 - Backup completed',
+    '2025-08-01 10:30 - Plugin updated: seo-tool',
 ];
-$latest_forum_posts = [
-    ['title' => 'Neue Features', 'author' => 'Chris', 'date' => '2025-07-02'],
-    ['title' => 'Feedback zur Beta', 'author' => 'Laura', 'date' => '2025-07-01']
-];
-$open_support_tickets = 3;
-
-// News per API laden
-$news_updates = [];
-$json = @file_get_contents('https://nexpell.de/admin/api_news.php');
-if ($json) {
-    $news_updates = json_decode($json, true) ?? [];
-} else {
-    $news_updates = [];
-}
+$updateAvailable = true;
+$updateText = 'v2.1.0 verfügbar – Sicherheitsupdate';
 ?>
 
-<div class="card mb-4 shadow-sm rounded-3">
-  <div class="card-header d-flex align-items-center">
-    <i class="bi bi-speedometer me-2"></i>
-    <?php echo $languageService->get('title'); ?>
+
+  <style>
+    /* Kleine UI-Tweaks */
+    .card-shortcuts .btn { min-width: 140px; }
+    .metric { font-size: 1.5rem; font-weight: 600; }
+    .small-muted { color: #6c757d; font-size: .9rem; }
+    .fixed-col { min-width: 160px; }
+    .activity-pre { max-height: 220px; overflow:auto; background:#f8f9fa; padding:10px; border-radius:.375rem; }
+  </style>
+
+
+<div class="container-fluid p-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-0">Hallo, <?= htmlspecialchars($adminName) ?> 👋</h1>
+      <div class="small-muted">Übersicht & Schnellzugriffe</div>
+    </div>
+    <div class="text-end">
+      <?php if ($updateAvailable): ?>
+        <a href="/admin/updates.php" class="btn btn-warning btn-sm">
+          <i class="bi bi-arrow-up-circle"></i> Update: <?= htmlspecialchars($updateText) ?>
+        </a>
+      <?php else: ?>
+        <span class="badge bg-success">System aktuell</span>
+      <?php endif; ?>
+    </div>
   </div>
-  <div class="card-body">
-  <div class="container mt-4">  
-    <!-- Welcome Card -->
-    <div class="card shadow-sm mb-4 border-0">
-      <div class="card-body d-flex flex-column flex-md-row align-items-center gap-3">
-        <img src="/admin/images/logo.png" alt="Logo" class="img-fluid" style="height:60px;">
-        <div>
-          <h5 class="mb-1"><?php echo $languageService->get('welcome'); ?></h5>
-          <p class="mb-0 small text-muted">
-            <?php echo $languageService->get('hello'); ?> <strong><?php echo $username; ?></strong>,
-            <?php echo $languageService->get('last_login'); ?> <?php echo $lastlogin_formatted; ?>.
-          </p>
-          <p class="mb-0 mt-1">
-            <?php echo $languageService->get('welcome_message'); ?>
-          </p>
+
+  <!-- Top metrics -->
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="small-muted">Aktive Nutzer</div>
+          <div class="metric"><?= number_format($activeUsers) ?></div>
+          <div class="small-muted mt-2">in den letzten 24 Std.</div>
         </div>
       </div>
     </div>
 
-    <!-- Quick Stats -->
-    <div class="row g-3 mb-4">
-      <div class="col-6 col-md-3">
-        <div class="card text-center shadow-sm border-0">
-          <div class="card-body">
-            <i class="bi bi-people-fill fs-2 text-primary mb-2"></i>
-            <h6>Besucher heute</h6>
-            <h3 class="fw-bold"><?php echo $visitor_today; ?></h3>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="card text-center shadow-sm border-0">
-          <div class="card-body">
-            <i class="bi bi-calendar3 fs-2 text-success mb-2"></i>
-            <h6>Besucher letzte 7 Tage</h6>
-            <h3 class="fw-bold"><?php echo $visitor_last7days; ?></h3>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="card text-center shadow-sm border-0">
-          <div class="card-body">
-            <i class="bi bi-person-plus-fill fs-2 text-info mb-2"></i>
-            <h6>Neue Registrierungen</h6>
-            <h3 class="fw-bold"><?php echo $new_registrations; ?></h3>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="card text-center shadow-sm border-0">
-          <div class="card-body">
-            <i class="bi bi-person-check-fill fs-2 text-warning mb-2"></i>
-            <h6>Aktive Nutzer</h6>
-            <h3 class="fw-bold"><?php echo $active_users; ?></h3>
-          </div>
+    <div class="col-6 col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="small-muted">Offene Tickets</div>
+          <div class="metric text-danger"><?= (int)$pendingTickets ?></div>
+          <a href="/admin/tickets.php" class="small-muted">Zum Ticket-System</a>
         </div>
       </div>
     </div>
+
+    <div class="col-6 col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="small-muted">Unveröffentlichte Beiträge</div>
+          <div class="metric"><?= (int)$unpublishedPosts ?></div>
+          <a href="/admin/posts.php?filter=draft" class="small-muted">Beiträge verwalten</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="small-muted">Letztes Backup</div>
+          <div class="metric"><?= htmlspecialchars($lastBackups) ?></div>
+          <a href="/admin/backups.php" class="small-muted">Backup-Verwaltung</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Left column: shortcuts + activity -->
+    <div class="col-lg-7">
+      <div class="row g-3">
+        <!-- Shortcuts -->
+        <div class="col-12">
+          <div class="card card-shortcuts shadow-sm">
+            <div class="card-body d-flex align-items-center justify-content-between flex-wrap">
+              <div>
+                <h5 class="card-title mb-1">Schnellzugriffe</h5>
+                <div class="small-muted mb-2">Aktionen, die Admins häufig nutzen</div>
+                <div class="d-flex gap-2 flex-wrap">
+                  <a href="/admin/posts_new.php" class="btn btn-primary btn-sm"><i class="bi bi-pencil"></i> Neuer Beitrag</a>
+                  <a href="/admin/users.php" class="btn btn-outline-secondary btn-sm"><i class="bi bi-people"></i> Benutzer</a>
+                  <a href="/admin/plugins.php" class="btn btn-outline-secondary btn-sm"><i class="bi bi-plug"></i> Plugins</a>
+                  <a href="/admin/settings.php" class="btn btn-outline-secondary btn-sm"><i class="bi bi-gear"></i> Einstellungen</a>
+                  <a href="/admin/media.php" class="btn btn-outline-secondary btn-sm"><i class="bi bi-image"></i> Medien</a>
+                </div>
+              </div>
+              <div class="text-end small-muted">
+                <div>Letzte Anmeldung: <?= date('d.m.Y H:i') ?></div>
+                <div class="mt-2"><a href="/admin/profile.php" class="link-primary">Profil & Sicherheit</a></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent activity / logs -->
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title">Kürzliche System-Aktivitäten</h5>
+              <div class="small-muted mb-2">Wichtige Log-Einträge & Aktionen</div>
+              <div class="row">
+                <div class="col-md-7">
+                  <ul class="list-group list-group-flush">
+                    <?php foreach ($recentLogs as $log): ?>
+                      <li class="list-group-item small-muted"><?= htmlspecialchars($log) ?></li>
+                    <?php endforeach; ?>
+                  </ul>
+                </div>
+                <div class="col-md-5">
+                  <div class="small-muted mb-1">Schnellaktionen</div>
+                  <div class="d-grid gap-2">
+                    <a href="/admin/maintenance.php" class="btn btn-outline-primary btn-sm">Wartungsmodus</a>
+                    <a href="/admin/backups.php" class="btn btn-outline-success btn-sm">Backup jetzt starten</a>
+                    <a href="/admin/security.php" class="btn btn-outline-danger btn-sm">Sicherheits-Scan</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right column: users + stats -->
+    <div class="col-lg-5">
+      <div class="row g-3">
+        <!-- Latest users -->
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title">Neueste Benutzer</h5>
+              <div class="small-muted mb-2">Letzte Registrierungen / Anmeldungen</div>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Name</th>
+                      <th class="text-end">Rolle</th>
+                      <th class="text-end">Vor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php foreach ($latestUsers as $u): ?>
+                      <tr>
+                        <td><?= htmlspecialchars($u['name']) ?></td>
+                        <td class="text-end"><span class="badge bg-secondary"><?= htmlspecialchars($u['role']) ?></span></td>
+                        <td class="text-end small-muted"><?= htmlspecialchars($u['when']) ?></td>
+                      </tr>
+                    <?php endforeach; ?>
+                  </tbody>
+                </table>
+              </div>
+              <div class="mt-2 text-end"><a href="/admin/users.php" class="link-primary">Alle Benutzer</a></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mini stats / health -->
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title">System-Health</h5>
+              <div class="small-muted mb-2">Schnellüberblick</div>
+
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="small-muted">CPU Load</div>
+                <div class="small-muted">35%</div>
+              </div>
+              <div class="progress mb-3" style="height:10px"><div class="progress-bar" style="width:35%"></div></div>
+
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="small-muted">DB Größe</div>
+                <div class="small-muted">1.2 GB</div>
+              </div>
+              <div class="progress mb-1" style="height:10px"><div class="progress-bar bg-info" style="width:24%"></div></div>
+
+              <div class="mt-3 small-muted">Letzte Backups: <?= htmlspecialchars($lastBackups) ?></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer quick links -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div class="small-muted">Schnellhilfe: <a href="/docs" class="link-primary">Dokumentation</a> · <a href="/forum" class="link-primary">Forum</a> · <a href="https://discord.gg/..." target="_blank" class="link-primary">Discord</a></div>
+          <div class="small-muted">Version: <strong>2.0.0</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+
 
     <!-- News -->
     <h4 class="mb-3">Neuigkeiten vom nexpell-Team</h4>

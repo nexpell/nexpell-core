@@ -22,31 +22,16 @@ if ($_database->connect_error) {
 $timeout_minutes = 5;
 $now = date('Y-m-d H:i:s');
 
-// === 1. Eigene Aktivität aktualisieren ===
+// === 1. Eigene Aktivität nur aktualisieren ===
 if (!empty($_SESSION['userID'])) {
     $userID = (int)$_SESSION['userID'];
 
     $stmt = $_database->prepare("
-        SELECT last_activity, total_online_seconds
-        FROM users
-        WHERE userID = ?
-    ");
-    $stmt->bind_param("i", $userID);
-    $stmt->execute();
-    $stmt->bind_result($lastActivityDb, $totalOnline);
-    $stmt->fetch();
-    $stmt->close();
-
-    $lastActivityTime = strtotime($lastActivityDb) ?: time();
-    $diffSeconds = max(0, time() - $lastActivityTime);
-    $totalOnline += $diffSeconds;
-
-    $stmt = $_database->prepare("
         UPDATE users
-        SET last_activity = ?, is_online = 1, total_online_seconds = ?
+        SET last_activity = ?, is_online = 1
         WHERE userID = ?
     ");
-    $stmt->bind_param("sii", $now, $totalOnline, $userID);
+    $stmt->bind_param("si", $now, $userID);
     $stmt->execute();
     $stmt->close();
 }

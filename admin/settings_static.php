@@ -64,7 +64,7 @@ if (isset($_POST['save'])) {
             // Navigationsmenü aktualisieren
             safe_query("
                 DELETE FROM navigation_website_sub
-                WHERE url = 'index.php?site=static&amp;staticID=$staticID'
+                WHERE url = 'index.php?site=static&staticID=$staticID'
             ");
 
             safe_query("
@@ -74,7 +74,7 @@ if (isset($_POST['save'])) {
                     '$categoryID',
                     '$title',
                     'static',
-                    'index.php?site=static&amp;staticID=$staticID',
+                    'index.php?site=static&staticID=$staticID',
                     1,
                     1,
                      NOW()

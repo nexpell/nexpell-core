@@ -78,10 +78,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $updateStmt = $_database->prepare("
                     UPDATE users 
-                    SET login_time = ?, is_online = ?, last_activity = ?
+                    SET 
+                        lastlogin = ?,       -- Datum des letzten Logins
+                        login_time = ?,      -- Start der aktuellen Session
+                        last_activity = ?,   -- erste Aktivität = Loginzeit
+                        is_online = ?        -- User ist eingeloggt
                     WHERE userID = ?
                 ");
-                $updateStmt->bind_param("sisi", $login_time, $is_online, $login_time, $user['userID']);
+                $updateStmt->bind_param("sssii", $login_time, $login_time, $login_time, $is_online, $user['userID']);
                 $updateStmt->execute();
                 $updateStmt->close();
 

@@ -171,10 +171,12 @@ if ($loggedin) {
     htmlspecialchars(SeoUrlHandler::convertToSeoUrl($urlString)) . 
     '">&nbsp;' . $languageService->module['to_profil'] . '</a></li>';
 
-$logoutUrl = 'index.php?' . http_build_query(['site' => 'logout']);
-$logout = '<li><a class="dropdown-item" href="' . 
-    htmlspecialchars(SeoUrlHandler::convertToSeoUrl($logoutUrl)) . 
-    '">&nbsp;' . $languageService->module['log_off'] . '</a></li>';
+    $logoutUrl = 'index.php?' . http_build_query(['site' => 'logout']);
+    $logout = '<li>
+        <a class="dropdown-item" href="' . 
+            htmlspecialchars(SeoUrlHandler::convertToSeoUrl($logoutUrl)) . 
+            '">&nbsp;' . $languageService->module['log_off'] . '</a>
+    </li>';
 
 
 $data_array = [

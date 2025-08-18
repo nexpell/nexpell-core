@@ -50,9 +50,28 @@ $data_array = array_merge([
 echo $tpl->loadTemplate("footer_easy", "content", $data_array, 'plugin');
 ?>
 <script>
+// Heartbeat alle 60 Sekunden (hält User online solange Tab offen)
 setInterval(function() {
     fetch('/system/heartbeat.php')
         .then(res => console.log("Heartbeat OK", res.status))
         .catch(err => console.error("Heartbeat error:", err));
-}, 60000); // alle 60 Sekunden
+}, 60000);
+
+// Sofort-Logout beim Schließen des Tabs/Fensters
+let isLoggingOut = false;
+
+// Logout-Link markieren
+document.querySelector('#logoutLink').addEventListener('click', function() {
+    isLoggingOut = true;
+});
+
+// Nur bei echtem Tab-/Fenster-Schließen logout senden
+window.addEventListener("beforeunload", function () {
+    if (!isLoggingOut) {
+        navigator.sendBeacon(
+            "/includes/modules/logout.php",
+            new Blob([], { type: "application/x-www-form-urlencoded" })
+        );
+    }
+});
 </script>

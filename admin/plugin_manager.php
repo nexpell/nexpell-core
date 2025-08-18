@@ -116,6 +116,14 @@ if (isset($_POST['add']) && empty($_POST['id'])) {
             )
         ");
 
+        safe_query("
+            INSERT INTO `settings_plugins_installed` 
+                (`name`, `modulname`, `description`, `version`, `author`, `url`, `folder`, `installed_date`)
+            VALUES
+                ('$name', '$modulname', '$info', '$version', '$author', '$website', '$modulname', NOW())
+        ");
+
+
         // Admin-Navigation
         if ($admin_title && $admin_file_url && $admin_cat_id > 0) {
             safe_query("
@@ -269,6 +277,20 @@ if (isset($_POST['edit']) && isset($_POST['id']) && is_numeric($_POST['id'])) {
             WHERE pluginID = $pluginID
         ");
 
+        safe_query("
+            UPDATE `settings_plugins_installed`
+            SET
+                `name` = '$name',
+                `modulname` = '$modulname',
+                `description` = '$info',
+                `version` = '$version',
+                `author` = '$author',
+                `url` = '$website',
+                `folder` = '$modulname'
+            WHERE modulname = '$modulname'"
+        );
+
+
         // Admin-Navigation
         $adminNavExists = mysqli_num_rows(safe_query("SELECT * FROM navigation_dashboard_links WHERE modulname = '$modulname'"));
         if ($admin_title && $admin_cat_id > 0) {
@@ -358,6 +380,8 @@ if (isset($_POST['edit']) && isset($_POST['id']) && is_numeric($_POST['id'])) {
             safe_query("DELETE FROM `navigation_dashboard_links` WHERE `modulname` = '" . $plugin_name . "'");
             safe_query("DELETE FROM `navigation_website_sub` WHERE `modulname` = '" . $plugin_name . "'");
             safe_query("DELETE FROM `user_role_admin_navi_rights` WHERE `modulname` = '" . $plugin_name . "'");
+
+            safe_query("DELETE FROM `settings_plugins_installed` WHERE `modulname` = '" . $plugin_name . "'");
 
             // 4) Redirect
             flush();

@@ -43,7 +43,8 @@ $language_array = array(
     'trial-member' => 'Trial-Mitglied',
     'war-organisator' => 'War-Organisator',
 
-    'changes_successful' => 'Änderungen erfolgreich'
+    'changes_successful' => 'Änderungen erfolgreich',
+    'edit' => 'ändern'
 );
 
 
