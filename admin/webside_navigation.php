@@ -638,7 +638,7 @@ echo'</div>
     $ergebnis = safe_query("SELECT * FROM navigation_website_main ORDER BY sort");
     $tmp = mysqli_fetch_assoc(safe_query("SELECT count(mnavID) as cnt FROM navigation_website_main"));
     $anz = $tmp[ 'cnt' ];
-$CAPCLASS = new \nexpell\Captcha;
+    $CAPCLASS = new \nexpell\Captcha;
     $CAPCLASS->createTransaction();
     $hash = $CAPCLASS->getHash();
     while ($ds = mysqli_fetch_array($ergebnis)) {
@@ -751,20 +751,23 @@ $CAPCLASS = new \nexpell\Captcha;
 <a href="admincenter.php?site=webside_navigation&amp;action=edit&amp;snavID=' . $db[ 'snavID' ] .'" class="btn btn-warning btn-sm">' . $languageService->get('edit') . '</a>
 
 <!-- Button trigger modal -->
-    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirm-delete" data-href="admincenter.php?site=webside_navigation&amp;delete=true&amp;snavID=' . $db[ 'snavID' ] . '&amp;captcha_hash=' . $hash . '">
-    ' . $languageService->get('delete') . '
-    </button>
-    <!-- Button trigger modal END-->
+<button type="button" class="btn btn-danger btn-sm" 
+        data-bs-toggle="modal" 
+        data-bs-target="#confirm-delete-link" 
+        data-href="admincenter.php?site=webside_navigation&delete=true&snavID=' . $db['snavID'] . '&captcha_hash=' . $hash . '">
+  ' . $languageService->get('delete') . '
+</button>
 
-     <!-- Modal -->
-<div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+<!-- Modal -->
+<div class="modal fade" id="confirm-delete-link" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">' . $languageService->get('dashnavi') . '</h5>
+        <h5 class="modal-title">' . $languageService->get('dashnavi') . '</h5>
         <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
       </div>
-      <div class="modal-body"><p>' . $languageService->get('really_delete_link') . '</p>
+      <div class="modal-body">
+        <p>' . $languageService->get('really_delete_link') . '</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">' . $languageService->get('close') . '</button>
@@ -773,7 +776,6 @@ $CAPCLASS = new \nexpell\Captcha;
     </div>
   </div>
 </div>
-<!-- Modal END -->
                     </td>
                     <td class="' . $td . '">' . $linklist . '</td>
                 </tr>';
@@ -803,6 +805,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const button = event.relatedTarget;
         const href = button.getAttribute('data-href');
         const confirmBtn = confirmModal.querySelector('.btn-ok');
+        confirmBtn.setAttribute('href', href);
+    });
+});
+document.addEventListener('DOMContentLoaded', function () {
+    var confirmModal = document.getElementById('confirm-delete-link');
+    confirmModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var href = button.getAttribute('data-href');
+        var confirmBtn = confirmModal.querySelector('.btn-ok');
         confirmBtn.setAttribute('href', href);
     });
 });

@@ -58,22 +58,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 /* =========================
    Funktionen laden Logs
 ========================= */
-function loadLogLines(string $file, string $search, int $page, int $linesPerPage): array {
+function loadLogLines(string $file, string $search, int $page, int $entriesPerPage): array {
     if (!file_exists($file)) return ['lines' => [], 'total' => 0, 'pages' => 1, 'page' => 1];
-    $logLines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    if ($logLines === false) return ['lines' => [], 'total' => 0, 'pages' => 1, 'page' => 1];
-    if ($search !== '') $logLines = array_filter($logLines, fn($line) => stripos($line, $search) !== false);
-    $logLines = array_reverse($logLines);
 
-    $totalLines = count($logLines);
-    $totalPages = max(1, (int)ceil($totalLines / $linesPerPage));
+    $content = file_get_contents($file);
+    if ($content === false) return ['lines' => [], 'total' => 0, 'pages' => 1, 'page' => 1];
+
+    // Einträge anhand der Trennlinie splitten
+    $entries = preg_split('/[-]{40,}/', $content);
+    $entries = array_map('trim', $entries);
+    $entries = array_filter($entries); // leere entfernen
+
+    // Filter nach Suchbegriff
+    if ($search !== '') {
+        $entries = array_values(array_filter($entries, fn($entry) => stripos($entry, $search) !== false));
+    }
+
+    // Neueste Einträge zuerst
+    $entries = array_reverse($entries);
+
+    $totalEntries = count($entries);
+    $totalPages = max(1, (int)ceil($totalEntries / $entriesPerPage));
     $page = min($page, $totalPages);
 
-    $start = ($page - 1) * $linesPerPage;
-    $displayLines = array_slice($logLines, $start, $linesPerPage);
+    $start = ($page - 1) * $entriesPerPage;
+    $displayEntries = array_slice($entries, $start, $entriesPerPage);
 
-    return ['lines' => $displayLines, 'total' => $totalLines, 'pages' => $totalPages, 'page' => $page];
+    // Trennlinie wieder an jeden Eintrag anhängen
+    $displayEntries = array_map(fn($entry) => $entry . "\n----------------------------------------", $displayEntries);
+
+    return ['lines' => $displayEntries, 'total' => $totalEntries, 'pages' => $totalPages, 'page' => $page];
 }
+
+
+
 
 function loadBlockedIPs(string $file, string $search, int $page, int $linesPerPage): array {
     if (!file_exists($file)) return ['lines' => [], 'total' => 0, 'pages' => 1, 'page' => 1];
@@ -125,11 +143,24 @@ unset($item);
   .container { margin-bottom: 3rem; }
 </style>
 
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-paragraph"></i> Log Viewer
+    </div>
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb t-5 p-2 bg-light">
+            <li class="breadcrumb-item active" aria-current="page">Log Viewer - Übersicht</li>
+        </ol>
+    </nav>  
+
+    <div class="card-body">
+
 <!-- =========================
    Access Control Log
 ========================= -->
 <div class="container">
-    <h2>Admin Log Viewer: Access Control Log</h2>
+    <h5>Access Control Log</h5>
 
     <form method="get" class="mb-3 row g-2">
         <div class="col-auto">
@@ -158,7 +189,7 @@ unset($item);
    Suspicious Log
 ========================= -->
 <div class="container">
-    <h2>Admin Log Viewer: Suspicious Access Log</h2>
+    <h5>Suspicious Access Log</h5>
 
     <form method="get" class="mb-3 row g-2">
         <div class="col-auto">
@@ -187,7 +218,7 @@ unset($item);
    Blocked IPs
 ========================= -->
 <div class="container">
-    <h2>Gesperrte IPs</h2>
+    <h5>Gesperrte IPs</h5>
 
     <!-- Formular: Neue IP sperren -->
     <form method="post" class="mb-3 row g-2">
@@ -267,3 +298,6 @@ unset($item);
         </ul>
     </nav>
 </div>
+
+
+</div></div>

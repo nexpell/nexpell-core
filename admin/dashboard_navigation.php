@@ -55,21 +55,32 @@ if (isset($_GET['delete'])) {
         die();
     }
 
-    // Link und Rechte löschen
+    // Modulname des Links holen
+    $stmt = $_database->prepare("SELECT modulname FROM navigation_dashboard_links WHERE linkID = ?");
+    $stmt->bind_param("i", $linkID);
+    $stmt->execute();
+    $stmt->bind_result($modulname);
+    $stmt->fetch();
+    $stmt->close();
+
+    // Link löschen
     $stmt = $_database->prepare("DELETE FROM navigation_dashboard_links WHERE linkID = ?");
     $stmt->bind_param("i", $linkID);
     $stmt->execute();
     $stmt->close();
 
-    $stmt = $_database->prepare("DELETE FROM user_role_admin_navi_rights WHERE accessID = ?");
-    $stmt->bind_param("i", $linkID);
-    $stmt->execute();
-    $stmt->close();
+    // Rechte für den Modulname löschen, falls vorhanden
+    if (!empty($modulname)) {
+        $stmt = $_database->prepare("DELETE FROM user_role_admin_navi_rights WHERE modulname = ?");
+        $stmt->bind_param("s", $modulname);
+        $stmt->execute();
+        $stmt->close();
+    }
 
-    echo '<div class="alert alert-success" role="alert">Link erfolgreich gelöscht!</div>';
+    echo '<div class="alert alert-success" role="alert">Link erfolgreich gelöscht und Rechte entfernt!</div>';
     redirect("admincenter.php?site=dashboard_navigation", "", 3);
 
-} elseif (isset($_GET['delcat'])) {
+}elseif (isset($_GET['delcat'])) {
     // Validierung der catID
     $catID = isset($_GET['catID']) ? (int) $_GET['catID'] : 0;
     if ($catID <= 0) {
@@ -78,10 +89,28 @@ if (isset($_GET['delete'])) {
         die();
     }
 
-    // Links der Kategorie zuordnen (catID=0)
-    $stmt = $_database->prepare("UPDATE navigation_dashboard_links SET catID = ? WHERE catID = ?");
-    $newCatID = 0;
-    $stmt->bind_param("ii", $newCatID, $catID);
+    // Zuerst die Kategorie-Modulname holen
+    $stmt = $_database->prepare("SELECT modulname FROM navigation_dashboard_categories WHERE catID = ?");
+    $stmt->bind_param("i", $catID);
+    $stmt->execute();
+    $stmt->bind_result($catModulname);
+    $stmt->fetch();
+    $stmt->close();
+
+    // Alle Links dieser Kategorie holen (inkl. deren Modulname)
+    $links = [];
+    $stmt = $_database->prepare("SELECT linkID, modulname FROM navigation_dashboard_links WHERE catID = ?");
+    $stmt->bind_param("i", $catID);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $links[] = $row;
+    }
+    $stmt->close();
+
+    // Links löschen
+    $stmt = $_database->prepare("DELETE FROM navigation_dashboard_links WHERE catID = ?");
+    $stmt->bind_param("i", $catID);
     $stmt->execute();
     $stmt->close();
 
@@ -91,13 +120,28 @@ if (isset($_GET['delete'])) {
     $stmt->execute();
     $stmt->close();
 
-    // Rechte für die Kategorie löschen
-    $stmt = $_database->prepare("DELETE FROM user_role_admin_navi_rights WHERE accessID = ?");
-    $stmt->bind_param("i", $catID);
-    $stmt->execute();
-    $stmt->close();
+    // Alle Modulnamen aus der Kategorie und Links sammeln
+    $modulnamesToDelete = [];
+    if (!empty($catModulname)) {
+        $modulnamesToDelete[] = $catModulname;
+    }
+    foreach ($links as $link) {
+        if (!empty($link['modulname'])) {
+            $modulnamesToDelete[] = $link['modulname'];
+        }
+    }
 
-    echo '<div class="alert alert-success" role="alert">Kategorie erfolgreich gelöscht!</div>';
+    // Rechte für alle Modulnamen löschen
+    if (!empty($modulnamesToDelete)) {
+        $in  = str_repeat('?,', count($modulnamesToDelete) - 1) . '?';
+        $types = str_repeat('s', count($modulnamesToDelete));
+        $stmt = $_database->prepare("DELETE FROM user_role_admin_navi_rights WHERE modulname IN ($in)");
+        $stmt->bind_param($types, ...$modulnamesToDelete);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    echo '<div class="alert alert-success" role="alert">Kategorie und zugehörige Links erfolgreich gelöscht, Rechte entfernt!</div>';
     redirect("admincenter.php?site=dashboard_navigation", "", 3);
 }
 
@@ -108,17 +152,25 @@ if (isset($_POST['saveedit'])) {
     // Captcha prüfen
     if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
 
-        // Eingaben holen und validieren
-        $catID      = (int)$_POST['catID'];
-        $linkID     = (int)$_POST['linkID'];
-        $nameArray  = $_POST['name'] ?? [];
-        $url        = mysqli_real_escape_string($_database, $_POST['url'] ?? '');
-        $modulname  = mysqli_real_escape_string($_database, $_POST['modulname'] ?? '');
+        // Eingaben holen & absichern
+        $catID     = (int)($_POST['catID'] ?? 0);
+        $linkID    = (int)($_POST['linkID'] ?? 0);
+        $nameArray = $_POST['name'] ?? [];
+        $url       = mysqli_real_escape_string($_database, $_POST['url'] ?? '');
+        $modulname = mysqli_real_escape_string($_database, $_POST['modulname'] ?? '');
+
+        // Pflichtprüfung
+        if (empty($nameArray['de']) || empty($url)) {
+            echo '<div class="alert alert-warning" role="alert">
+                    Bitte mindestens einen Linknamen und eine URL angeben.
+                  </div>';
+            return;
+        }
 
         // Mehrsprachigen Text zusammenbauen
         $name = '';
         foreach (['de', 'en', 'it'] as $lang) {
-            $text = $nameArray[$lang] ?? '';
+            $text = trim($nameArray[$lang] ?? '');
             $name .= "[[lang:$lang]]" . $text;
         }
 
@@ -131,48 +183,58 @@ if (isset($_POST['saveedit'])) {
             $stmt->bind_param("isssi", $catID, $name, $url, $modulname, $linkID);
 
             if ($stmt->execute()) {
+                $stmt->close();
+
                 // Zugriffsrechte für Admin-Rolle (roleID = 1) setzen
-                $roleID = 1;
-                $type = 'link';
+                if (!empty($modulname)) {
+                    $roleID = 1;
+                    $type   = 'link';
 
-                $access_query = "
-                    INSERT INTO user_role_admin_navi_rights (roleID, type, modulname)
-                    VALUES (?, ?, ?)
-                    ON DUPLICATE KEY UPDATE modulname = VALUES(modulname)
-                ";
+                    $access_query = "
+                        INSERT INTO user_role_admin_navi_rights (roleID, type, modulname)
+                        VALUES (?, ?, ?)
+                        ON DUPLICATE KEY UPDATE modulname = VALUES(modulname)
+                    ";
 
-                if ($stmt_access = $_database->prepare($access_query)) {
-                    $stmt_access->bind_param("iss", $roleID, $type, $modulname);
-                    if ($stmt_access->execute()) {
-                        echo '<div class="alert alert-success" role="alert">Link und Zugriffsrechte erfolgreich aktualisiert!</div>';
+                    if ($stmt_access = $_database->prepare($access_query)) {
+                        $stmt_access->bind_param("iss", $roleID, $type, $modulname);
+
+                        if ($stmt_access->execute()) {
+                            echo '<div class="alert alert-success" role="alert">
+                                    Link und Zugriffsrechte erfolgreich aktualisiert!
+                                  </div>';
+                        } else {
+                            echo '<div class="alert alert-danger" role="alert">
+                                    Fehler beim Aktualisieren der Zugriffsrechte: ' . $stmt_access->error . '
+                                  </div>';
+                        }
+                        $stmt_access->close();
                     } else {
-                        echo '<div class="alert alert-danger" role="alert">Fehler beim Aktualisieren der Zugriffsrechte: ' . $stmt_access->error . '</div>';
+                        echo '<div class="alert alert-danger" role="alert">
+                                Fehler beim Vorbereiten der Rechte-Abfrage: ' . $_database->error . '
+                              </div>';
                     }
-                    $stmt_access->close();
-                } else {
-                    echo '<div class="alert alert-danger" role="alert">Fehler beim Vorbereiten der Rechte-Abfrage: ' . $_database->error . '</div>';
                 }
 
                 redirect("admincenter.php?site=dashboard_navigation", "", 3);
 
             } else {
-                echo '<div class="alert alert-warning" role="alert">Fehler beim Speichern des Links oder keine Änderungen vorgenommen.</div>';
+                echo '<div class="alert alert-warning" role="alert">
+                        Fehler beim Speichern des Links oder keine Änderungen vorgenommen.
+                      </div>';
                 redirect("admincenter.php?site=dashboard_navigation", "", 3);
             }
 
-            $stmt->close();
-
         } else {
-            echo '<div class="alert alert-danger" role="alert">Fehler bei der SQL-Vorbereitung: ' . $_database->error . '</div>';
+            echo '<div class="alert alert-danger" role="alert">
+                    Fehler bei der SQL-Vorbereitung: ' . $_database->error . '
+                  </div>';
         }
 
     } else {
         echo '<div class="alert alert-danger" role="alert">Fehler: Ungültiges Captcha.</div>';
     }
 }
-
-
-
 
 if (isset($_POST['save'])) {
 
@@ -184,17 +246,41 @@ if (isset($_POST['save'])) {
         // Eingabewerte holen & absichern
         $nameArray  = $_POST['name'] ?? [];
         $url        = mysqli_real_escape_string($_database, $_POST['url'] ?? '');
-        $modulname  = mysqli_real_escape_string($_database, $_POST['modulname'] ?? '');
-        $catID      = (int)$_POST['catID'];
+        $modulname  = trim(mysqli_real_escape_string($_database, $_POST['modulname'] ?? ''));
+        $catID      = (int)($_POST['catID'] ?? 0);
 
         // Mehrsprachigen Namen zusammenbauen
         $name = '';
         foreach (['de', 'en', 'it'] as $lang) {
-            $text = $nameArray[$lang] ?? '';
+            $text = trim($nameArray[$lang] ?? '');
             $name .= "[[lang:$lang]]" . $text;
         }
 
-        // Standard-Sortierung
+        // Pflichtprüfung
+        if (empty($nameArray['de']) || empty($url)) {
+            echo '<div class="alert alert-warning" role="alert">
+                    Bitte mindestens einen Linknamen und eine URL angeben.
+                  </div>';
+            return;
+        }
+
+        // Modulname prüfen (nur wenn angegeben)
+        if (!empty($modulname)) {
+            $stmt_check = $_database->prepare("SELECT COUNT(*) FROM navigation_dashboard_links WHERE modulname = ?");
+            $stmt_check->bind_param("s", $modulname);
+            $stmt_check->execute();
+            $stmt_check->bind_result($count);
+            $stmt_check->fetch();
+            $stmt_check->close();
+
+            if ($count > 0) {
+                echo '<div class="alert alert-warning" role="alert">
+                        Dieser Modulname wird bereits verwendet. Bitte wähle einen anderen.
+                      </div>';
+                return;
+            }
+        }
+
         $sort = 1;
 
         // Insert vorbereiten
@@ -202,44 +288,65 @@ if (isset($_POST['save'])) {
             INSERT INTO navigation_dashboard_links (catID, name, url, modulname, sort)
             VALUES (?, ?, ?, ?, ?)
         ");
-        $stmt->bind_param("isssi", $catID, $name, $url, $modulname, $sort);
 
-        if ($stmt->execute()) {
-            $linkID = mysqli_insert_id($_database);  // zuletzt eingefügter Link
+        if ($stmt) {
+            $stmt->bind_param("isssi", $catID, $name, $url, $modulname, $sort);
 
-            // Rechte für Admin-Rolle setzen
-            $roleID = 1;
-            $type   = 'link';
+            if ($stmt->execute()) {
+                $stmt->close();
 
-            $access_query = "
-                INSERT INTO user_role_admin_navi_rights (roleID, type, modulname, accessID)
-                VALUES (?, ?, ?, ?)
-            ";
+                // Admin-Rechte setzen
+                if (!empty($modulname)) {
+                    $roleID = 1;
+                    $type   = 'link';
 
-            $stmt_access = $_database->prepare($access_query);
-            $stmt_access->bind_param("isss", $roleID, $type, $modulname, $linkID);
+                    $access_query = "
+                        INSERT INTO user_role_admin_navi_rights (roleID, type, modulname)
+                        VALUES (?, ?, ?)
+                    ";
 
-            if ($stmt_access->execute()) {
-                echo '<div class="alert alert-success" role="alert">Link erfolgreich hinzugefügt und Rechte gesetzt.</div>';
+                    if ($stmt_access = $_database->prepare($access_query)) {
+                        $stmt_access->bind_param("iss", $roleID, $type, $modulname);
+
+                        if ($stmt_access->execute()) {
+                            echo '<div class="alert alert-success" role="alert">
+                                    Link erfolgreich hinzugefügt und Rechte gesetzt!
+                                  </div>';
+                        } else {
+                            echo '<div class="alert alert-danger" role="alert">
+                                    Fehler beim Setzen der Rechte: ' . $stmt_access->error . '
+                                  </div>';
+                        }
+                        $stmt_access->close();
+                    } else {
+                        echo '<div class="alert alert-danger" role="alert">
+                                Fehler bei der Rechte-Abfrage: ' . $_database->error . '
+                              </div>';
+                    }
+                }
+
+                redirect("admincenter.php?site=dashboard_navigation", "", 3);
+
             } else {
-                echo '<div class="alert alert-danger" role="alert">Fehler beim Setzen der Rechte: ' . $stmt_access->error . '</div>';
+                echo '<div class="alert alert-danger" role="alert">
+                        Fehler beim Einfügen des Links: ' . $stmt->error . '
+                      </div>';
+                $stmt->close();
             }
 
-            $stmt_access->close();
-            redirect("admincenter.php?site=dashboard_navigation", "", 3);
         } else {
-            echo '<div class="alert alert-danger" role="alert">Fehler beim Einfügen des Links: ' . $stmt->error . '</div>';
+            echo '<div class="alert alert-danger" role="alert">
+                    Fehler bei der SQL-Vorbereitung: ' . $_database->error . '
+                  </div>';
         }
 
-        $stmt->close();
-
     } else {
-        echo '<div class="alert alert-danger" role="alert">Fehler: Ungültiges Captcha.</div>';
+        echo '<div class="alert alert-danger" role="alert">
+                Fehler: Ungültiges Captcha.
+              </div>';
     }
 }
 
-
-###################
 
 if (isset($_POST['saveaddcat'])) {
     $CAPCLASS = new \nexpell\Captcha;
@@ -250,13 +357,15 @@ if (isset($_POST['saveaddcat'])) {
         // Eingabewerte holen und escapen
         $fa_name    = trim($_POST['fa_name'] ?? '');
         $nameArray  = $_POST['name'] ?? [];
-        $modulname  = trim($_POST['modulname'] ?? ''); // optional
+        $modulname  = trim($_POST['modulname'] ?? ''); // optional, aber für Rechte wichtig
         $sort_art   = 0;
         $sort       = 1;
 
-        // Prüfung auf Pflichtfelder (z. B. fa_name, mindestens ein Sprachfeld)
+        // Pflichtfelder prüfen
         if (empty($fa_name) || empty($nameArray['de'])) {
-            echo '<div class="alert alert-warning" role="alert">Bitte mindestens einsprachigen Kategorienamen und ein Icon angeben.</div>';
+            echo '<div class="alert alert-warning" role="alert">
+                    Bitte mindestens eine Kategorienamen und ein Icon angeben.
+                  </div>';
             return;
         }
 
@@ -267,32 +376,86 @@ if (isset($_POST['saveaddcat'])) {
             $name .= "[[lang:$lang]]" . $text;
         }
 
-        // SQL vorbereiten und ausführen
-        $stmt = $_database->prepare("
+        // Modulname prüfen (nur wenn angegeben)
+        if (!empty($modulname)) {
+            $stmt_check = $_database->prepare("SELECT COUNT(*) FROM navigation_dashboard_categories WHERE modulname = ?");
+            $stmt_check->bind_param("s", $modulname);
+            $stmt_check->execute();
+            $stmt_check->bind_result($count);
+            $stmt_check->fetch();
+            $stmt_check->close();
+
+            if ($count > 0) {
+                echo '<div class="alert alert-warning" role="alert">
+                        Dieser Modulname wird bereits verwendet. Bitte wähle einen anderen.
+                      </div>';
+                return;
+            }
+        }
+
+        // SQL vorbereiten
+        $insertQuery = "
             INSERT INTO navigation_dashboard_categories (fa_name, name, modulname, sort_art, sort)
             VALUES (?, ?, ?, ?, ?)
-        ");
+        ";
 
-        if ($stmt) {
+        if ($stmt = $_database->prepare($insertQuery)) {
             $stmt->bind_param("ssssi", $fa_name, $name, $modulname, $sort_art, $sort);
 
             if ($stmt->execute()) {
-                echo '<div class="alert alert-success" role="alert">Kategorie erfolgreich hinzugefügt.</div>';
-                redirect("admincenter.php?site=dashboard_navigation", "", 2);
+                $stmt->close();
+
+                // Admin-Rechte setzen
+                if (!empty($modulname)) {
+                    $roleID = 1;
+                    $type   = 'category';
+
+                    $access_query = "
+                        INSERT INTO user_role_admin_navi_rights (roleID, type, modulname)
+                        VALUES (?, ?, ?)
+                    ";
+
+                    if ($stmt_access = $_database->prepare($access_query)) {
+                        $stmt_access->bind_param("iss", $roleID, $type, $modulname);
+
+                        if ($stmt_access->execute()) {
+                            echo '<div class="alert alert-success" role="alert">
+                                    Kategorie erfolgreich hinzugefügt und Rechte gesetzt!
+                                  </div>';
+                        } else {
+                            echo '<div class="alert alert-danger" role="alert">
+                                    Fehler beim Setzen der Rechte: ' . $stmt_access->error . '
+                                  </div>';
+                        }
+                        $stmt_access->close();
+                    } else {
+                        echo '<div class="alert alert-danger" role="alert">
+                                Fehler beim Vorbereiten der Rechte-Abfrage: ' . $_database->error . '
+                              </div>';
+                    }
+                }
+
+                redirect("admincenter.php?site=dashboard_navigation", "", 3);
+
             } else {
-                echo '<div class="alert alert-danger" role="alert">Fehler beim Speichern: ' . $stmt->error . '</div>';
+                echo '<div class="alert alert-danger" role="alert">
+                        Fehler beim Einfügen der Kategorie: ' . $stmt->error . '
+                      </div>';
+                $stmt->close();
             }
 
-            $stmt->close();
         } else {
-            echo '<div class="alert alert-danger" role="alert">Fehler bei der SQL-Vorbereitung: ' . $_database->error . '</div>';
+            echo '<div class="alert alert-danger" role="alert">
+                    Fehler bei der SQL-Vorbereitung: ' . $_database->error . '
+                  </div>';
         }
 
     } else {
-        echo '<div class="alert alert-danger" role="alert">Fehler: Ungültiges Captcha.</div>';
+        echo '<div class="alert alert-danger" role="alert">
+                Fehler: Ungültiges Captcha.
+              </div>';
     }
 }
-
 
 
 if (isset($_POST['savecat'])) {
@@ -308,7 +471,9 @@ if (isset($_POST['savecat'])) {
 
         // Validierung: Pflichtfelder prüfen
         if (empty($catID) || empty($fa_name) || empty($nameArray['de'])) {
-            echo '<div class="alert alert-warning" role="alert">Bitte alle Pflichtfelder ausfüllen (Icon und deutscher Name).</div>';
+            echo '<div class="alert alert-warning" role="alert">
+                    Bitte alle Pflichtfelder ausfüllen (Icon und deutscher Name).
+                  </div>';
             return;
         }
 
@@ -330,22 +495,70 @@ if (isset($_POST['savecat'])) {
             $stmt->bind_param("ssi", $fa_name, $name, $catID);
 
             if ($stmt->execute()) {
-                echo '<div class="alert alert-success" role="alert">Kategorie erfolgreich bearbeitet!</div>';
+                // modulname aus navigation_dashboard_categories ermitteln
+                $modulname = '';
+                $sql_modul = "SELECT modulname FROM navigation_dashboard_categories WHERE catID = ?";
+                if ($stmt_modul = $_database->prepare($sql_modul)) {
+                    $stmt_modul->bind_param("i", $catID);
+                    $stmt_modul->execute();
+                    $stmt_modul->bind_result($modulname);
+                    $stmt_modul->fetch();
+                    $stmt_modul->close();
+                }
+
+                if (!empty($modulname)) {
+                    // Zugriffsrechte für Admin-Rolle (roleID = 1) setzen
+                    $roleID = 1;
+                    $type   = 'category';
+
+                    $access_query = "
+                        INSERT INTO user_role_admin_navi_rights (roleID, type, modulname)
+                        VALUES (?, ?, ?)
+                        ON DUPLICATE KEY UPDATE modulname = VALUES(modulname)
+                    ";
+
+                    if ($stmt_access = $_database->prepare($access_query)) {
+                        $stmt_access->bind_param("iss", $roleID, $type, $modulname);
+                        if ($stmt_access->execute()) {
+                            echo '<div class="alert alert-success" role="alert">
+                                    Kategorie und Zugriffsrechte erfolgreich aktualisiert!
+                                  </div>';
+                        } else {
+                            echo '<div class="alert alert-danger" role="alert">
+                                    Fehler beim Aktualisieren der Zugriffsrechte: ' . $stmt_access->error . '
+                                  </div>';
+                        }
+                        $stmt_access->close();
+                    } else {
+                        echo '<div class="alert alert-danger" role="alert">
+                                Fehler beim Vorbereiten der Rechte-Abfrage: ' . $_database->error . '
+                              </div>';
+                    }
+                }
+
                 redirect("admincenter.php?site=dashboard_navigation", "", 3);
+
             } else {
-                echo '<div class="alert alert-danger" role="alert">Fehler beim Ausführen der SQL-Abfrage: ' . htmlspecialchars($stmt->error) . '</div>';
+                echo '<div class="alert alert-warning" role="alert">
+                        Fehler beim Speichern der Kategorie oder keine Änderungen vorgenommen.
+                      </div>';
+                redirect("admincenter.php?site=dashboard_navigation", "", 3);
             }
 
             $stmt->close();
+
         } else {
-            echo '<div class="alert alert-danger" role="alert">Fehler bei der Vorbereitung der SQL-Abfrage: ' . htmlspecialchars($_database->error) . '</div>';
+            echo '<div class="alert alert-danger" role="alert">
+                    Fehler bei der SQL-Vorbereitung: ' . $_database->error . '
+                  </div>';
         }
 
     } else {
-        echo '<div class="alert alert-warning" role="alert">' . htmlspecialchars($languageService->get('transaction_invalid')) . '</div>';
+        echo '<div class="alert alert-warning" role="alert">'
+            . htmlspecialchars($languageService->get('transaction_invalid')) .
+            '</div>';
     }
 }
-
 
 
 if ($action == "add") {
@@ -416,7 +629,7 @@ if ($action == "add") {
                     </div>';
                 }
 
-    echo '</div>
+            echo '</div>
 
                 <div class="mb-3 row">
                     <label class="col-md-2 control-label">' . $languageService->get('url') . ':</label>
@@ -439,45 +652,6 @@ if ($action == "add") {
     </div>';
 }
  elseif ($action === "edit") {
-
-    // --- POST-Handler zum Speichern ---
-    if (isset($_POST['saveedit'])) {
-        $CAPCLASS = new \nexpell\Captcha;
-
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-            // Eingaben sicher holen
-            $linkID   = (int)($_POST['linkID'] ?? 0);
-            $fa_name  = $_POST['fa_name'] ?? '';        // falls benötigt
-            $catID    = (int)($_POST['catID'] ?? 0);
-            $url      = $_POST['url'] ?? '';
-            $modulname= $_POST['modulname'] ?? '';
-            $nameArray= $_POST['name'] ?? [];
-
-            // Mehrsprachigen Text zusammenbauen
-            $name = '';
-            foreach (['de', 'en', 'it'] as $l) {
-                $txt = $nameArray[$l] ?? '';
-                $name .= "[[lang:$l]]" . $txt;
-            }
-
-            // Update Query vorbereiten
-            $stmt = $_database->prepare("UPDATE navigation_dashboard_links SET catID = ?, name = ?, url = ?, modulname = ? WHERE linkID = ?");
-            if ($stmt) {
-                $stmt->bind_param("isssi", $catID, $name, $url, $modulname, $linkID);
-                if ($stmt->execute()) {
-                    echo '<div class="alert alert-success" role="alert">' . $languageService->get('edit_success') . '</div>';
-                    redirect("admincenter.php?site=dashboard_navigation", "", 3);
-                } else {
-                    echo '<div class="alert alert-danger" role="alert">' . $languageService->get('edit_error') . '</div>';
-                }
-                $stmt->close();
-            } else {
-                echo '<div class="alert alert-danger" role="alert">Fehler bei der SQL-Vorbereitung.</div>';
-            }
-        } else {
-            echo '<div class="alert alert-warning" role="alert">' . htmlspecialchars($languageService->get('transaction_invalid')) . '</div>';
-        }
-    }
 
     // --- Daten für Formular laden ---
     $linkID = isset($_GET['linkID']) ? (int)$_GET['linkID'] : 0;
@@ -632,104 +806,60 @@ $hash = $_SESSION['captcha_hash'];
         $languages = ['de' => 'Deutsch', 'en' => 'English', 'it' => 'Italiano'];
     }
 
-echo '<div class="card">
-        <div class="card-header"><i class="bi bi-menu-app"></i> 
-            ' . $languageService->get('dashnavi') . '
+    echo '<div class="card">
+            <div class="card-header"><i class="bi bi-menu-app"></i> 
+                ' . $languageService->get('dashnavi') . '
+            </div>
+                
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="admincenter.php?site=dashboard_navigation">' . $languageService->get('dashnavi') . '</a></li>
+        <li class="breadcrumb-item active" aria-current="page">' . $languageService->get('add_category') . '</li>
+      </ol>
+    </nav>
+         <div class="card-body">';
+
+    echo '<form class="form-horizontal" method="post">
+        <div class="mb-3 row">
+        <label class="col-md-2 control-label">'.$languageService->get('fa_name').':</label>
+        <div class="col-md-8"><span class="text-muted small"><em>
+          <input class="form-control" type="text" name="fa_name" size="60"></em></span>
         </div>
-            
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="admincenter.php?site=dashboard_navigation">' . $languageService->get('dashnavi') . '</a></li>
-    <li class="breadcrumb-item active" aria-current="page">' . $languageService->get('add_category') . '</li>
-  </ol>
-</nav>
-     <div class="card-body">';
+      </div>
+      <div class="alert alert-info" role="alert">
+        <label class="form-label"><h4>' . $languageService->get('text') . '</h4></label>';
 
-echo '<form class="form-horizontal" method="post">
-    <div class="mb-3 row">
-    <label class="col-md-2 control-label">'.$languageService->get('fa_name').':</label>
-    <div class="col-md-8"><span class="text-muted small"><em>
-      <input class="form-control" type="text" name="fa_name" size="60"></em></span>
-    </div>
-  </div>
-  <div class="alert alert-info" role="alert">
-                <label class="form-label"><h4>' . $languageService->get('text') . '</h4></label>';
+    foreach ($languages as $code => $label) {
+    echo '
+        <div class="mb-3 row">
+            <label class="col-sm-2 col-form-label">' . $label . ':</label>
+            <div class="col-sm-8"><input class="form-control" type="text" id="text_' . $code . '" name="name[' . $code . ']" value="'
+            . htmlspecialchars(extractLangText($ds['name'] ?? '', $code)) .
+            '">
+            </div>
+        </div>';
+    }
 
-                foreach ($languages as $code => $label) {
-                    echo '
-                    <div class="mb-3 row">
-                        <label class="col-sm-2 col-form-label">' . $label . ':</label>
-                        <div class="col-sm-8"><input class="form-control" type="text" id="text_' . $code . '" name="name[' . $code . ']" value="'
-                            . htmlspecialchars(extractLangText($ds['name'] ?? '', $code)) .
-                            '">
-                        </div>
-                    </div>';
-                }
+    echo '</div>
+      <div class="mb-3 row">
+        <label class="col-md-2 control-label">modulname:</label>
+        <div class="col-md-8"><span class="text-muted small"><em>
+          <input class="form-control" type="text" name="modulname" size="60"></em></span>
+        </div>
+      </div>
+      
+      <div class="mb-3 row">
+        <div class="col-md-offset-2 col-md-10">
+          <input type="hidden" name="captcha_hash" value="' . $hash . '" />
+          <button class="btn btn-success btn-sm" type="submit" name="saveaddcat"><i class="bi bi-box-arrow-down"></i> ' . $languageService->get('add_category') . '</button>
+        </div>
+      </div>
 
-        echo '</div>
-  <div class="mb-3 row">
-    <label class="col-md-2 control-label">modulname:</label>
-    <div class="col-md-8"><span class="text-muted small"><em>
-      <input class="form-control" type="text" name="modulname" size="60"></em></span>
-    </div>
-  </div>
-  
-  <div class="mb-3 row">
-    <div class="col-md-offset-2 col-md-10">
-      <input type="hidden" name="captcha_hash" value="' . $hash . '" />
-      <button class="btn btn-success btn-sm" type="submit" name="saveaddcat"><i class="bi bi-box-arrow-down"></i> ' . $languageService->get('add_category') . '</button>
-    </div>
-  </div>
-
-</form>
-</div></div>';
-
-
-
-
+    </form>
+    </div></div>';
 
 
 } elseif ($action == "editcat") {
-
-    // POST-Handler zum Speichern
-    if (isset($_POST['savecat'])) {
-        $CAPCLASS = new \nexpell\Captcha;
-
-        if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-            // Eingaben holen und sichern
-            $catID   = (int)($_POST['catID'] ?? 0);
-            $fa_name = $_POST['fa_name'] ?? '';
-            $modulname = $_POST['modulname'] ?? ''; // wird nicht bearbeitet, nur zur Vollständigkeit
-            $nameArray = $_POST['name'] ?? [];
-
-            // Mehrsprachigen Namen zusammensetzen
-            $name = '';
-            foreach (['de','en','it'] as $lang) {
-                $txt = $nameArray[$lang] ?? '';
-                $name .= "[[lang:$lang]]" . $txt;
-            }
-
-            // Update vorbereiten (Prepared Statement empfohlen)
-            $stmt = $_database->prepare("UPDATE navigation_dashboard_categories SET fa_name = ?, name = ? WHERE catID = ?");
-            if ($stmt) {
-                $stmt->bind_param("ssi", $fa_name, $name, $catID);
-                if ($stmt->execute()) {
-                    echo '<div class="alert alert-success" role="alert">' . $languageService->get('edit_success') . '</div>';
-                    redirect("admincenter.php?site=dashboard_navigation", "", 3);
-                } else {
-                    echo '<div class="alert alert-danger" role="alert">' . $languageService->get('edit_error') . '</div>';
-                }
-                $stmt->close();
-            } else {
-                echo '<div class="alert alert-danger" role="alert">Fehler bei der SQL-Vorbereitung.</div>';
-            }
-
-        } else {
-            echo '<div class="alert alert-warning" role="alert">' . htmlspecialchars($languageService->get('transaction_invalid')) . '</div>';
-        }
-    }
-
-    // --- Formularanzeige ---
 
     // Daten laden
     $catID = isset($_GET['catID']) ? (int)$_GET['catID'] : 0;
@@ -887,49 +1017,51 @@ while ($ds = mysqli_fetch_array($ergebnis)) {
         $sort = $list;
         $catactions = '
             <a class="btn btn-warning btn-sm" href="admincenter.php?site=dashboard_navigation&amp;action=editcat&amp;catID=' . $ds[ 'catID' ] .
-            '" class="input"><i class="bi bi-pencil-square"></i> ' . $languageService->get('edit') . '</a>
-
-            
+            '" class="input"><i class="bi bi-pencil-square"></i> ' . $languageService->get('edit') . '</a>            
 
             <!-- Button trigger modal -->
-<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirm-delete-link" 
-        data-href="admincenter.php?site=dashboard_navigation&delcat=true&catID=' .$ds['catID'] . '&captcha_hash=' .$hash . '">
-    <i class="bi bi-trash3"></i> 
-    ' . $languageService->get('delete') . '
-</button>
+            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" 
+                    data-bs-target="#confirm-delete" 
+                    data-href="admincenter.php?site=dashboard_navigation&delcat=true&catID=' . $ds['catID'] . '&captcha_hash=' . $hash . '">
+                <i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '
+            </button>
 
-
-<!-- Modal -->
-<div class="modal fade" id="confirm-delete-link" tabindex="-1" aria-labelledby="confirm-delete-linkLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="confirm-delete-linkLabel"><i class="bi bi-menu-app"></i> ' . $languageService->get('dashnavi') . '</h5>
-                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
+            <!-- Modal -->
+            <div class="modal fade" id="confirm-delete" tabindex="-1" aria-labelledby="confirm-delete-linkLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="confirm-delete-linkLabel">
+                                <i class="bi bi-menu-app"></i> ' . $languageService->get('dashnavi') . '
+                            </h5>
+                            <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p><i class="bi bi-trash3"></i> ' . $languageService->get('really_delete_category') . '</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                                <i class="bi bi-x-lg"></i> ' . $languageService->get('close') . '
+                            </button>
+                            <a class="btn btn-danger btn-ok btn-sm">
+                                <i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="modal-body">
-                <p><i class="bi bi-trash3"></i> ' . $languageService->get('really_delete_category') . '</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> ' . $languageService->get('close') . '</button>
-                <a class="btn btn-danger btn-ok btn-sm"><i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '</a>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Modal END -->
+            <!-- Modal END ';
 
-
-
-        ';
-
-    ?><script>
-    const deleteLinkButton = document.querySelector('.btn-ok');
-    deleteLinkButton.addEventListener('click', function () {
-        const href = document.querySelector('[data-bs-target="#confirm-delete-link"]').getAttribute('data-href');
-        window.location.href = href;  // Leitet den Benutzer zur URL weiter, die die Löschanfrage enthält
+    ?>
+    <script>
+    document.getElementById('confirm-delete').addEventListener('show.bs.modal', function (event) {
+        let button = event.relatedTarget; // Button, der das Modal geöffnet hat
+        let href = button.getAttribute('data-href'); // Wert vom data-href holen
+        let confirmBtn = this.querySelector('.btn-ok');
+        confirmBtn.setAttribute('href', href); // Link im Modal setzen
     });
-</script><?php
+    </script>
+<?php
         $name = $ds['name'];
         $translate = new multiLanguage($lang);
         $translate->detectLanguages($name);
@@ -982,47 +1114,47 @@ while ($ds = mysqli_fetch_array($ergebnis)) {
                 <td class="' . $td . '">
                     <a href="admincenter.php?site=dashboard_navigation&amp;action=edit&amp;linkID=' . $db[ 'linkID' ] .'" class="btn btn-warning btn-sm"><i class="bi bi-pencil-square"></i> ' . $languageService->get('edit') . '</a>
 
-                   <!-- Button trigger modal -->
-<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirm-delete-link" data-href="admincenter.php?site=dashboard_navigation&delete=true&linkID=' . $db['linkID'] . '&captcha_hash=' . $hash . '"><i class="bi bi-trash3"></i> 
-  ' . $languageService->get('delete') . '
-</button>
+                <!-- Button trigger modal -->
+                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirm-delete-link" data-href="admincenter.php?site=dashboard_navigation&delete=true&linkID=' . $db['linkID'] . '&captcha_hash=' . $hash . '"><i class="bi bi-trash3"></i> 
+                  ' . $languageService->get('delete') . '
+                </button>
 
-<!-- Modal -->
-<div class="modal fade" id="confirm-delete-link" tabindex="-1" aria-labelledby="confirm-delete-linkLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="confirm-delete-linkLabel"><i class="bi bi-menu-app"></i> ' . $languageService->get('dashnavi') . '</h5>
-                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
-            </div>
-            <div class="modal-body">
-                <p><i class="bi bi-trash3"></i> ' . $languageService->get('really_delete_link') . '</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> ' . $languageService->get('close') . '</button>
-                <a class="btn btn-danger btn-ok btn-sm"><i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '</a>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Modal END -->
-';?>
-<script>
-    // Verwende Vanilla JS, um den Link für das Löschen zu setzen
-    document.addEventListener('DOMContentLoaded', function () {
-        var deleteModal = document.getElementById('confirm-delete-link');
-        
-        deleteModal.addEventListener('show.bs.modal', function (event) {
-            var button = event.relatedTarget; // Der Button, der das Modal geöffnet hat
-            var href = button.getAttribute('data-href'); // Die URL, die im data-href Attribut gespeichert ist
-            var deleteButton = deleteModal.querySelector('.btn-ok');
-            deleteButton.setAttribute('href', href); // Setze den href des Löschen-Buttons auf die URL
-        });
-    });
-</script>
-<?php
+                <!-- Modal -->
+                <div class="modal fade" id="confirm-delete-link" tabindex="-1" aria-labelledby="confirm-delete-linkLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="confirm-delete-linkLabel"><i class="bi bi-menu-app"></i> ' . $languageService->get('dashnavi') . '</h5>
+                                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p><i class="bi bi-trash3"></i> ' . $languageService->get('really_delete_link') . '</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> ' . $languageService->get('close') . '</button>
+                                <a class="btn btn-danger btn-ok btn-sm"><i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal END -->
+                ';?>
+                <script>
+                    // Verwende Vanilla JS, um den Link für das Löschen zu setzen
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var deleteModal = document.getElementById('confirm-delete-link');
+                        
+                        deleteModal.addEventListener('show.bs.modal', function (event) {
+                            var button = event.relatedTarget; // Der Button, der das Modal geöffnet hat
+                            var href = button.getAttribute('data-href'); // Die URL, die im data-href Attribut gespeichert ist
+                            var deleteButton = deleteModal.querySelector('.btn-ok');
+                            deleteButton.setAttribute('href', href); // Setze den href des Löschen-Buttons auf die URL
+                        });
+                    });
+                </script>
+            <?php
 
-               echo' </td>
+            echo' </td>
                 <td class="' . $td . '">' . $linklist . '</td>
             </tr>';
             $i++;

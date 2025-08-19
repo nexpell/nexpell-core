@@ -226,7 +226,7 @@ function mail_protect($mailaddress)
 #echo mail_protect("example@example.com");
 
 // Funktion zur Überprüfung, ob eine URL gültig ist
-function validate_url($url)
+/*function validate_url($url)
 {
     // Regulärer Ausdruck zur Validierung einer URL
     return preg_match(
@@ -235,7 +235,51 @@ function validate_url($url)
         // @codingStandardsIgnoreEnd
         $url
     );
+}*/
+
+function validate_url(string $url): bool {
+    // 1. Grundlegende URL-Validierung
+    if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        return false;
+    }
+
+    // 2. Nur erlaubte Protokolle
+    $allowedSchemes = ['http', 'https', 'ftp'];
+    $scheme = parse_url($url, PHP_URL_SCHEME);
+    if (!in_array($scheme, $allowedSchemes, true)) {
+        return false;
+    }
+
+    // 3. Keine gefährlichen Zeichen in der URL
+    if (preg_match('/[\'"<>{}\[\]|\\\\]/', $url)) {
+        return false;
+    }
+
+    // 4. Max. Länge
+    if (strlen($url) > 2000) {
+        return false;
+    }
+
+    // 5. Host überprüfen
+    $host = parse_url($url, PHP_URL_HOST);
+    if (!$host) return false;
+
+    // 6. IP-Adressen blockieren, wenn sie privat oder Loopback sind
+    if (filter_var($host, FILTER_VALIDATE_IP)) {
+        if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            return false;
+        }
+    }
+
+    // 7. Optional: localhost oder ähnliche lokale Domains blockieren
+    $blockedHosts = ['localhost', '127.0.0.1', '::1'];
+    if (in_array(strtolower($host), $blockedHosts, true)) {
+        return false;
+    }
+
+    return true;
 }
+
 
 // Funktion zur Überprüfung, ob eine E-Mail-Adresse gültig ist
 function validate_email($email)
