@@ -3,7 +3,7 @@
 **nexpell** ist ein vollständig neu entwickeltes, modulares und sicheres Open-Source CMS für Communities, Clans und Teams – bereit für das Jahr 2025 und darüber hinaus.
 
 [![PHP Version](https://img.shields.io/badge/PHP-8.2-blue)](https://www.php.net/)
-[![License](https://img.shields.io/badge/License-GPLv3-green)](LICENSE.md)
+[![License](https://img.shields.io/badge/License-GPLv3-green)](licenses/GPL-3.0.txt)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/nexpell/nexpell/ci.yml)](https://github.com/nexpell/nexpell/actions)
 [![Downloads](https://img.shields.io/badge/Downloads-⭐-brightgreen)](https://www.nexpell.de/de/download)
 
