@@ -2,10 +2,12 @@
 
 **nexpell** ist ein vollständig neu entwickeltes, modulares und sicheres Open-Source CMS für Communities, Clans und Teams – bereit für das Jahr 2025 und darüber hinaus.
 
+
 <!-- Logo -->
 <p align="center">
   <img src="images/logo.png" alt="nexpell Logo" width="250">
 </p>
+
 
 <!-- Screenshot -->
 <p align="center">
