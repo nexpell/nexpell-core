@@ -68,7 +68,7 @@ if (!empty($positions)) {
 loadPluginHeadAssets();
 
 require_once __DIR__ . '/../../../system/seo_meta_helper.php';
-$site = $_GET['site'] ?? 'home';
+$site = $_GET['site'] ?? 'index';
 $meta = getSeoMeta($site);
 // Ausgabe $_GET zum Debug
 /*var_dump($_GET);

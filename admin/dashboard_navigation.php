@@ -1020,47 +1020,48 @@ while ($ds = mysqli_fetch_array($ergebnis)) {
             '" class="input"><i class="bi bi-pencil-square"></i> ' . $languageService->get('edit') . '</a>            
 
             <!-- Button trigger modal -->
-            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" 
-                    data-bs-target="#confirm-delete" 
-                    data-href="admincenter.php?site=dashboard_navigation&delcat=true&catID=' . $ds['catID'] . '&captcha_hash=' . $hash . '">
-                <i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '
-            </button>
+<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" 
+        data-bs-target="#confirm-delete-' . $ds['catID'] . '" 
+        data-href="admincenter.php?site=dashboard_navigation&delcat=true&catID=' . $ds['catID'] . '&captcha_hash=' . $hash . '">
+    <i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '
+</button>
 
-            <!-- Modal -->
-            <div class="modal fade" id="confirm-delete" tabindex="-1" aria-labelledby="confirm-delete-linkLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="confirm-delete-linkLabel">
-                                <i class="bi bi-menu-app"></i> ' . $languageService->get('dashnavi') . '
-                            </h5>
-                            <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p><i class="bi bi-trash3"></i> ' . $languageService->get('really_delete_category') . '</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
-                                <i class="bi bi-x-lg"></i> ' . $languageService->get('close') . '
-                            </button>
-                            <a class="btn btn-danger btn-ok btn-sm">
-                                <i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '
-                            </a>
-                        </div>
-                    </div>
-                </div>
+<!-- Modal -->
+<div class="modal fade" id="confirm-delete-' . $ds['catID'] . '" tabindex="-1" aria-labelledby="confirm-delete-' . $ds['catID'] . 'Label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirm-delete-' . $ds['catID'] . 'Label">
+                    <i class="bi bi-menu-app"></i> ' . $languageService->get('dashnavi') . '
+                </h5>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
             </div>
-            <!-- Modal END ';
-
-    ?>
-    <script>
-    document.getElementById('confirm-delete').addEventListener('show.bs.modal', function (event) {
-        let button = event.relatedTarget; // Button, der das Modal geöffnet hat
-        let href = button.getAttribute('data-href'); // Wert vom data-href holen
-        let confirmBtn = this.querySelector('.btn-ok');
-        confirmBtn.setAttribute('href', href); // Link im Modal setzen
+            <div class="modal-body">
+                <p><i class="bi bi-trash3"></i> ' . $languageService->get('really_delete_category') . '</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> ' . $languageService->get('close') . '
+                </button>
+                <a class="btn btn-danger btn-ok btn-sm">
+                    <i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+';?>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".modal").forEach(function(modal) {
+        modal.addEventListener("show.bs.modal", function(event) {
+            var button = event.relatedTarget;
+            var href = button.getAttribute("data-href");
+            modal.querySelector(".btn-ok").setAttribute("href", href);
+        });
     });
-    </script>
+});
+</script>
 <?php
         $name = $ds['name'];
         $translate = new multiLanguage($lang);
@@ -1106,7 +1107,7 @@ while ($ds = mysqli_fetch_array($ergebnis)) {
                 'value="' . $db[ 'linkID' ] . '-' . $db[ 'sort' ] . '" selected="selected"',
                 $linklist
             );
-
+            $modalID = 'confirm-delete-link-' . $db['linkID'];
             echo '<tr>
                 <td class="' . $td . '">&nbsp;-&nbsp;<b>' . $name . '</b></td>
                 <td class="' . $td . '"><small>' . $db[ 'url' ] . '</small></td>
@@ -1115,43 +1116,40 @@ while ($ds = mysqli_fetch_array($ergebnis)) {
                     <a href="admincenter.php?site=dashboard_navigation&amp;action=edit&amp;linkID=' . $db[ 'linkID' ] .'" class="btn btn-warning btn-sm"><i class="bi bi-pencil-square"></i> ' . $languageService->get('edit') . '</a>
 
                 <!-- Button trigger modal -->
-                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirm-delete-link" data-href="admincenter.php?site=dashboard_navigation&delete=true&linkID=' . $db['linkID'] . '&captcha_hash=' . $hash . '"><i class="bi bi-trash3"></i> 
-                  ' . $languageService->get('delete') . '
-                </button>
+<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#' . $modalID . '" data-href="admincenter.php?site=dashboard_navigation&delete=true&linkID=' . $db['linkID'] . '&captcha_hash=' . $hash . '">
+    <i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '
+</button>
 
-                <!-- Modal -->
-                <div class="modal fade" id="confirm-delete-link" tabindex="-1" aria-labelledby="confirm-delete-linkLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="confirm-delete-linkLabel"><i class="bi bi-menu-app"></i> ' . $languageService->get('dashnavi') . '</h5>
-                                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p><i class="bi bi-trash3"></i> ' . $languageService->get('really_delete_link') . '</p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> ' . $languageService->get('close') . '</button>
-                                <a class="btn btn-danger btn-ok btn-sm"><i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Modal END -->
+<!-- Modal -->
+<div class="modal fade" id="' . $modalID . '" tabindex="-1" aria-labelledby="' . $modalID . 'Label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="' . $modalID . 'Label"><i class="bi bi-menu-app"></i> ' . $languageService->get('dashnavi') . '</h5>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
+            </div>
+            <div class="modal-body">
+                <p><i class="bi bi-trash3"></i> ' . $languageService->get('really_delete_link') . '</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> ' . $languageService->get('close') . '</button>
+                <a class="btn btn-danger btn-ok btn-sm"><i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '</a>
+            </div>
+        </div>
+    </div>
+</div>
                 ';?>
                 <script>
-                    // Verwende Vanilla JS, um den Link für das Löschen zu setzen
-                    document.addEventListener('DOMContentLoaded', function () {
-                        var deleteModal = document.getElementById('confirm-delete-link');
-                        
-                        deleteModal.addEventListener('show.bs.modal', function (event) {
-                            var button = event.relatedTarget; // Der Button, der das Modal geöffnet hat
-                            var href = button.getAttribute('data-href'); // Die URL, die im data-href Attribut gespeichert ist
-                            var deleteButton = deleteModal.querySelector('.btn-ok');
-                            deleteButton.setAttribute('href', href); // Setze den href des Löschen-Buttons auf die URL
-                        });
-                    });
-                </script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".modal").forEach(function(modal) {
+        modal.addEventListener("show.bs.modal", function(event) {
+            var button = event.relatedTarget;
+            var href = button.getAttribute("data-href");
+            modal.querySelector(".btn-ok").setAttribute("href", href);
+        });
+    });
+});
+</script>
             <?php
 
             echo' </td>
