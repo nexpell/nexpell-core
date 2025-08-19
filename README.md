@@ -2,11 +2,24 @@
 
 **nexpell** ist ein vollständig neu entwickeltes, modulares und sicheres Open-Source CMS für Communities, Clans und Teams – bereit für das Jahr 2025 und darüber hinaus.
 
-![nexpell Logo](images/logo.png)
 
-👉 **Offizielle Website:** [https://www.nexpell.de](https://www.nexpell.de)  
-👉 **Forum & Support:** [https://www.nexpell.de/forum.html](https://www.nexpell.de/forum.html)  
-👉 **Dokumentation:** [https://www.nexpell.de/wiki.html](https://www.nexpell.de/wiki.html)
+<!-- Logo -->
+<p align="center">
+  <img src="images/logo.png" alt="nexpell Logo" width="250">
+</p>
+
+
+<!-- Screenshot -->
+<p align="center">
+  <img src="images/startseite.png" alt="Startseite Screenshot" width="600">
+</p>
+
+<!-- Buttons -->
+<p align="center">
+  <a href="https://www.nexpell.de" target="_blank" style="background:#4CAF50;color:white;padding:8px 16px;text-decoration:none;border-radius:4px;margin:2px;">Offizielle Website</a>
+  <a href="https://www.nexpell.de/de/forum" target="_blank" style="background:#2196F3;color:white;padding:8px 16px;text-decoration:none;border-radius:4px;margin:2px;">Forum & Support</a>
+  <a href="https://www.nexpell.de/de/wiki" target="_blank" style="background:#FF9800;color:white;padding:8px 16px;text-decoration:none;border-radius:4px;margin:2px;">Dokumentation</a>
+</p>
 
 ---
 
@@ -40,7 +53,7 @@ Die Installation erfolgt **ausschließlich über den neuen Web-Installer**, der 
 ### 🛠️ Installationsschritte
 
 1. **Installer herunterladen:**  
-   [Download Installer (.php)](https://www.nexpell.de/download)
+   [Download Installer (.php)](https://www.nexpell.de/de/download)
 
 2. **Hochladen:**  
    Lade den Installer auf deinen Webserver (Root-Verzeichnis)
@@ -70,13 +83,13 @@ Die Installation erfolgt **ausschließlich über den neuen Web-Installer**, der 
 
 ```plaintext
 /admin/             → Adminbereich mit modularer Navigation  
-/includes/          → Kernfunktionen & Klassen  
-/plugins/           → Erweiterbare Plugins  
-/themes/            → Frontend-Themes  
+/includes/          → Kernfunktionen & Klassen
+/includes/module/   → Code Dateien    
+/includes/plugins/  → Erweiterbare Plugins  
+/includes/themes/   → Frontend-Themes  
 /system/            → Template-Engine, Auth, CSRF, Router  
 /config/            → Konfigurationen (wird automatisch erstellt)  
-/install/           → Nur während des Setups vorhanden  
-/uploads/           → Medien und Dateien  
+/install/           → Nur während des Setups vorhanden 
 ```
 
 ---
@@ -86,15 +99,15 @@ Die Installation erfolgt **ausschließlich über den neuen Web-Installer**, der 
 - Eigene Themes via `/themes/`
 - Eigene Plugins via `/plugins/`
 - Eigene Module mit Routing und Zugriffskontrolle
-- Template-System mit `{{ platzhalter }}`-Syntax
+- Template-System mit `{platzhalter}`-Syntax
 - Saubere OOP-Struktur mit modernem PHP
 
 ---
 
 ## 📚 Dokumentation & Hilfe
 
-- 📖 [nexpell Wiki](https://www.nexpell.de/wiki.html)  
-- 💬 [Forum](https://www.nexpell.de/forum.html)  
+- 📖 [nexpell Wiki](https://www.nexpell.de/de/wiki)  
+- 💬 [Forum](https://www.nexpell.de/de/forum)  
 - 🐛 Bugs & Feedback: *GitHub Issues (folgt)*
 
 ---
