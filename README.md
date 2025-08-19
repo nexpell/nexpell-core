@@ -2,7 +2,7 @@
 
 **nexpell** ist ein vollständig neu entwickeltes, modulares und sicheres Open-Source CMS für Communities, Clans und Teams – bereit für das Jahr 2025 und darüber hinaus.
 
-![nexpell Logo](https://www.nexpell.de/assets/images/logo_dark.png)
+![nexpell Logo](https://www.nexpell.de/images/logo.png)
 
 👉 **Offizielle Website:** [https://www.nexpell.de](https://www.nexpell.de)  
 👉 **Forum & Support:** [https://www.nexpell.de/forum.html](https://www.nexpell.de/forum.html)  
@@ -70,13 +70,13 @@ Die Installation erfolgt **ausschließlich über den neuen Web-Installer**, der 
 
 ```plaintext
 /admin/             → Adminbereich mit modularer Navigation  
-/includes/          → Kernfunktionen & Klassen  
-/plugins/           → Erweiterbare Plugins  
-/themes/            → Frontend-Themes  
+/includes/          → Kernfunktionen & Klassen
+/includes/module/   → Code Dateien    
+/includes/plugins/  → Erweiterbare Plugins  
+/includes/themes/   → Frontend-Themes  
 /system/            → Template-Engine, Auth, CSRF, Router  
 /config/            → Konfigurationen (wird automatisch erstellt)  
-/install/           → Nur während des Setups vorhanden  
-/uploads/           → Medien und Dateien  
+/install/           → Nur während des Setups vorhanden 
 ```
 
 ---
@@ -86,7 +86,7 @@ Die Installation erfolgt **ausschließlich über den neuen Web-Installer**, der 
 - Eigene Themes via `/themes/`
 - Eigene Plugins via `/plugins/`
 - Eigene Module mit Routing und Zugriffskontrolle
-- Template-System mit `{{ platzhalter }}`-Syntax
+- Template-System mit `{platzhalter}`-Syntax
 - Saubere OOP-Struktur mit modernem PHP
 
 ---
