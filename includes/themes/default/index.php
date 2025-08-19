@@ -215,7 +215,7 @@ header('X-UA-Compatible: IE=edge');
 <!-- Cookie Consent -->
 <div id="cookie-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 9998; display: none;"></div>
 <?php include 'cookie-consent.php'; ?>
-
+<script src="./includes/themes/<?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/js/page.js"></script>
 <script src="./components/ckeditor/ckeditor.js"></script>
 <script src="./components/ckeditor/config.js"></script>
 
