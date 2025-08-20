@@ -81,6 +81,15 @@ if (isset($_SESSION['language'])) {
         return $this->module[$key] ?? "[{$key}]";
     }
 
+    // Ermögliche mehrere language files zu nutzen ohne überschrieben zu werden //
+    public function addData(array $language_array): void
+    {
+        if (is_array($language_array)) {
+            $this->module = array_merge($this->module, $language_array);
+        }
+    }
+    //
+
     public function setLanguage(string $lang): void
     {
         $this->currentLanguage = $lang;
