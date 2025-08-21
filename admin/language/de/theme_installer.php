@@ -1,6 +1,7 @@
 <?php
+
 $language_array = array(
-    'title' => 'Theme-Verwaltung',
+    /*'title' => 'Theme-Verwaltung',
     'installed_themes' => 'Installierte Themes',
     'available_themes' => 'Verfügbare Themes',
     'install' => 'Installieren',
@@ -82,6 +83,17 @@ $language_array = array(
     // Section descriptions
     'installed_themes' => 'Installierte Themes',
     'available_themes' => 'Verfügbare Themes',
-    'no_themes_available' => 'Keine verfügbaren Themes gefunden.',
+    'no_themes_available' => 'Keine verfügbaren Themes gefunden.',*/
+
+
+    'theme_installer_headline' => 'Theme Installer',
+    'version' => 'Version',
+    'author_label' => 'Autor',
+    'no_download_available' => 'Kein Download verfügbar',
+    'download' => 'Download',
+    'install' => 'Installieren',
+    'installed' => 'Installiert',
+    'uninstall' => 'Deinstallieren',
+    'confirm_uninstall' => 'Wirklich deinstallieren?',
 );
 ?>

@@ -6,6 +6,20 @@ if (session_status() === PHP_SESSION_NONE) {
 use nexpell\LanguageService;
 use nexpell\SeoUrlHandler;
 
+// Prüfen, ob das Plugin Achievements existiert und einbinden
+// Pfad zum Plugin definieren
+$achievements_plugin_path = dirname(__FILE__) . '/../plugins/achievements/engine_achievements.php';
+$achievements_plugin_active = false; // Standardmäßig deaktiviert
+
+if (file_exists($achievements_plugin_path)) {
+    require_once $achievements_plugin_path;
+    // Prüfen, ob die Kernfunktion des Plugins existiert
+    if (function_exists('achievements_get_profile_widgets')) {
+        $achievements_plugin_active = true;
+    }
+}
+// Plugin Achievements END
+
 global $_database, $languageService;
 
 $lang = $languageService->detectLanguage();
@@ -23,7 +37,7 @@ $data_array_header = [
 ];
 echo $tpl->loadTemplate("profile", "head", $data_array_header);
 
-// userID aus GET oder Session (neu: prüfe 'userID' oder 'id')
+// userID aus GET oder Session
 if (isset($_GET['userID'])) {
     $userID = (int)$_GET['userID'];
 } elseif (isset($_GET['id'])) {
@@ -37,7 +51,7 @@ if ($userID === 0) {
     exit();
 }
 
-// user_profile laden
+// User-Daten laden
 $sql_users = "SELECT * FROM users WHERE userID = $userID LIMIT 1";
 $result_users = $_database->query($sql_users);
 if (!$result_users || $result_users->num_rows === 0) {
@@ -154,20 +168,30 @@ $edit_button = $is_own_profile
 
 $isLocked = isset($user_users['is_locked']) && (int)$user_users['is_locked'] === 1;
 
-#$last_activity = (!empty($last_visit_raw) && strtotime($last_visit_raw) !== false) ? strtotime($last_visit_raw) : 0;
-#$current_time = time();
-#$online_time = ($last_activity > 0 && $last_activity <= $current_time)
-#    ? floor(($current_time - $last_activity) / 3600) . " Stunden, " . floor((($current_time - $last_activity) % 3600) / 60) . " Minuten"
-#    : "Keine Aktivität";
+// Achievements Plugin-Daten verarbeiten oder Fallback verwenden
+if ($achievements_plugin_active) {
+    $processed_data = achievements_get_profile_widgets($userID);
+    
+    $user_points = $processed_data['total_points'];
+    $user_level = $processed_data['level'];
+    $level_progress = $processed_data['level_percent'];
+    $achievements_sidebar = $processed_data['achievements_sidebar_html'];
+    $achievements_tab_button = $processed_data['achievements_tab_button_html'];
+    $achievements_tab_content = $processed_data['achievements_tab_content_html'];
+    $user_posts = $processed_data['post_type_html']; 
 
-//////////////////////
+} else {
+    $achievements_sidebar = '';
+$achievements_tab_button = '';
+$achievements_tab_content = '';
+}
+// Achievements Plugin-Daten END
 
 $current_session_seconds = 0;
 $sum_seconds = 0;
 $is_online = false;
 
 // 1️⃣ Profil-User bestimmen: erst GET, dann SESSION
-// 1️⃣ Profil-User bestimmen
 if (!empty($_GET['userID'])) {
     $viewUserID = (int)$_GET['userID']; // Fremdes Profil
 } elseif (!empty($_GET['id'])) {
@@ -204,9 +228,7 @@ if ($viewUserID > 0) {
     $is_online = false;
 }
 
-
 // 3️⃣ Zeitformat-Funktion
-
 function formatTime($seconds) {
     global $languageService;
 
@@ -216,11 +238,6 @@ function formatTime($seconds) {
     return $h . " " . $languageService->get('hour') . ($h !== 1 ? $languageService->get('hours_suffix') : "") . ", " .
            $m . " " . $languageService->get('minute') . ($m !== 1 ? $languageService->get('minutes_suffix') : "");
 }
-
-
-
-
-
 
 if ($is_online): ?>
 <script>
@@ -250,11 +267,7 @@ function updateTimers() {
 
 setInterval(updateTimers, 1000);
 </script>
-<?php endif; ?>
-
-
-<?php
-
+<?php endif;
 
 //////////////////////////
 
@@ -325,30 +338,21 @@ $total_points = 0;
 $post_type = '';
 foreach ($counts as $type => $count) {
     $weight = $weights[$type] ?? 0;
-    //$single_points = $count * $weight;
     $single_points = $count;
     $total_points += $single_points;
     $post_type .= '<tr><td>' . htmlspecialchars($type) . '</td><td>' . $single_points . '</td></tr>';
 }
 
-#$total_points = 0;
-#$post_type = '';
-
 // Punkte berechnen
 foreach ($counts as $type => $count) {
     $weight = $weights[$type] ?? 0;
     $single_points = $count * $weight;
-    //echo "$type: $count × $weight = $single_points Punkte<br>";
     $total_points += $single_points;
 }
 
 // Level-Berechnung
-$level = floor($total_points / 100);         // z. B. 329 / 100 = 3
-$level_percent = $total_points % 100;        // 329 % 100 = 29
-
-//echo "<strong>Total Points:</strong> $total_points<br>";
-//echo "<strong>Level:</strong> $level<br>";
-//echo "<strong>Fortschritt im Level:</strong> $level_percent %<br>";
+$level = floor($total_points / 100); 
+$level_percent = $total_points % 100;
 
 if ($isLocked == 1 ) {
     $isrowLocked = '<div class="alert alert-danger d-flex align-items-center" role="alert">
@@ -394,6 +398,14 @@ $data_array = [
     'edit_button'     => $edit_button,
     'user_posts'      => $post_type,
     'isLocked'        => $isrowLocked ?? '',
+
+    // Achievements Plugin
+    'achievements_plugin_active' => $achievements_plugin_active,
+    'achievements_sidebar' => $achievements_sidebar,
+    'achievements_tab_button' => $achievements_tab_button,
+    'achievements_tab_content' => $achievements_tab_content,
+    'lang_tab_achievements'    => $languageService->get('tab_achievements'),
+
     // Sprachvariablen
     'lang_alt_profile_picture' => $languageService->get('alt_profile_picture'),
     'lang_points'              => $languageService->get('points'),

@@ -25,7 +25,7 @@ class ThemeUninstaller
         $theme_folder = $_database->real_escape_string($theme_folder);
 
         // Theme-Eintrag in DB löschen
-        safe_query("DELETE FROM themes_installed WHERE modulname = '" . $theme_folder . "'");
+        safe_query("DELETE FROM settings_themes_installed WHERE modulname = '" . $theme_folder . "'");
         $this->log[] = ['type' => 'info', 'message' => "Eintrag in der Datenbank gelöscht."];
     }
 

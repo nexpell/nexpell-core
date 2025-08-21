@@ -37,7 +37,7 @@ function getavatar($userID)
     "));
 
     // Username für Fallback-Avatar bestimmen
-    $username = !empty($ds['username']) ? $ds['username'] : 'User';
+    $username = !empty($ds['username']) ? $ds['username'] : 'Gelöschtes Mitglied';
 
     // Wenn Avatar vorhanden → zurückgeben
     if (!empty($ds['avatar'])) {

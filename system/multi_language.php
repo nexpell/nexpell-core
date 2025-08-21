@@ -32,7 +32,7 @@ class multiLanguage {
      * @param string $text Der mehrsprachige Text
      * @return string Der passende Textausschnitt
      */
-    public function getTextByLanguage($text) {
+    /*public function getTextByLanguage($text) {
         // Wenn keine Sprachmarkierungen im Text vorhanden sind, gib den Originaltext zurück
         if (empty($this->availableLanguages)) {
             return $text; // Hier wird der Originaltext immer zurückgegeben, wenn keine Sprach-Tags vorhanden sind
@@ -50,6 +50,23 @@ class multiLanguage {
         else {
             return $text;
         }
+    }*/
+
+    public function getTextByLanguage($text) {
+        // Verfügbare Sprachen aus dem Text erkennen
+        $this->detectLanguages($text);
+
+        // Wenn keine Sprachmarkierungen im Text vorhanden sind, gib den Originaltext zurück
+        if (empty($this->availableLanguages)) {
+            return $text;
+        }
+
+        // Prüfen, ob die gewählte Sprache verfügbar ist
+        if (in_array($this->language, $this->availableLanguages)) {
+            return $this->getTextByTag($this->language, $text);
+        } 
+        // Wenn keine Übersetzung für die aktuelle Sprache gefunden wird, gibt es den ersten verfügbaren Text zurück
+        return $this->getTextByTag($this->availableLanguages[0], $text);
     }
 
 

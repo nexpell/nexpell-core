@@ -1,19 +1,18 @@
 <?php
 
-use nexpell\LanguageService;
-
-// Session absichern
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (session_status() === PHP_SESSION_NONE) session_start();
+use nexpell\LanguageService;
+
+// Sprache setzen, falls nicht vorhanden
 $_SESSION['language'] = $_SESSION['language'] ?? 'de';
 
-// Initialisieren
-global $_database,$languageService;
+// LanguageService initialisieren
+global $languageService;
 $lang = $languageService->detectLanguage();
-$languageService = new LanguageService($_database);
+#$languageService = new LanguageService($_database);
 
 // Admin-Modul laden
 $languageService->readModule('theme_installer', true);
@@ -24,7 +23,9 @@ use nexpell\themeUninstaller;
 use nexpell\Plugininstaller;
 
 // Admin-Rechte prüfen
-#AccessControl::checkAdminAccess('ac_plugin_installer');
+AccessControl::checkAdminAccess('ac_plugin_installer');
+
+
 
 // Konfiguration
 $theme_dir = '../includes/themes/default/css/dist/';
@@ -167,54 +168,73 @@ foreach ($all_theme_names as $name) {
 }
 
 // HTML-Ausgabe
-echo '
-<div class="card">
+$cardsPerPage = 12; // Anzahl Karten pro Seite
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$totalThemes = count($themes_for_template);
+$totalPages = ceil($totalThemes / $cardsPerPage);
+$start = ($page - 1) * $cardsPerPage;
+$themesForCurrentPage = array_slice($themes_for_template, $start, $cardsPerPage);
+
+echo '<div class="card">
     <div class="card-header">' . $languageService->get('theme_installer') . '</div>
     <div class="card-body">
-        <div class="container py-5">
-        <h3>' . $languageService->get('theme_installer_headline') . '</h3>
-        <table class="table table-bordered table-striped bg-white shadow-sm">
-            <thead class="table-light">
-                <tr>
-                    <th width="14%">' . $languageService->get('theme_name') . '</th>
-                    <th>' . $languageService->get('theme_description') . '</th>
-                    <th width="6%">' . $languageService->get('theme_version') . '</th>
-                    <th width="14%">' . $languageService->get('theme_action') . '</th>
-                </tr>
-            </thead>
-            <tbody>';
+        <div class="container py-4">
+            <h3>' . $languageService->get('theme_installer_headline') . '</h3>
+            <div class="row gx-3 gy-2 my-0">
+';
 
-foreach ($themes_for_template as $theme) {
+foreach ($themesForCurrentPage as $theme) {
     $translate = new multiLanguage($lang);
-    $languages = $translate->detectLanguages($theme['description']);
     $description = $translate->getTextByLanguage($theme['description']);
-    $flags_html = '';
+    
+    $img = !empty($theme['name'])
+        ? 'https://update.nexpell.de/themes/screen/' . urlencode($theme['name']) . '.png'
+        : 'assets/default_theme_preview.png';
 
-    echo '<tr>
-        <td>' . htmlspecialchars($theme['name']) . '</td>
-        <td>' . $description . '</td>
-        <td>' . htmlspecialchars($theme['version']);
-    if ($theme['installed']) echo '<br><small class="text-muted">(' . htmlspecialchars($theme['installed_version']) . ')</small>';
-    echo '</td><td>';
-
+    echo '<div class="col-md-3 d-flex align-items-stretch mb-2">
+        <div class="card h-auto shadow-sm w-100">
+            <img src="' . $img . '" class="card-img-top" alt="' . htmlspecialchars($theme['name']) . ' Preview">
+            <div class="card-body d-flex flex-column border-top py-2 px-2">
+                <h5 class="card-title mb-2">' . htmlspecialchars($theme['name']) . '</h5>
+                <p class="card-text flex-grow-1 mb-2">' . $description . '</p>
+                <p class="text-muted small mb-2">
+                    ' . $languageService->get('version') . ': ' . htmlspecialchars($theme['version']);
     if ($theme['installed']) {
-        echo '<button class="btn btn-success btn-sm" disabled>' . $languageService->get('installed') . '</button> ';
+        echo ' / <small>(' . htmlspecialchars($theme['installed_version']) . ')</small>';
+    }
+    echo '</p>
+                <div class="mt-auto d-flex justify-content-between flex-wrap">';
+    
+    if ($theme['installed']) {
+        echo '<button class="btn btn-success" disabled>' . $languageService->get('installed') . '</button>';
         if ($theme['update']) {
-            echo '<a href="admincenter.php?site=theme_installer&update=' . urlencode($theme['modulname']) . '" class="btn btn-warning btn-sm">' . $languageService->get('update') . '</a> ';
+            echo ' <a href="admincenter.php?site=theme_installer&update=' . urlencode($theme['modulname']) . '" class="btn btn-warning">' . $languageService->get('update') . '</a>';
         }
-        echo '<a href="admincenter.php?site=theme_installer&uninstall=' . urlencode($theme['modulname']) . '" class="btn btn-danger btn-sm" onclick="return confirm(\'Wirklich deinstallieren?\');">' . $languageService->get('uninstall') . '</a>';
+        echo ' <a href="admincenter.php?site=theme_installer&uninstall=' . urlencode($theme['modulname']) . '" class="btn btn-danger" onclick="return confirm(\'' . $languageService->get('confirm_uninstall') . ''?\');">' . $languageService->get('uninstall') . '</a>';
     } else {
         if (!empty($theme['download']) && $theme['download'] !== 'DISABLED') {
-            echo '<a href="admincenter.php?site=theme_installer&install=' . urlencode($theme['modulname']) . '" class="btn btn-primary btn-sm">' . $languageService->get('install') . '</a>';
+            echo '<a href="admincenter.php?site=theme_installer&install=' . urlencode($theme['modulname']) . '" class="btn btn-primary">' . $languageService->get('install') . '</a>';
         } else {
-            echo '<span style="color: gray;">Kein Download verfügbar</span>';
+            echo '<span style="color: gray;">' . $languageService->get('no_download_available') . '</span>';
         }
     }
 
-    echo '</td></tr>';
+    echo '</div></div></div></div>';
 }
 
-echo '</tbody></table></div></div></div>';
+echo '</div>';
+
+if ($totalPages > 1) {
+    echo '<nav aria-label="Page navigation"><ul class="pagination justify-content-center mt-3">';
+    for ($i = 1; $i <= $totalPages; $i++) {
+        $active = $i === $page ? ' active' : '';
+        echo '<li class="page-item' . $active . '"><a class="page-link" href="?site=theme_installer&page=' . $i . '">' . $i . '</a></li>';
+    }
+    echo '</ul></nav>';
+}
+
+echo '</div></div></div>';
+
 
 /**
  * Lädt und entpackt das Theme-ZIP

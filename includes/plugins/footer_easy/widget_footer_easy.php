@@ -52,7 +52,7 @@ echo $tpl->loadTemplate("footer_easy", "content", $data_array, 'plugin');
 <script>
 // Heartbeat alle 60 Sekunden (hält User online solange Tab offen)
 setInterval(function() {
-    fetch('/system/heartbeat.php')
+    fetch('/../../system/heartbeat.php')
         .then(res => console.log("Heartbeat OK", res.status))
         .catch(err => console.error("Heartbeat error:", err));
 }, 60000);

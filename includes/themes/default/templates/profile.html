@@ -20,10 +20,15 @@
         <div class="col-md-4 text-center">
           <img src="{avatar}" class="img-fluid mb-3" width="150" alt="{lang_alt_profile_picture}">
           <h4>{username}</h4>
-          <span class="badge bg-primary">
-            <i class="bi bi-star-fill me-1"></i>{user_points} {lang_points}
-          </span>
-          <p class="text-muted mt-2">{user_role}</p>
+          <div class="mt-2 mb-2">
+            <span class="badge bg-primary">
+              <i class="bi bi-star-fill me-1"></i>{user_points} {lang_points}
+            </span>
+          </div>
+          {if achievements_plugin_active}
+            <div class="mt-2 mb-2">{achievements_sidebar}</div>
+          {endif}
+          <small class="text-muted">{user_role}</small>
 
           <!-- Level-Fortschritt -->
           <div class="my-2">
@@ -78,6 +83,9 @@
             <li class="nav-item" role="presentation">
               <button class="nav-link" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button" role="tab">{lang_tab_activity}</button>
             </li>
+            {if achievements_plugin_active}
+              {achievements_tab_button}
+            {endif}
           </ul>
 
           <div class="tab-content" id="profileTabContent">
@@ -87,17 +95,12 @@
               <table class="table table-sm">
                 <tr><th>{lang_about_firstname}</th><td>{user_name}</td></tr>
                 <tr><th>{lang_about_lastname}</th><td>{user_surname}</td></tr>
-
-
-
                 <tr><th>{lang_about_birthday}</th><td>{user_birthday}</td></tr>
                 <tr><th>{lang_about_age}</th><td>{user_age}</td></tr>
                 <tr><th>{lang_about_location}</th><td>{user_location}</td></tr>
                 <tr><th>{lang_about_gender}</th><td>{user_gender}</td></tr>
                 <tr><th>{lang_registered_since}</th><td>{register_date}</td></tr>
               </table>
-
-
 
               <h6 class="mt-3">{lang_about_text}</h6>
               <p>{user_about}</p>
@@ -135,20 +138,13 @@
                 </tbody>
               </table>
             </div>
+            {if achievements_plugin_active}
+              {achievements_tab_content}
+            {endif}
           </div>
         </div>
       </div>
     </div>
   </div>
 </div>
-
-<script>
-  // Bootstrap Tooltip aktivieren
-  document.addEventListener("DOMContentLoaded", function () {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
-  });
-</script>
 <!-- END -->
