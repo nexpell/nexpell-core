@@ -21,7 +21,7 @@ global $languageService;
 $languageService = new LanguageService($_database);
 $languageService->readPluginModule('seo');
 
-AccessControl::checkAdminAccess('seo');
+AccessControl::checkAdminAccess('ac_seo_meta');
 
 // Verfügbare Seiten (aus der Navigation)
 $availableSites = [];

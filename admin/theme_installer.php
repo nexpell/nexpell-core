@@ -210,7 +210,7 @@ foreach ($themesForCurrentPage as $theme) {
         if ($theme['update']) {
             echo ' <a href="admincenter.php?site=theme_installer&update=' . urlencode($theme['modulname']) . '" class="btn btn-warning">' . $languageService->get('update') . '</a>';
         }
-        echo ' <a href="admincenter.php?site=theme_installer&uninstall=' . urlencode($theme['modulname']) . '" class="btn btn-danger" onclick="return confirm(\'' . $languageService->get('confirm_uninstall') . ''?\');">' . $languageService->get('uninstall') . '</a>';
+        echo '<a href="admincenter.php?site=theme_installer&uninstall=' . urlencode($theme['modulname']) . '" class="btn btn-danger" onclick="return confirm(\'' . addslashes($languageService->get('confirm_uninstall')) . '\');">' . htmlspecialchars($languageService->get('uninstall')) . '</a>';
     } else {
         if (!empty($theme['download']) && $theme['download'] !== 'DISABLED') {
             echo '<a href="admincenter.php?site=theme_installer&install=' . urlencode($theme['modulname']) . '" class="btn btn-primary">' . $languageService->get('install') . '</a>';

@@ -86,6 +86,7 @@ $language_array = array(
     // Achievements
     'tab_achievements'   => 'Achievements',
     'achievements_title' => 'Achievements',
+    'no_achievements' => 'You have not earned any achievements yet.',
 
 );
 

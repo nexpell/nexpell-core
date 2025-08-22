@@ -81,11 +81,20 @@ function logSuspiciousAccess(string $reason = '', array $details = []): void {
 
 // Prüfen auf verdächtige Eingaben
 function detectSuspiciousInput(array $input): ?array {
-    $pattern = '/(\bAND\b|\bOR\b|;|\'|"|--|\/\*|\*\/|<|>)/i';
+    // SQL-Injection relevante Muster
+    $pattern = '/(\bUNION\b|\bSELECT\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b|\bDROP\b|--|#|\/\*|\*\/)/i';
+
+    // Felder, die Content enthalten dürfen (Forum, Kommentare etc.)
+    $whitelist = ['message', 'post_text', 'comment', 'content', 'body', 'description'];
 
     foreach ($input as $key => $value) {
         // Passwortfelder komplett ignorieren
         if (stripos($key, 'pass') !== false) {
+            continue;
+        }
+
+        // Content-Felder überspringen
+        if (in_array(strtolower($key), $whitelist)) {
             continue;
         }
 
@@ -124,8 +133,6 @@ $blocked = array_filter($blocked, function($b) use ($now) {
 // zurückschreiben
 file_put_contents($blockfile, json_encode(array_values($blocked), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-
-
 // Prüfen, ob IP aktuell blockiert ist
 foreach ($blocked as $b) {
     if ($b['ip'] === $ip) {
@@ -138,8 +145,6 @@ foreach ($blocked as $b) {
         exit;
     }
 }
-
-
 
 // Funktion zum Sperren einer IP
 function blockIP($ip, $reason = '', $level = 'warning', $duration = 3600) {
@@ -177,6 +182,7 @@ foreach (['GET' => $_GET, 'POST' => $_POST] as $method => $data) {
         exit;
     }
 }
+
 
 
 
