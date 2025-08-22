@@ -52,6 +52,7 @@ $language_array = array(
     'imprint_info' => '<small>
             <img src="/images/logo.png" alt="nexpell Logo" style="height:25px; vertical-align:middle;">&nbsp;
             Diese Website verwendet <strong>nexpell</strong> – ein modernes, quelloffenes Content-Management-System der nächsten Generation.<br>
+            Core-Version: <strong>{core_version}</strong><br>
             Die Software basiert auf PHP 8.1 oder höher, MySQL 8 bzw. MariaDB 10 und nutzt Bootstrap 5 für das Frontend-Layout.<br>
             Weitere Informationen und Dokumentation findest du im <a href="https://www.nexpell.de/wiki" target="_blank" rel="noopener">nexpell Wiki</a>.<br>
             Quellcode und Download: <a href="https://www.nexpell.de" target="_blank" rel="noopener">www.nexpell.de</a><br>

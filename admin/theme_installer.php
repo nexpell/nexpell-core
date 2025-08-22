@@ -10,9 +10,8 @@ use nexpell\LanguageService;
 $_SESSION['language'] = $_SESSION['language'] ?? 'de';
 
 // LanguageService initialisieren
-global $languageService;
-$lang = $languageService->detectLanguage();
-#$languageService = new LanguageService($_database);
+global $languageService, $_database;
+$languageService = new LanguageService($_database);
 
 // Admin-Modul laden
 $languageService->readModule('theme_installer', true);
@@ -24,7 +23,6 @@ use nexpell\Plugininstaller;
 
 // Admin-Rechte prüfen
 AccessControl::checkAdminAccess('ac_plugin_installer');
-
 
 
 // Konfiguration
@@ -51,7 +49,7 @@ if (isset($_GET['install']) || isset($_GET['update']) || isset($_GET['uninstall'
 
     if ($theme_action === 'uninstall') {
         if (empty($theme_folder) || !preg_match('/^[a-z0-9_\-]+$/i', $theme_folder)) {
-            echo '<div class="alert alert-danger">Ungültiger Theme-Ordner.</div>';
+            echo '<div class="alert alert-danger">' . $languageService->get('invalid_theme_folder') . '</div>';
             exit;
         }
 
@@ -66,14 +64,14 @@ if (isset($_GET['install']) || isset($_GET['update']) || isset($_GET['uninstall'
     }
 
     if (!$theme_info) {
-        echo '<div class="alert alert-danger">Theme nicht gefunden: ' . htmlspecialchars($theme_folder) . '</div>';
+        echo '<div class="alert alert-danger">' . $languageService->get('theme_not_found') . ' ' . htmlspecialchars($theme_folder) . '</div>';
         exit;
     }
 
     $local_theme_folder = $theme_dir . $theme_folder;
 
     if (!download_theme_files($theme_folder, $local_theme_folder, $theme_path)) {
-        echo '<div class="alert alert-danger">Download fehlgeschlagen.</div>';
+        echo '<div class="alert alert-danger">' . $languageService->get('download_failed') . '</div>';
         exit;
     }
 
@@ -93,10 +91,10 @@ if (isset($_GET['install']) || isset($_GET['update']) || isset($_GET['uninstall'
     if ($theme_action === 'install') {
         safe_query("INSERT INTO settings_themes_installed (name, modulname, description, version, author, url, folder, installed_date)
                     VALUES ('$name','$modulname','$description','$version','$author','$url','$folder',NOW())");
-        echo '<div class="alert alert-success">Theme <strong>' . $name . '</strong> wurde installiert.</div>';
+        echo '<div class="alert alert-success">Theme <strong>' . $name . '</strong> ' . $languageService->get('was_installed') . '</div>';
     } else {
         safe_query("UPDATE settings_themes_installed SET version = '$version', installed_date = NOW() WHERE modulname = '$modulname'");
-        echo '<div class="alert alert-success">Theme <strong>' . $name . '</strong> wurde aktualisiert.</div>';
+        echo '<div class="alert alert-success">Theme <strong>' . $name . '</strong> ' . $languageService->get('was_updated') . '</div>';
     }
 
     echo '<script>setTimeout(function() { window.location.href = "admincenter.php?site=theme_installer"; }, 3000);</script>';
@@ -184,7 +182,7 @@ echo '<div class="card">
 ';
 
 foreach ($themesForCurrentPage as $theme) {
-    $translate = new multiLanguage($lang);
+    $translate = new multiLanguage($_SESSION['language']);
     $description = $translate->getTextByLanguage($theme['description']);
     
     $img = !empty($theme['name'])
@@ -321,4 +319,3 @@ function deleteFolder($folderPath) {
 
     return rmdir($folderPath);
 }
-
