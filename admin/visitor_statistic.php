@@ -117,9 +117,14 @@ while ($row = $result_daily->fetch_assoc()) {
 }
 ?>
 
-<div class="container-fluid py-4">
+<div class="card">
+    <div class="card-header">
+        <?= $languageService->get('visitor_statistics'); ?>
+    </div>
+    <div class="card-body">
+        <div class="container py-4">
 
-    <h1 class="mb-4 text-center"><?= $languageService->get('visitor_statistics'); ?></h1>
+    <h5 class="mb-4 text-center"><?= $languageService->get('visitor_statistics'); ?></h5>
 
     <div class="row g-4 mb-5 text-white text-center">
         <div class="col-md-3">
@@ -235,6 +240,8 @@ while ($row = $result_daily->fetch_assoc()) {
         </div>
     </div>
 </div>
+
+</div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>

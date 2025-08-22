@@ -1,2 +1,2 @@
 <?php
-return '2.0.5'; // aktuelle Core-Version
+return '1.0.0'; // aktuelle Core-Version
