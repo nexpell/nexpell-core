@@ -29,7 +29,7 @@ if (isset($_POST['ws_user']) && isset($_POST['password'])) {
         $_SESSION['role'] = $row['role'];
 
         // Optional: Cookie für längere Login-Dauer setzen
-        setcookie('ws_session', 'accepted', time() + 3600 * 24 * 30, '/');
+        setcookie('nexpell_session', 'accepted', time() + 3600 * 24 * 30, '/');
 
         // Weiterleitung zum Admincenter
         header('Location: admin/admincenter.php');

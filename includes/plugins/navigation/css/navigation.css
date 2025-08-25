@@ -36,3 +36,16 @@
 .navbar-colored .nav-link {
   color: #fff;
 }
+
+#total-unread-badge {
+    min-width: 1.5rem;          /* Mindestbreite für runden Kreis bei 1-2 Zeichen */
+    height: 1.5rem;             /* Höhe = Breite für Kreis */
+    padding: 0 0.4rem;          /* bei 2-3 Zeichen wird die Badge breiter */
+    
+    align-items: center;        /* vertikal zentriert */
+    justify-content: center;    /* horizontal zentriert */
+    border-radius: 50%;         /* rund */
+    
+    line-height: 1.5rem;             /* verhindert, dass Text oben sitzt */
+    white-space: nowrap;         /* kein Zeilenumbruch */
+}

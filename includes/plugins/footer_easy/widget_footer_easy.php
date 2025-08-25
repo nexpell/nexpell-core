@@ -3,9 +3,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-#$pm = new plugin_manager();
-#$plugin_language = $pm->plugin_language("footer_easy", $plugin_path);
-
 use nexpell\LanguageService;
 use nexpell\SeoUrlHandler;
 
@@ -49,29 +46,3 @@ $data_array = array_merge([
 // ausgeben
 echo $tpl->loadTemplate("footer_easy", "content", $data_array, 'plugin');
 ?>
-<script>
-// Heartbeat alle 60 Sekunden (hält User online solange Tab offen)
-setInterval(function() {
-    fetch('/../../system/heartbeat.php')
-        .then(res => console.log("Heartbeat OK", res.status))
-        .catch(err => console.error("Heartbeat error:", err));
-}, 60000);
-
-// Sofort-Logout beim Schließen des Tabs/Fensters
-let isLoggingOut = false;
-
-// Logout-Link markieren
-document.querySelector('#logoutLink').addEventListener('click', function() {
-    isLoggingOut = true;
-});
-
-// Nur bei echtem Tab-/Fenster-Schließen logout senden
-window.addEventListener("beforeunload", function () {
-    if (!isLoggingOut) {
-        navigator.sendBeacon(
-            "/includes/modules/logout.php",
-            new Blob([], { type: "application/x-www-form-urlencoded" })
-        );
-    }
-});
-</script>

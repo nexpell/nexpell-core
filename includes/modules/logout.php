@@ -5,6 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . "/../../system/config.inc.php"; // <--- DB einbinden
 global $_database;
 
 if (!empty($_SESSION['userID'])) {
