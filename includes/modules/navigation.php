@@ -167,20 +167,37 @@ if ($loggedin) {
             '">&nbsp;' . $languageService->module['log_off'] . '</a>
     </li>';
 
-    $modulname = 'messenger';
-    $result = $_database->query("SELECT COUNT(*) AS installed FROM settings_plugins_installed WHERE modulname = '$modulname'");
-    $row = $result->fetch_assoc();
+$modulname = 'messenger';
+$result = $_database->query("SELECT COUNT(*) AS installed FROM settings_plugins_installed WHERE modulname = '$modulname'");
+$row = $result->fetch_assoc();
 
-    if ($row['installed'] > 0) {
-        // Plugin ist installiert – HTML-Link ausgeben
-        $messenger = '<a class="nav-link messenger-link" href="index.php?site=messenger">
-  <i id="mail-icon" class="bi bi-envelope-dash"></i>
-  <span id="total-unread-badge">0</span>
-</a>
-';
-    } else {
-        $messenger = ''; // oder gar nichts ausgeben
-    }
+$messenger = ''; // Standard: nichts ausgeben
+
+if ($row['installed'] > 0) {
+    $userID = (int)$_SESSION['userID'];
+
+    // Anzahl ungelesener Nachrichten abfragen
+    $msgResult = $_database->query("
+        SELECT COUNT(*) AS unread 
+        FROM plugins_messages 
+        WHERE receiver_id = $userID 
+          AND is_read = 0
+    ");
+    $msgRow = $msgResult->fetch_assoc();
+    $unreadCount = (int) $msgRow['unread'];
+
+    // Badge immer erzeugen, aber nur sichtbar, wenn > 0
+    $badgeStyle = $unreadCount > 0 ? 'inline-block' : 'none';
+    $badgeContent = $unreadCount > 0 ? $unreadCount : '';
+
+    // Messenger-Link ausgeben
+    $messenger = '<a class="nav-link messenger-link" href="index.php?site=messenger">
+                      <i id="mail-icon" class="bi bi-envelope-dash"></i>
+                      <span id="total-unread-badge" style="display:' . $badgeStyle . ';">' 
+                          . $badgeContent . '</span>
+                  </a>';
+}
+
 
     $data_array = [
         'modulepath' => substr(MODULE, 0, -1),

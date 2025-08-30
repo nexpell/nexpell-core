@@ -72,25 +72,37 @@
 })()
 
 // Prüfe, ob der User angemeldet ist
-const userID = window.NEXP_USER_ID || 0; // z.B. vom Backend per JS gesetzt
+async function updateMailBadge() {
+    try {
+        const res = await fetch('includes/plugins/messenger/get_total_unread_count.php');
+        const data = await res.json();
 
-if (userID > 0) {
-    function updateUnreadBadge() {
-        fetch('/includes/plugins/messenger/get_total_unread_count.php')
-            .then(response => response.json())
-            .then(data => {
-                const badge = document.getElementById('total-unread-badge');
-                if (!badge) return;
-                
-                badge.textContent = data.total_unread;
-                badge.style.display = data.total_unread > 0 ? 'inline-block' : 'none';
-            })
-            .catch(err => console.error('Fehler beim Laden der Nachrichten:', err));
+        const badge = document.getElementById('total-unread-badge');
+        const icon = document.getElementById('mail-icon');
+
+        const unread = data.total_unread;
+
+        // Badge aktualisieren
+        if (unread > 0) {
+            badge.textContent = unread > 99 ? '99+' : unread;
+            badge.style.display = 'inline-block'; // nur sichtbar wenn >0
+            icon.classList.remove('bi-envelope-dash');
+            icon.classList.add('bi-envelope-check');
+        } else {
+            badge.style.display = 'none';           // unsichtbar bei 0
+            icon.classList.remove('bi-envelope-check');
+            icon.classList.add('bi-envelope-dash');
+        }
+
+    } catch (err) {
+        console.error("Fehler beim Laden der Mail-Badge:", err);
     }
-
-    // Direkt beim Laden der Seite aufrufen
-    updateUnreadBadge();
-
-    // Optional: alle 30 Sekunden aktualisieren
-    setInterval(updateUnreadBadge, 30000);
 }
+
+// Direkt beim Laden und alle 30 Sekunden
+document.addEventListener('DOMContentLoaded', () => {
+    updateMailBadge();
+    setInterval(updateMailBadge, 30000);
+});
+
+
