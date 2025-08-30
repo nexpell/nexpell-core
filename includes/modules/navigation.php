@@ -1,24 +1,15 @@
 <?php
 
-use nexpell\LanguageService;
-use nexpell\SeoUrlHandler;
-
-
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+use nexpell\LanguageService;
+use nexpell\SeoUrlHandler;
+
 global $languageService, $_database, $tpl;
 
 $lang = $languageService->detectLanguage();
-
-
-
-// SEO-Link-Erzeugung mit Dummy-Dateien
-#function convertToSeoUrl(string $site, string $lang): string {
-#    return "/{$lang}/{$site}";
-#}
 
 // Verfügbare Sprachen aus DB laden
 $availableLangs = [];
@@ -31,8 +22,6 @@ $languageService->readModule('index');
 
 $loggedin = isset($_SESSION['userID']) && $_SESSION['userID'] > 0;
 $userID = $_SESSION['userID'] ?? 0;
-
-
 
 // Funktion zur Navigation ohne Dropdown
 function navigation_nodropdown($default_url) {
@@ -116,13 +105,13 @@ try {
                     $sub_url = $rox['url'];
 
                     if (strpos($sub_url, 'index.php?site=') === 0) {
-    // URL ist bereits im Query-Format, einfach in SEO-URL umwandeln
-    $sub_url = SeoUrlHandler::convertToSeoUrl($sub_url);
-} elseif (substr($sub_url, -4) === '.php' && !str_starts_with($sub_url, 'http')) {
-    // URL endet auf ".php" und ist kein externer Link,
-    // z.B. "forum.php" -> "index.php?site=forum" -> SEO-URL
-    $sub_url = SeoUrlHandler::convertToSeoUrl('index.php?site=' . basename($sub_url, '.php'));
-}
+                        // URL ist bereits im Query-Format, einfach in SEO-URL umwandeln
+                        $sub_url = SeoUrlHandler::convertToSeoUrl($sub_url);
+                    } elseif (substr($sub_url, -4) === '.php' && !str_starts_with($sub_url, 'http')) {
+                        // URL endet auf ".php" und ist kein externer Link,
+                        // z.B. "forum.php" -> "index.php?site=forum" -> SEO-URL
+                        $sub_url = SeoUrlHandler::convertToSeoUrl('index.php?site=' . basename($sub_url, '.php'));
+                    }
 
                     $target = '';
                     if (strpos($sub_url, 'http://') === 0 || strpos($sub_url, 'https://') === 0) {
@@ -178,27 +167,37 @@ if ($loggedin) {
             '">&nbsp;' . $languageService->module['log_off'] . '</a>
     </li>';
 
+    $modulname = 'messenger';
+    $result = $_database->query("SELECT COUNT(*) AS installed FROM settings_plugins_installed WHERE modulname = '$modulname'");
+    $row = $result->fetch_assoc();
 
-$data_array = [
-    'modulepath' => substr(MODULE, 0, -1),
-    //'userID' => $userID,
-    'l_avatar' => $l_avatar,
-    'nickname' => getusername($userID),
-    'profile' => $profile,
-    'dashboard' => $dashboard,
-    'logout' => $logout,
-    //'lang_log_off' => $languageService->module['log_off'] ?? 'Abmelden',
-    'lang_overview' => $languageService->module['overview'] ?? 'Übersicht',
-    //'to_profil' => $languageService->module['to_profil'] ?? 'Zum Profil',
-    //'lang_edit_profile' => $languageService->module['edit_profile'] ?? 'Profil bearbeiten',
-    'my_account' => $languageService->module['my_account'] ?? 'Mein Konto',
-];
+    if ($row['installed'] > 0) {
+        // Plugin ist installiert – HTML-Link ausgeben
+        $messenger = '<a class="nav-link messenger-link" href="index.php?site=messenger">
+  <i id="mail-icon" class="bi bi-envelope-dash"></i>
+  <span id="total-unread-badge">0</span>
+</a>
+';
+    } else {
+        $messenger = ''; // oder gar nichts ausgeben
+    }
+
+    $data_array = [
+        'modulepath' => substr(MODULE, 0, -1),
+        'l_avatar' => $l_avatar,
+        'nickname' => getusername($userID),
+        'profile' => $profile,
+        'dashboard' => $dashboard,
+        'logout' => $logout,
+        'messenger' => $messenger,
+        'lang_overview' => $languageService->module['overview'] ?? 'Übersicht',
+        'my_account' => $languageService->module['my_account'] ?? 'Mein Konto',
+    ];
 
     echo $tpl->loadTemplate("navigation", "login_loggedin", $data_array, 'theme');
 } else {
 
     $login = '<li><a class="nav-link" href="' . htmlspecialchars(SeoUrlHandler::convertToSeoUrl('index.php?site=login')) . '">' . $languageService->module['login'] . '</a></li>';
-
 
     $data_array = [
         'modulepath' => substr(MODULE, 0, -1),

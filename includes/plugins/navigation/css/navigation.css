@@ -26,8 +26,6 @@
   transition: color 0.3s ease;
 }
 
-
-
 .navbar-colored {
   background-color: var(--bs-primary) !important;
   box-shadow: 0 2px 10px rgba(0,0,0,0.2);
@@ -37,15 +35,3 @@
   color: #fff;
 }
 
-#total-unread-badge {
-    min-width: 1.5rem;          /* Mindestbreite für runden Kreis bei 1-2 Zeichen */
-    height: 1.5rem;             /* Höhe = Breite für Kreis */
-    padding: 0 0.4rem;          /* bei 2-3 Zeichen wird die Badge breiter */
-    
-    align-items: center;        /* vertikal zentriert */
-    justify-content: center;    /* horizontal zentriert */
-    border-radius: 50%;         /* rund */
-    font-size: 0.75rem;
-    line-height: 1.5rem;             /* verhindert, dass Text oben sitzt */
-    white-space: nowrap;         /* kein Zeilenumbruch */
-}
