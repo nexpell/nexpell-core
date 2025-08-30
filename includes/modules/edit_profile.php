@@ -26,173 +26,120 @@ $data_array = [
 echo $tpl->loadTemplate("edit_profiles", "head", $data_array, 'theme');
 
 
+
+
 $userID = $_SESSION['userID'] ?? null;
-if (!$userID) {
-    die('Nicht eingeloggt.');
-}
-
-/*
-if (isset($_GET['username']) && !empty($_GET['username'])) {
-    $username = $_GET['username'];
-
-    $stmt = $_database->prepare("SELECT userID FROM users WHERE username = ?");
-    $stmt->bind_param('s', $username);
-    $stmt->execute();
-    $stmt->bind_result($userID);
-    if (!$stmt->fetch()) {
-        http_response_code(404);
-        echo "Benutzer nicht gefunden.";
-        exit();
-    }
-    $stmt->close();
-} else {
-    // Falls es über userID läuft oder Session, hier fallback
-    $userID = $_SESSION['userID'] ?? 0;
-    if ($userID === 0) {
-        echo "Kein Benutzer angegeben.";
-        exit();
-    }
-}
-*/
+if (!$userID) die('Nicht eingeloggt.');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $firstname = $_POST['firstname'] ?? '';
-    $lastname = $_POST['lastname'] ?? '';
-    $location = $_POST['location'] ?? '';
-    $about_me = $_POST['about_me'] ?? '';
-    $birthday = $_POST['birthday'] ?? '';
-    $gender = $_POST['gender'] ?? '';
-    $signatur = $_POST['signatur'] ?? '';
-    $twitter = $_POST['twitter'] ?? '';
-    $facebook = $_POST['facebook'] ?? '';
-    $website = $_POST['website'] ?? '';
-    $github = $_POST['github'] ?? '';
-    $instagram = $_POST['instagram'] ?? '';
+    // POST-Daten holen
+    $firstname = escape($_POST['firstname'] ?? '');
+    $lastname  = escape($_POST['lastname'] ?? '');
+    $location  = escape($_POST['location'] ?? '');
+    $about_me  = escape($_POST['about_me'] ?? '');
+    $birthday  = escape($_POST['birthday'] ?? '');
+    $gender    = escape($_POST['gender'] ?? '');
+    $signatur  = escape($_POST['signatur'] ?? '');
+    $twitter   = escape($_POST['twitter'] ?? '');
+    $facebook  = escape($_POST['facebook'] ?? '');
+    $website   = escape($_POST['website'] ?? '');
+    $github    = escape($_POST['github'] ?? '');
+    $instagram = escape($_POST['instagram'] ?? '');
 
-    // Neues Feld für zugeschnittenes Bild
     $croppedAvatar = $_POST['croppedAvatar'] ?? null;
     $avatar_url = null;
-
     $dark_mode = isset($_POST['dark_mode']) ? 1 : 0;
     $email_notifications = isset($_POST['email_notifications']) ? 1 : 0;
 
-    if ($croppedAvatar) {
-        // Base64-Daten parsen (erwartet data:image/png;base64,...)
-        if (preg_match('/^data:image\/(\w+);base64,/', $croppedAvatar, $type)) {
-            $data = substr($croppedAvatar, strpos($croppedAvatar, ',') + 1);
-            $data = base64_decode($data);
-            if ($data === false) {
-                die('Base64-Dekodierung fehlgeschlagen.');
-            }
+    // Avatar speichern
+    if ($croppedAvatar && preg_match('/^data:image\/(\w+);base64,/', $croppedAvatar, $type)) {
+        $data = base64_decode(substr($croppedAvatar, strpos($croppedAvatar, ',') + 1));
+        if ($data !== false) {
             $ext = strtolower($type[1]) === 'jpeg' ? 'jpg' : $type[1];
             $uploadDir = 'images/avatars/';
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
             $avatarFileName = "avatar_user{$userID}_" . time() . '.' . $ext;
             $avatarPath = $uploadDir . $avatarFileName;
-            if (file_put_contents($avatarPath, $data) === false) {
-                die('Speichern des zugeschnittenen Bildes fehlgeschlagen.');
-            }
+            file_put_contents($avatarPath, $data);
             $avatar_url = $avatarPath;
-        } else {
-            die('Ungültiges Bildformat.');
         }
-    } else if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
-        // Falls noch altes Uploadverfahren benutzt wird (Backup)
-        $fileTmpPath = $_FILES['avatar']['tmp_name'];
-        $fileName = basename($_FILES['avatar']['name']);
-        $fileType = mime_content_type($fileTmpPath);
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        if (!in_array($fileType, $allowedTypes)) {
-            die('Ungültiger Dateityp.');
-        }
-        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-        $ext = pathinfo($fileName, PATHINFO_EXTENSION);
-        $newName = "avatar_user{$userID}_" . time() . '.' . $ext;
-        $avatarPath = $uploadDir . $newName;
-        if (!move_uploaded_file($fileTmpPath, $avatarPath)) {
-            die('Upload fehlgeschlagen.');
-        }
-        $avatar_url = $avatarPath;
     }
 
-    $result = $_database->query("SELECT userID FROM user_profiles WHERE userID = $userID");
+    // ----------------------------
+    // user_profiles
+    // ----------------------------
+    $columns = ['firstname','lastname','location','about_me','birthday','gender','signatur'];
+    $values = [$firstname,$lastname,$location,$about_me,$birthday,$gender,$signatur];
+    $types = str_repeat('s', count($columns));
 
-if ($result->num_rows > 0) {
-    $query = "UPDATE user_profiles SET 
-        firstname = '$firstname',
-        lastname = '$lastname',
-        location = '$location',
-        about_me = '$about_me',
-        birthday = '$birthday',
-        gender = '$gender',
-        signatur = '$signatur'";
-    
     if ($avatar_url) {
-        $query .= ", avatar = '$avatar_url'";
+        $columns[] = 'avatar';
+        $values[] = $avatar_url;
+        $types .= 's';
     }
 
-    $query .= " WHERE userID = $userID";
-} else {
-    $columns = "userID, firstname, lastname, location, about_me, birthday, gender, signatur";
-    $values  = "$userID, '$firstname', '$lastname', '$location', '$about_me', '$birthday', '$gender', '$signatur'";
-    
-    if ($avatar_url) {
-        $columns .= ", avatar";
-        $values  .= ", '$avatar_url'";
-    }
+    $stmt = $_database->prepare(
+        "INSERT INTO user_profiles (userID,".implode(',', $columns).") VALUES (?,".str_repeat('?,', count($columns)-1)."?) 
+        ON DUPLICATE KEY UPDATE ".implode('=?,', $columns).'=?'
+    );
+    $stmt->bind_param('i'.$types.$types, $userID, ...$values, ...$values);
+    $stmt->execute();
+    $stmt->close();
 
-    $query = "INSERT INTO user_profiles ($columns) VALUES ($values)";
-}
+    // ----------------------------
+    // user_socials
+    // ----------------------------
+    $stmt = $_database->prepare("
+        INSERT INTO user_socials (userID, twitter, facebook, website, github, instagram) 
+        VALUES (?, ?, ?, ?, ?, ?) 
+        ON DUPLICATE KEY UPDATE
+            twitter = VALUES(twitter),
+            facebook = VALUES(facebook),
+            website = VALUES(website),
+            github = VALUES(github),
+            instagram = VALUES(instagram)
+    ");
+    $stmt->bind_param("isssss", $userID, $twitter, $facebook, $website, $github, $instagram);
+    $stmt->execute();
+    $stmt->close();
 
-$_database->query($query);
-
-    $result = $_database->query("SELECT userID FROM user_socials WHERE userID = $userID");
-    if ($result->num_rows > 0) {
-        $_database->query("UPDATE user_socials SET 
-            instagram = '$instagram',
-            github = '$github',
-            twitter = '$twitter',
-            facebook = '$facebook',
-            website = '$website'
-            WHERE userID = $userID");
-    } else {
-        $_database->query("INSERT INTO user_socials (userID, twitter, facebook, website, github, instagram) 
-            VALUES ($userID, '$twitter', '$facebook', '$website', '$github', '$instagram')");
-    }
-
-    $result = $_database->query("SELECT userID FROM user_settings WHERE userID = $userID");
-    if ($result->num_rows > 0) {
-        $_database->query("UPDATE user_settings SET 
-            dark_mode = $dark_mode, 
-            email_notifications = $email_notifications 
-            WHERE userID = $userID");
-    } else {
-        $_database->query("INSERT INTO user_settings (userID, dark_mode, email_notifications) 
-            VALUES ($userID, $dark_mode, $email_notifications)");
-    }
+    // ----------------------------
+    // user_settings
+    // ----------------------------
+    $stmt = $_database->prepare("
+        INSERT INTO user_settings (userID, dark_mode, email_notifications) 
+        VALUES (?, ?, ?) 
+        ON DUPLICATE KEY UPDATE 
+            dark_mode=VALUES(dark_mode),
+            email_notifications=VALUES(email_notifications)
+    ");
+    $stmt->bind_param("iii", $userID, $dark_mode, $email_notifications);
+    $stmt->execute();
+    $stmt->close();
 
     header("Location: " . SeoUrlHandler::convertToSeoUrl("index.php?site=profile&userID=$userID"));
     exit;
 }
 
+// ----------------------------
+// Werte für Template laden
+// ----------------------------
 $firstname = $lastname = $location = $about_me = $avatar = $birthday = $gender = $signatur = '';
 $twitter = $facebook = $website = $github = $instagram = '';
 $dark_mode = $email_notifications = 0;
 
-$result = $_database->query("SELECT firstname, lastname, location, about_me, avatar, birthday, gender, signatur FROM user_profiles WHERE userID = $userID");
-if ($row = $result->fetch_assoc()) {
+if ($row = $_database->query("SELECT * FROM user_profiles WHERE userID = $userID")->fetch_assoc()) {
     extract($row);
 }
 
-$result = $_database->query("SELECT twitter, facebook, website, github, instagram FROM user_socials WHERE userID = $userID");
-if ($row = $result->fetch_assoc()) {
+if ($row = $_database->query("SELECT * FROM user_socials WHERE userID = $userID")->fetch_assoc()) {
     extract($row);
 }
 
-$result = $_database->query("SELECT dark_mode, email_notifications FROM user_settings WHERE userID = $userID");
-if ($row = $result->fetch_assoc()) {
+if ($row = $_database->query("SELECT * FROM user_settings WHERE userID = $userID")->fetch_assoc()) {
     extract($row);
 }
+
 $gender = trim($gender ?? '');
 
 $gender_options = [

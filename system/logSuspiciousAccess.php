@@ -191,13 +191,14 @@ foreach (['GET' => $_GET, 'POST' => $_POST] as $method => $data) {
 // ==========================
 
 // Optional: Whitelist für erlaubte Domains   muss ich noch mal verfeinern!!!
-$allowed_domains = [
+//Blockiert das Profil beim eingen von URL, Sperre sollte man nur bei bestimmten Seiten mit einbauen (Kommentare zB)
+/*$allowed_domains = [
     // Eigene Seite
     'nexpell.de',
     'www.nexpell.de',
 
     // Social Media
-    /*'facebook.com',
+    'facebook.com',
     'www.facebook.com',
     'twitter.com',
     'www.twitter.com',
@@ -219,7 +220,7 @@ $allowed_domains = [
     'discord.com',
     'www.discord.com',
     'github.com',
-    'www.github.com'*/
+    'www.github.com'
 ];
 
 
@@ -262,7 +263,7 @@ checkInputForUrls($_POST, 'POST');
 $raw = file_get_contents('php://input');
 if ($raw && $json = json_decode($raw, true)) {
     checkInputForUrls($json, 'JSON');
-}
+}*/
 
 
 // Ausgabe-Puffer freigeben

@@ -45,4 +45,4 @@ $data_array = array_merge([
 
 // ausgeben
 echo $tpl->loadTemplate("footer_easy", "content", $data_array, 'plugin');
-?>
+

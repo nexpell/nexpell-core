@@ -76,7 +76,6 @@ echo '<pre>';
 print_r($_GET);
 echo '</pre>';*/
 
-
 // Header-Kompatibilität
 header('X-UA-Compatible: IE=edge');
 ?>
@@ -116,8 +115,6 @@ header('X-UA-Compatible: IE=edge');
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="format-detection" content="telephone=no">
 
-    <meta name="mobile-web-app-capable" content="yes">
-
     <link rel="SHORTCUT ICON" href="./includes/themes/<?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/images/favicon.ico">
     <base href="/">
 
@@ -131,7 +128,6 @@ header('X-UA-Compatible: IE=edge');
     <?= $plugin_loadheadfile_widget_css ?? '' ?>
     <link rel="stylesheet" href='/includes/plugins/footer_easy/css/footer_easy.css'>
     <link rel="stylesheet" href="./includes/themes/<?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/css/stylesheet.css" />
-
 </head>
 
 <body>
@@ -213,37 +209,14 @@ header('X-UA-Compatible: IE=edge');
 <?= $plugin_loadheadfile_widget_js ?? '' ?>
 <?= '<!--Plugin & Widget js END-->' . PHP_EOL ?>
 
-
+<!-- Cookie Consent -->
 <!-- Cookie Consent -->
 <div id="cookie-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 9998; display: none;"></div>
 <?php include 'cookie-consent.php'; ?>
 <script src="./components/ckeditor/ckeditor.js"></script>
 <script src="./components/ckeditor/config.js"></script>
-
-<!-- DataTables Sprache -->
-<script>
-    const LangDataTables = '<?= htmlspecialchars($currentLang, ENT_QUOTES, 'UTF-8'); ?>';
-</script>
-
-<!-- Bootstrap Form Validation -->
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    'use strict';
-    var forms = document.querySelectorAll('.needs-validation');
-    if (!forms || forms.length === 0) return; // Keine Formulare vorhanden
-
-    Array.prototype.slice.call(forms).forEach(function (form) {
-        form.addEventListener('submit', function (event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add('was-validated');
-        }, false);
-    });
-});
-</script>
-
+<script src="/includes/plugins/navigation/js/navigation.js"></script>
+<script src="/includes/themes/default/js/global.js"></script>
 <script src="/includes/plugins/footer_easy/js/footer_easy.js"></script>
 </body>
 </html>

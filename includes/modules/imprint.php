@@ -50,21 +50,8 @@ if ($type === 'association') {
     $name_label = $languageService->module['name_label'] ?? 'Name';
 }
 
-$core_version_file = __DIR__ . '/system/version.php';
-
-if (!file_exists($core_version_file)) {
-    // Alternative: absolute Pfadangabe vom Projektstamm
-    $core_version_file = $_SERVER['DOCUMENT_ROOT'] . '/system/version.php';
-}
-
-$core_version = file_exists($core_version_file) ? include $core_version_file : null;
-$core_version_text = $core_version ?? 'Bitte Core-Version bei Supportanfragen angeben';
-
-// Language-Text mit Platzhalter laden und ersetzen
-$imprint_info_template = $languageService->module['imprint_info'] ?? '';
-$imprint_info_filled = str_replace('{core_version}', $core_version_text, $imprint_info_template);
-
 $data_array = [
+
     'impressum_type_label' => $languageService->module['impressum_type_label'] ?? 'Typ',
     'represented_by_label' => $languageService->module['represented_by_company_label'] ?? $languageService->module['represented_by_label'] ?? 'Vertreten durch',
     'tax_id_label' => $languageService->module['tax_id_company_label'] ?? $languageService->module['tax_id_label'] ?? 'Steuernummer',
@@ -80,9 +67,7 @@ $data_array = [
     'phone_label' => $languageService->module['phone_label'] ?? 'Telefon',
     'disclaimer_label' => $languageService->module['disclaimer_label'] ?? 'Haftungsausschluss',
     'association_label' => $languageService->module['association_label'] ?? 'Vereinsname',
-
-    // Hier kommt der **fertig ersetzte** Text
-    'imprint_info' => $imprint_info_filled,
+    'imprint_info' => $languageService->module['imprint_info'] ?? '',
 
     'name_label' => $name_label,
 
@@ -102,9 +87,6 @@ $data_array = [
     'email' => $imprint_data['email'] ?? '',
     'website' => $imprint_data['website'] ?? '',
     'phone' => $imprint_data['phone'] ?? '',
-
-    // Core-Version nur den Wert
-    'core_version' => $core_version_text,
     'disclaimer' => $translate->getTextByLanguage($imprint_data['disclaimer'] ?? '')
 ];
 

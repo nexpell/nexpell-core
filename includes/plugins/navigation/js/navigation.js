@@ -70,3 +70,27 @@
   }, true)  
 
 })()
+
+// Prüfe, ob der User angemeldet ist
+const userID = window.NEXP_USER_ID || 0; // z.B. vom Backend per JS gesetzt
+
+if (userID > 0) {
+    function updateUnreadBadge() {
+        fetch('/includes/plugins/messenger/get_total_unread_count.php')
+            .then(response => response.json())
+            .then(data => {
+                const badge = document.getElementById('total-unread-badge');
+                if (!badge) return;
+                
+                badge.textContent = data.total_unread;
+                badge.style.display = data.total_unread > 0 ? 'inline-block' : 'none';
+            })
+            .catch(err => console.error('Fehler beim Laden der Nachrichten:', err));
+    }
+
+    // Direkt beim Laden der Seite aufrufen
+    updateUnreadBadge();
+
+    // Optional: alle 30 Sekunden aktualisieren
+    setInterval(updateUnreadBadge, 30000);
+}

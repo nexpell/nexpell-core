@@ -111,13 +111,9 @@ $theme_css = headfiles("css", $tpl->themes_path);
 $theme_js = headfiles("js", $tpl->themes_path);
 
 // === Zusätzliche Tracker / Plugins ===
-if (file_exists("includes/plugins/counter/counter_track.php")) {
-    include_once("includes/plugins/counter/counter_track.php");
+if (file_exists("includes/plugins/userlist/userlist_tracker.php")) {
+    include_once("includes/plugins/userlist/userlist_tracker.php");
 }
-if (file_exists("includes/plugins/whoisonline/whoisonline_tracker.php")) {
-    include_once("includes/plugins/whoisonline/whoisonline_tracker.php");
-}
-
 
 $availableLangs = ['de', 'en', 'it'];
 define('BASE_PATH', realpath(__DIR__));
