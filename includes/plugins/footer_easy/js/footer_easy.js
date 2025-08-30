@@ -24,14 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Heller Hintergrund → dunkler Footer mit weißem Text
     footer.classList.remove('bg-light', 'text-dark');
     footer.classList.add('bg-dark', 'text-white');
-    contrastColor = '#ffffff'; // Weiß
-    hoverColor = 'rgba(255, 255, 255, 0.7)';
+    //contrastColor = '#ffffff'; // Weiß
+    //hoverColor = 'rgba(255, 255, 255, 0.7)';
   } else {
     // Dunkler Hintergrund → heller Footer mit schwarzem Text
     footer.classList.remove('bg-dark', 'text-white');
     footer.classList.add('bg-light', 'text-dark');
-    contrastColor = '#000000'; // Schwarz
-    hoverColor = 'rgba(0, 0, 0, 0.7)';
+    //contrastColor = '#000000'; // Schwarz
+    //hoverColor = 'rgba(0, 0, 0, 0.7)';
   }
 
   // Alle Links und Icons im Footer anpassen
