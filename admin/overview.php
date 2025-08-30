@@ -24,7 +24,7 @@ use nexpell\AccessControl;
 // Den Admin-Zugriff für das Modul überprüfen
 AccessControl::checkAdminAccess('ac_overview');
 
-$version = trim(file_get_contents(__DIR__ . '/version.txt'));
+$version = trim(require __DIR__ . '/../system/version.php');
 
 $phpversion = phpversion() < '4.3' ? '<font color="#FF0000">' . phpversion() . '</font>' :
     '<font color="#008000">' . phpversion() . '</font>';
