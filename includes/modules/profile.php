@@ -18,6 +18,8 @@ if (file_exists($achievements_plugin_path)) {
         $achievements_plugin_active = true;
     }
 }
+
+
 // Plugin Achievements END
 
 global $_database, $languageService;
@@ -182,8 +184,8 @@ if ($achievements_plugin_active) {
 
 } else {
     $achievements_sidebar = '';
-$achievements_tab_button = '';
-$achievements_tab_content = '';
+    $achievements_tab_button = '';
+    $achievements_tab_content = '';
 }
 // Achievements Plugin-Daten END
 
