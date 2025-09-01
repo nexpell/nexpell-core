@@ -1,124 +1,122 @@
 <?php
-// --- Besucher Tracking ---
-// Datenbankverbindung ($ _database) muss vorher vorhanden sein!
-/*
 if (!isset($_database)) {
     die('Database connection not established.');
 }
 
-// IP-Adresse holen
-$ip = $_SERVER['REMOTE_ADDR'];
+// IP-Adresse
+$ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 
-// Aktuelle Seite holen
-$page = $_SERVER['REQUEST_URI'];
+// IP-Hash (für IPv4 und IPv6)
+$ip_hash = hash('sha256', $ip);
 
-// Land holen (optional, wenn du IP to Country hast)
-$country_code = null;
+// Aktuelle Seite
+$page = $_SERVER['REQUEST_URI'] ?? 'unknown';
 
-// Beispiel mit geoip_country_code_by_name() (nur wenn GeoIP installiert ist):
-if (function_exists('geoip_country_code_by_name')) {
-    $country_code = @geoip_country_code_by_name($ip);
+// Referer
+$referer = $_SERVER['HTTP_REFERER'] ?? 'direct';
+
+// User-Agent
+$user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+
+// Device, OS, Browser
+$device_type = 'Unknown';
+$os = 'Unknown';
+$browser = 'Unknown';
+
+if (function_exists('get_browser')) {
+    $browser_info = get_browser(null, true);
+    $device_type = $browser_info['device_type'] ?? 'Unknown';
+    $os = $browser_info['platform'] ?? 'Unknown';
+    $browser = $browser_info['browser'] ?? 'Unknown';
+} else {
+    if (stripos($user_agent, 'mobile') !== false) $device_type = 'Mobile';
+    else $device_type = 'Desktop';
+
+    if (stripos($user_agent, 'windows') !== false) $os = 'Windows';
+    elseif (stripos($user_agent, 'mac') !== false) $os = 'Mac';
+    elseif (stripos($user_agent, 'linux') !== false) $os = 'Linux';
+
+    if (stripos($user_agent, 'firefox') !== false) $browser = 'Firefox';
+    elseif (stripos($user_agent, 'chrome') !== false) $browser = 'Chrome';
+    elseif (stripos($user_agent, 'safari') !== false && stripos($user_agent, 'chrome') === false) $browser = 'Safari';
 }
 
-// Oder einfach leer lassen wenn keine GeoIP-Daten verfügbar sind
-if (!$country_code) {
-    $country_code = '??'; // Unbekannt
-}
-
-// IP-Duplikate innerhalb 5 Minuten vermeiden (optional)
-$five_minutes_ago = date('Y-m-d H:i:s', time() - 300);
-
-// Prüfen ob dieser Besucher in den letzten 5 Minuten schon eingetragen wurde
-$check = $_database->prepare("
-    SELECT COUNT(*) AS count
-    FROM visitor_statistics
-    WHERE ip_address = ? AND created_at > ?
-");
-$check->bind_param('ss', $ip, $five_minutes_ago);
-$check->execute();
-$check_result = $check->get_result();
-$count = (int) $check_result->fetch_assoc()['count'];
-
-if ($count == 0) {
-    // Neuen Besuch eintragen
-    $insert = $_database->prepare("
-        INSERT INTO visitor_statistics (ip_address, page, country_code)
-        VALUES (?, ?, ?)
-    ");
-    $insert->bind_param('sss', $ip, $page, $country_code);
-    $insert->execute();
-}
-
-
-*/
-// --- Besucher Tracking ---
-// Datenbankverbindung ($_database) muss vorher vorhanden sein!
-
-if (!isset($_database)) {
-    die('Database connection not established.');
-}
-
-// IP-Adresse holen
-$ip = $_SERVER['REMOTE_ADDR'];
-
-// Aktuelle Seite holen
-$page = $_SERVER['REQUEST_URI'];
-
-// Land ermitteln über API
-$country_code = 'unknown'; // Fallback
-
+// Land über API
+$country_code = 'unknown';
 if (filter_var($ip, FILTER_VALIDATE_IP) && !in_array($ip, ['127.0.0.1', '::1'])) {
     $api_url = 'https://ipwho.is/' . $ip;
-
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $api_url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-    $api_response = curl_exec($ch);
+    $data = curl_exec($ch);
     curl_close($ch);
 
-    if ($api_response) {
-        $data = json_decode($api_response, true);
-        if (isset($data['success']) && $data['success'] && !empty($data['country_code'])) {
-            $country_code = strtolower($data['country_code']); // Wichtig: Kleinbuchstaben für Dateinamen!
-        }
+    if ($data) {
+        $json = json_decode($data, true);
+        if (!empty($json['country_code'])) $country_code = strtolower($json['country_code']);
     }
 }
 
-// Jetzt Flagge anzeigen
-$flag_file = 'flags/' . $country_code . '.png';
+// User-ID aus Session holen (falls angemeldet)
+$user_id = $_SESSION['userID'] ?? null;
 
-if (!file_exists($flag_file)) {
-    $flag_file = 'flags/unknown.png'; // Optional: Fallback-Flagge
-}
-
-// Ausgabe:
-#echo '<img src="' . $flag_file . '" alt="' . strtoupper($country_code) . '" style="width:24px;height:16px;"> ' . strtoupper($country_code);
-
-
-
-// IP-Duplikate innerhalb 5 Minuten vermeiden (optional)
+// 5 Minuten prüfen, um doppelte Einträge zu vermeiden
 $five_minutes_ago = date('Y-m-d H:i:s', time() - 300);
 
-// Prüfen ob dieser Besucher in den letzten 5 Minuten schon eingetragen wurde
 $check = $_database->prepare("
     SELECT COUNT(*) AS count
     FROM visitor_statistics
-    WHERE ip_address = ? AND created_at > ?
+    WHERE ip_hash = ? AND created_at > ?
 ");
-$check->bind_param('ss', $ip, $five_minutes_ago);
+$check->bind_param('ss', $ip_hash, $five_minutes_ago);
 $check->execute();
-$check_result = $check->get_result();
-$count = (int) $check_result->fetch_assoc()['count'];
+$count = (int)$check->get_result()->fetch_assoc()['count'];
 
-if ($count == 0) {
-    // Neuen Besuch eintragen
+if ($count === 0) {
+    // Neuer Eintrag
     $insert = $_database->prepare("
-        INSERT INTO visitor_statistics (ip_address, page, country_code)
-        VALUES (?, ?, ?)
+        INSERT INTO visitor_statistics 
+        (user_id, ip_address, pageviews, page, country_code, device_type, os, browser, ip_hash, referer, user_agent)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
-    $insert->bind_param('sss', $ip, $page, $country_code);
+
+    $pageviews = 1;
+    $insert->bind_param(
+        'iisssssssss',
+        $user_id,
+        $ip,
+        $pageviews,
+        $page,
+        $country_code,
+        $device_type,
+        $os,
+        $browser,
+        $ip_hash,
+        $referer,
+        $user_agent
+    );
     $insert->execute();
+} else {
+    // Optional: pageviews erhöhen
+    $update = $_database->prepare("
+        UPDATE visitor_statistics 
+        SET user_id = ?, pageviews = pageviews + 1, page = ?, country_code = ?, device_type = ?, os = ?, browser = ?, referer = ?, user_agent = ?
+        WHERE ip_hash = ? AND created_at > ?
+    ");
+    $update->bind_param(
+        'isssssssss',
+        $user_id,
+        $page,
+        $country_code,
+        $device_type,
+        $os,
+        $browser,
+        $referer,
+        $user_agent,
+        $ip_hash,
+        $five_minutes_ago
+    );
+    $update->execute();
 }
 ?>
-
