@@ -76,6 +76,10 @@ echo '<pre>';
 print_r($_GET);
 echo '</pre>';*/
 
+// Live-Visitor Tracking
+$currentSite = $site ?? 'index';
+live_visitor_track($currentSite);
+
 // Header-Kompatibilität
 header('X-UA-Compatible: IE=edge');
 ?>
@@ -216,7 +220,6 @@ header('X-UA-Compatible: IE=edge');
 <script src="./components/ckeditor/ckeditor.js"></script>
 <script src="./components/ckeditor/config.js"></script>
 <script src="/includes/plugins/navigation/js/navigation.js"></script>
-<script src="/includes/themes/default/js/global.js"></script>
 <script src="/includes/plugins/footer_easy/js/footer_easy.js"></script>
 </body>
 </html>

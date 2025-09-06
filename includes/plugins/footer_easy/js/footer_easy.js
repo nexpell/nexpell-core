@@ -1,79 +1,83 @@
-// ==============================
-// Footer-Kontrast & Links
-// ==============================
+(function() {
+  "use strict";
+  // ==============================
+  // Footer-Kontrast & Links
+  // ==============================
 
-function getContrastYIQ(rgbString) {
-  const rgb = rgbString.replace(/[^\d,]/g, '').split(',').map(Number);
-  if (rgb.length !== 3) return 'dark';
-  const yiq = ((rgb[0] * 299) + (rgb[1] * 587) + (rgb[2] * 114)) / 1000;
-  return yiq >= 128 ? 'dark' : 'light';
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const footer = document.querySelector('footer.footer');
-  if (!footer) return;
-
-  const bodyStyles = getComputedStyle(document.body);
-  const bgColor = bodyStyles.getPropertyValue('--bs-body-bg').trim() || window.getComputedStyle(document.body).backgroundColor;
-
-  const mode = getContrastYIQ(bgColor);
-
-  let contrastColor, hoverColor;
-
-  if (mode === 'dark') {
-    // Heller Hintergrund → dunkler Footer mit weißem Text
-    footer.classList.remove('bg-light', 'text-dark');
-    footer.classList.add('bg-dark', 'text-white');
-    //contrastColor = '#ffffff'; // Weiß
-    //hoverColor = 'rgba(255, 255, 255, 0.7)';
-  } else {
-    // Dunkler Hintergrund → heller Footer mit schwarzem Text
-    footer.classList.remove('bg-dark', 'text-white');
-    footer.classList.add('bg-light', 'text-dark');
-    //contrastColor = '#000000'; // Schwarz
-    //hoverColor = 'rgba(0, 0, 0, 0.7)';
+  function getContrastYIQ(rgbString) {
+    const rgb = rgbString.replace(/[^\d,]/g, '').split(',').map(Number);
+    if (rgb.length !== 3) return 'dark';
+    const yiq = ((rgb[0] * 299) + (rgb[1] * 587) + (rgb[2] * 114)) / 1000;
+    return yiq >= 128 ? 'dark' : 'light';
   }
 
-  // Alle Links und Icons im Footer anpassen
-  const links = footer.querySelectorAll('a, .bi');
+  document.addEventListener('DOMContentLoaded', () => {
+    const footer = document.querySelector('footer.footer');
+    if (!footer) return;
 
-  links.forEach(link => {
-    link.style.color = contrastColor;
+    const bodyStyles = getComputedStyle(document.body);
+    const bgColor = bodyStyles.getPropertyValue('--bs-body-bg').trim() || window.getComputedStyle(document.body).backgroundColor;
 
-    link.addEventListener('mouseover', () => {
-      link.style.color = hoverColor;
-    });
+    const mode = getContrastYIQ(bgColor);
 
-    link.addEventListener('mouseout', () => {
+    let contrastColor, hoverColor;
+
+    if (mode === 'dark') {
+      // Heller Hintergrund → dunkler Footer mit weißem Text
+      footer.classList.remove('bg-light', 'text-dark');
+      footer.classList.add('bg-dark', 'text-white');
+      //contrastColor = '#ffffff'; // Weiß
+      //hoverColor = 'rgba(255, 255, 255, 0.7)';
+    } else {
+      // Dunkler Hintergrund → heller Footer mit schwarzem Text
+      footer.classList.remove('bg-dark', 'text-white');
+      footer.classList.add('bg-light', 'text-dark');
+      //contrastColor = '#000000'; // Schwarz
+      //hoverColor = 'rgba(0, 0, 0, 0.7)';
+    }
+
+    // Alle Links und Icons im Footer anpassen
+    const links = footer.querySelectorAll('a, .bi');
+
+    links.forEach(link => {
       link.style.color = contrastColor;
+
+      link.addEventListener('mouseover', () => {
+        link.style.color = hoverColor;
+      });
+
+      link.addEventListener('mouseout', () => {
+        link.style.color = contrastColor;
+      });
     });
   });
-});
 
-// ==============================
-// Heartbeat (außerhalb, darf immer laufen)
-// ==============================
-// Heartbeat alle 60 Sekunden (hält User online solange Tab offen)
-setInterval(function() {
-    fetch('/../../system/heartbeat.php')
-        .then(res => console.log("Heartbeat OK", res.status))
-        .catch(err => console.error("Heartbeat error:", err));
-}, 60000);
+  // ==============================
+  // Heartbeat (außerhalb, darf immer laufen)
+  // ==============================
+  // Heartbeat alle 60 Sekunden (hält User online solange Tab offen)
+  setInterval(function() {
+      fetch('/../../system/heartbeat.php')
+          .then(res => console.log("Heartbeat OK", res.status))
+          .catch(err => console.error("Heartbeat error:", err));
+  }, 60000);
 
-// Sofort-Logout beim Schließen des Tabs/Fensters
-let isLoggingOut = false;
+  // Sofort-Logout beim Schließen des Tabs/Fensters
+  let isLoggingOut = false;
 
-// Logout-Link markieren
-document.querySelector('#logoutLink').addEventListener('click', function() {
-    isLoggingOut = true;
-});
+  // Logout-Link markieren
+  document.querySelector('#logoutLink').addEventListener('click', function() {
+      isLoggingOut = true;
+  });
 
-// Nur bei echtem Tab-/Fenster-Schließen logout senden
-window.addEventListener("beforeunload", function () {
-    if (!isLoggingOut) {
-        navigator.sendBeacon(
-            "/includes/modules/logout.php",
-            new Blob([], { type: "application/x-www-form-urlencoded" })
-        );
-    }
-});
+  // Nur bei echtem Tab-/Fenster-Schließen logout senden
+  window.addEventListener("beforeunload", function () {
+      if (!isLoggingOut) {
+          navigator.sendBeacon(
+              "/includes/modules/logout.php",
+              new Blob([], { type: "application/x-www-form-urlencoded" })
+          );
+      }
+  });
+
+})();

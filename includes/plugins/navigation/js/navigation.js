@@ -74,22 +74,23 @@
 // Prüfe, ob der User angemeldet ist
 async function updateMailBadge() {
     try {
-        const res = await fetch('includes/plugins/messenger/get_total_unread_count.php');
+        const res = await fetch('/includes/plugins/messenger/get_total_unread_count.php');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
         const data = await res.json();
 
         const badge = document.getElementById('total-unread-badge');
         const icon = document.getElementById('mail-icon');
 
-        const unread = data.total_unread;
+        const unread = data.total_unread ?? 0; // fallback 0
 
-        // Badge aktualisieren
         if (unread > 0) {
             badge.textContent = unread > 99 ? '99+' : unread;
             badge.style.display = 'inline-block'; // nur sichtbar wenn >0
             icon.classList.remove('bi-envelope-dash');
             icon.classList.add('bi-envelope-check');
         } else {
-            badge.style.display = 'none';           // unsichtbar bei 0
+            badge.style.display = 'none'; // unsichtbar bei 0
             icon.classList.remove('bi-envelope-check');
             icon.classList.add('bi-envelope-dash');
         }

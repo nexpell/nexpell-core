@@ -63,7 +63,7 @@ include_once("system/init.php");
 include_once("system/plugin.php");
 include_once("system/widget.php");
 include_once("system/multi_language.php");
-include_once("system/classes/track_visitor.php");
+//include_once("system/classes/track_visitor.php");
 include_once("system/init_language.php"); // setzt $languageService
 include_once("system/classes/Template.php");
 include_once("system/classes/SeoUrlHandler.php");
@@ -109,11 +109,6 @@ if (!empty($components['js'])) {
 
 $theme_css = headfiles("css", $tpl->themes_path);
 $theme_js = headfiles("js", $tpl->themes_path);
-
-// === Zusätzliche Tracker / Plugins ===
-if (file_exists("includes/plugins/userlist/userlist_tracker.php")) {
-    include_once("includes/plugins/userlist/userlist_tracker.php");
-}
 
 $availableLangs = ['de', 'en', 'it'];
 define('BASE_PATH', realpath(__DIR__));

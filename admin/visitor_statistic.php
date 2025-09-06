@@ -8,6 +8,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+
+
+require_once '../system/visitor_log_statistic.php';
+
 // Standardsprache setzen
 $_SESSION['language'] = $_SESSION['language'] ?? 'de';
 
@@ -21,55 +25,148 @@ AccessControl::checkAdminAccess('ac_visitor_statistic');
 
 // Zeitraum (week oder month)
 // Range aus GET oder default
+
 $range = $_GET['range'] ?? 'week';
-if (!in_array($range, ['week','month','6months','12months'])) {
+if (!in_array($range, ['week', 'month', '6months', '12months'])) {
     $range = 'week';
 }
 
-// Tage bzw. Monate für Statistik-Berechnung
+$labels = [];
+$visitors = [];
+$maxonline_values = [];
+
 switch ($range) {
     case 'week':
-        $days = 7;
-        $since_date = date('Y-m-d', strtotime("-{$days} days"));
+        // letzte 7 Tage inkl. heute
+        $since_date = date('Y-m-d', strtotime("-6 days"));
+        $end_date   = date('Y-m-d');
+
+        $day_pointer = strtotime($since_date);
+        $days_array = [];
+        while ($day_pointer <= strtotime($end_date)) {
+            $key = date('Y-m-d', $day_pointer);
+            $days_array[$key] = ['hits' => 0, 'maxonline' => 0];
+            $day_pointer += 86400;
+        }
+
+        $result = $_database->query("
+            SELECT DATE(date) as day, SUM(hits) as count, MAX(maxonline) as maxpeak
+            FROM visitor_daily_counter
+            WHERE date BETWEEN '$since_date' AND '$end_date'
+            GROUP BY day
+            ORDER BY day ASC
+        ");
+        while ($row = $result->fetch_assoc()) {
+            $days_array[$row['day']] = ['hits' => (int)$row['count'], 'maxonline' => (int)$row['maxpeak']];
+        }
+
+        foreach ($days_array as $day => $values) {
+            $labels[] = date('D', strtotime($day));
+            $visitors[] = $values['hits'];
+            $maxonline_values[] = $values['maxonline'];
+        }
         break;
 
     case 'month':
-        $days = 30;
-        $since_date = date('Y-m-d', strtotime("-{$days} days"));
+        // letzte 30 Tage inkl. heute
+        $since_date = date('Y-m-d', strtotime("-29 days"));
+        $end_date   = date('Y-m-d');
+
+        $day_pointer = strtotime($since_date);
+        $days_array = [];
+        while ($day_pointer <= strtotime($end_date)) {
+            $key = date('Y-m-d', $day_pointer);
+            $days_array[$key] = ['hits' => 0, 'maxonline' => 0];
+            $day_pointer += 86400;
+        }
+
+        $result = $_database->query("
+            SELECT DATE(date) as day, SUM(hits) as count, MAX(maxonline) as maxpeak
+            FROM visitor_daily_counter
+            WHERE date BETWEEN '$since_date' AND '$end_date'
+            GROUP BY day
+            ORDER BY day ASC
+        ");
+        while ($row = $result->fetch_assoc()) {
+            $days_array[$row['day']] = ['hits' => (int)$row['count'], 'maxonline' => (int)$row['maxpeak']];
+        }
+
+        foreach ($days_array as $day => $values) {
+            $labels[] = date('d.m.', strtotime($day));
+            $visitors[] = $values['hits'];
+            $maxonline_values[] = $values['maxonline'];
+        }
         break;
 
     case '6months':
-        $days = 180; // ca. 6 Monate
-        $since_date = date('Y-m-d', strtotime("-6 months"));
+        // letzte 6 Monate inkl. aktueller
+        $since_date = date('Y-m-01', strtotime("-5 months"));
+        $end_date   = date('Y-m-01', strtotime("+1 month"));
+
+        $months_array = [];
+        $month_pointer = strtotime($since_date);
+        while ($month_pointer < strtotime($end_date)) {
+            $key = date('Y-m-01', $month_pointer);
+            $months_array[$key] = ['hits' => 0, 'maxonline' => 0];
+            $month_pointer = strtotime('+1 month', $month_pointer);
+        }
+
+        $result = $_database->query("
+            SELECT DATE_FORMAT(date, '%Y-%m-01') as month_start, SUM(hits) as count, MAX(maxonline) as maxpeak
+            FROM visitor_daily_counter
+            WHERE date >= '$since_date'
+            GROUP BY month_start
+            ORDER BY month_start ASC
+        ");
+        while ($row = $result->fetch_assoc()) {
+            $months_array[$row['month_start']] = ['hits' => (int)$row['count'], 'maxonline' => (int)$row['maxpeak']];
+        }
+
+        foreach ($months_array as $month => $values) {
+            $labels[] = date('M Y', strtotime($month));
+            $visitors[] = $values['hits'];
+            $maxonline_values[] = $values['maxonline'];
+        }
         break;
 
     case '12months':
-        $days = 365; // ca. 12 Monate
-        $since_date = date('Y-m-d', strtotime("-12 months"));
-        break;
+        // letzte 12 Monate inkl. aktueller
+        $since_date = date('Y-m-01', strtotime("-11 months"));
+        $end_date   = date('Y-m-01', strtotime("+1 month"));
 
-    default:
-        $days = 7;
-        $since_date = date('Y-m-d', strtotime("-7 days"));
+        $months_array = [];
+        $month_pointer = strtotime($since_date);
+        while ($month_pointer < strtotime($end_date)) {
+            $key = date('Y-m-01', $month_pointer);
+            $months_array[$key] = ['hits' => 0, 'maxonline' => 0];
+            $month_pointer = strtotime('+1 month', $month_pointer);
+        }
+
+        $result = $_database->query("
+            SELECT DATE_FORMAT(date, '%Y-%m-01') as month_start, SUM(hits) as count, MAX(maxonline) as maxpeak
+            FROM visitor_daily_counter
+            WHERE date >= '$since_date'
+            GROUP BY month_start
+            ORDER BY month_start ASC
+        ");
+        while ($row = $result->fetch_assoc()) {
+            $months_array[$row['month_start']] = ['hits' => (int)$row['count'], 'maxonline' => (int)$row['maxpeak']];
+        }
+
+        foreach ($months_array as $month => $values) {
+            $labels[] = date('M Y', strtotime($month));
+            $visitors[] = $values['hits'];
+            $maxonline_values[] = $values['maxonline'];
+        }
         break;
 }
 
-// Besucher pro Tag (für Line-Chart)
-$labels = [];
-$visits = [];
-$result = $_database->query("
-    SELECT DATE(created_at) AS day, COUNT(DISTINCT ip_address) AS visits
-    FROM visitor_statistics
-    WHERE created_at >= '$since_date'
-    GROUP BY day
-    ORDER BY day ASC
-");
-while ($row = $result->fetch_assoc()) {
-    $labels[] = $row['day'];
-    $visits[] = (int)$row['visits'];
-}
 
-// Aktuell Online
+
+
+
+###############################
+
 $time_limit = time() - 300; // 5 Minuten
 $result = $_database->query("
     SELECT COUNT(DISTINCT ip_address) AS online_users
@@ -78,83 +175,113 @@ $result = $_database->query("
 ");
 $online_users = (int) $result->fetch_assoc()['online_users'];
 
-// Besucher heute
-$result_today = $_database->query("
-    SELECT COUNT(DISTINCT ip_address) AS visitors_today
-    FROM visitor_statistics
-    WHERE DATE(created_at) = CURDATE()
-");
-$visitors_today = (int) $result_today->fetch_assoc()['visitors_today'];
+// --- Besucherstatistiken berechnen ---
 
-// Besucher gestern
-$result_yesterday = $_database->query("
-    SELECT COUNT(DISTINCT ip_address) AS visitors_yesterday
-    FROM visitor_statistics
-    WHERE DATE(created_at) = CURDATE() - INTERVAL 1 DAY
-");
-$visitors_yesterday = (int) $result_yesterday->fetch_assoc()['visitors_yesterday'];
 
-// Besucher diese Woche
-$result_week = $_database->query("
-    SELECT COUNT(DISTINCT ip_address) AS visitors_week
-    FROM visitor_statistics
-    WHERE YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)
-");
-$visitors_week = (int) $result_week->fetch_assoc()['visitors_week'];
 
-// Gesamtbesuche
-$res_total = mysqli_fetch_assoc(safe_query(
-    "SELECT COUNT(*) AS total FROM visitor_statistics"
-));
-$visitors_total = (int)$res_total['total'];
 
-// Top 10 Seiten nach Klicks
-$res_clicks = safe_query(
-    "SELECT page, COUNT(*) AS total FROM visitor_statistics GROUP BY page ORDER BY total DESC LIMIT 10"
-);
-$top_pages = [];
-while ($row = mysqli_fetch_assoc($res_clicks)) {
-    $top_pages[] = $row;
+
+
+
+
+
+
+function getVisitorCounter(mysqli $_database): array {
+    $bot_condition    = getBotCondition(); // deine bestehende Funktion
+    $today_date       = date('Y-m-d');
+    $yesterday        = date('Y-m-d', strtotime('-1 day'));
+    $month_start      = date('Y-m-01');
+    $five_minutes_ago = time() - 300;
+
+    // Heute (Hits aus daily_counter)
+    $today_hits = (int)$_database->query("
+        SELECT SUM(hits) AS hits
+        FROM visitor_daily_counter
+        WHERE DATE(date) = '$today_date'
+    ")->fetch_assoc()['hits'];
+
+    // Gestern
+    $yesterday_hits = (int)$_database->query("
+        SELECT SUM(hits) AS hits
+        FROM visitor_daily_counter
+        WHERE DATE(date) = '$yesterday'
+    ")->fetch_assoc()['hits'];
+
+    // Monat
+    $month_hits = (int)$_database->query("
+        SELECT SUM(hits) AS hits
+        FROM visitor_daily_counter
+        WHERE date >= '$month_start'
+    ")->fetch_assoc()['hits'];
+
+    // Gesamt
+    $total_hits = (int)$_database->query("
+        SELECT SUM(hits) AS hits
+        FROM visitor_daily_counter
+    ")->fetch_assoc()['hits'];
+
+    // Online (letzte 5 Minuten, Bots raus)
+    $online_visitors = (int)$_database->query("
+        SELECT COUNT(DISTINCT ip_hash) AS cnt
+        FROM visitor_statistics
+        WHERE last_seen >= FROM_UNIXTIME($five_minutes_ago) $bot_condition
+    ")->fetch_assoc()['cnt'];
+
+    // MaxOnline (aus daily_counter)
+    $max_online = (int)$_database->query("
+        SELECT MAX(maxonline) AS maxcnt
+        FROM visitor_daily_counter
+    ")->fetch_assoc()['maxcnt'];
+
+    // Seit wann die Webseite läuft (erstes Statistikdatum)
+    // Erstes und letztes Statistikdatum holen
+    $result_range = $_database->query("
+        SELECT MIN(date) AS first_visit, MAX(date) AS last_visit
+        FROM visitor_daily_counter
+    ");
+    $range = $result_range->fetch_assoc();
+
+    $first_visit = $range['first_visit'];
+    $last_visit  = $range['last_visit'];
+
+    $first_visit_date = $first_visit ? date('d.m.Y', strtotime($first_visit)) : 'unbekannt';
+
+    // Anzahl Tage seit Start berechnen (inkl. Starttag)
+    $days = ($first_visit && $last_visit)
+        ? (floor((strtotime($last_visit) - strtotime($first_visit)) / 86400) + 1)
+        : 0;
+
+    // Durchschnitt pro Tag berechnen
+    $avg_per_day = $days > 0 ? round($total_hits / $days, 1) : 0;
+
+    // Durchschnitt pro Tag
+    $result_days = $_database->query("
+        SELECT DATEDIFF(MAX(date), MIN(date)) + 1 AS days
+        FROM visitor_daily_counter
+    ");
+    $days = (int)$result_days->fetch_assoc()['days'];
+    $avg_per_day = round($total_hits / max($days, 1), 1);
+
+    return [
+        'today'           => $today_hits,
+        'yesterday'       => $yesterday_hits,
+        'month'           => $month_hits,
+        'total'           => $total_hits,
+        'online'          => $online_visitors,
+        'maxonline'       => $max_online,
+        'first_visit'     => $first_visit_date,
+        'average_per_day' => $avg_per_day,
+        'days'           => $days
+    ];
 }
 
-$res_unique = mysqli_fetch_assoc(safe_query(
-  "SELECT COUNT(DISTINCT ip_hash) AS unique_visitors FROM visitor_statistics WHERE created_at >= '$since_date'"
-));
-$unique_visitors = (int)$res_unique['unique_visitors'];
 
-$avg_per_day = round($visitors_total / max($days, 1), 1);
 
-$active_since = date('Y-m-d H:i:s', strtotime('-10 minutes'));
-$res_online = mysqli_fetch_assoc(safe_query(
-  "SELECT COUNT(DISTINCT ip_hash) AS online_visitors FROM visitor_statistics WHERE created_at >= '$active_since'"
-));
-$online_visitors = (int)$res_online['online_visitors'];
 
-// Top 10 Seiten
-$top_pages = [];
-$result = $_database->query("
-    SELECT page, COUNT(*) AS visits
-    FROM visitor_statistics
-    GROUP BY page
-    ORDER BY visits DESC
-    LIMIT 10
-");
-while ($row = $result->fetch_assoc()) {
-    $top_pages[] = $row;
-}
+$counter = getVisitorCounter($_database);
 
-// Top 10 Länder
-$top_countries = [];
-$result = $_database->query("
-    SELECT country_code, COUNT(*) AS visitors
-    FROM visitor_statistics
-    GROUP BY country_code
-    ORDER BY visitors DESC
-    LIMIT 10
-");
-while ($row = $result->fetch_assoc()) {
-    $top_countries[] = $row;
-}
+
+
 
 
 // Geräte-Auswertung
@@ -184,6 +311,41 @@ while ($row = mysqli_fetch_assoc($res_browser)) {
     $browser_data[$row['browser']] = (int)$row['total'];
 }
 
+// Top 10 Seiten nach Klicks
+$res_clicks = safe_query(
+    "SELECT page, COUNT(*) AS total FROM visitor_statistics GROUP BY page ORDER BY total DESC LIMIT 10"
+);
+$top_pages = [];
+while ($row = mysqli_fetch_assoc($res_clicks)) {
+    $top_pages[] = $row;
+}
+
+// Top 10 Seiten
+$top_pages = [];
+$result = $_database->query("
+    SELECT page, COUNT(*) AS visits
+    FROM visitor_statistics
+    GROUP BY page
+    ORDER BY visits DESC
+    LIMIT 10
+");
+while ($row = $result->fetch_assoc()) {
+    $top_pages[] = $row;
+}
+
+// Top 10 Länder
+$top_countries = [];
+$result = $_database->query("
+    SELECT country_code, COUNT(*) AS visitors
+    FROM visitor_statistics
+    GROUP BY country_code
+    ORDER BY visitors DESC
+    LIMIT 10
+");
+while ($row = $result->fetch_assoc()) {
+    $top_countries[] = $row;
+}
+
 // Top-Referer
 $res_referer = safe_query(
     "SELECT referer, COUNT(*) AS hits FROM visitor_statistics WHERE created_at >= '$since_date' GROUP BY referer ORDER BY hits DESC LIMIT 5"
@@ -192,7 +354,6 @@ $top_referers = [];
 while ($row = mysqli_fetch_assoc($res_referer)) {
     $top_referers[] = $row;
 }
-
 
 // CSV Export
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
@@ -216,42 +377,6 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     exit;
 }
 
-// Beispiel: tägliche Besucher der letzten 6 Monate
-$six_months_visitors = [];
-for ($i = 180; $i >= 0; $i--) { // ca. 6 Monate = 180 Tage
-    $date = date('Y-m-d', strtotime("-$i days"));
-    $count = (int)$_database->query("SELECT COUNT(*) AS cnt FROM visitor_statistics WHERE DATE(created_at) = '$date'")->fetch_assoc()['cnt'];
-    $six_months_visitors[] = ['date' => $date, 'visitors' => $count];
-}
-
-// 12 Monate aggregiert nach Monat
-$twelve_months_visitors = [];
-for ($i = 11; $i >= 0; $i--) {
-    $month = date('Y-m', strtotime("-$i months"));
-    $count = (int)$_database->query("SELECT COUNT(*) AS cnt FROM visitor_statistics WHERE DATE_FORMAT(created_at,'%Y-%m') = '$month'")->fetch_assoc()['cnt'];
-    $twelve_months_visitors[] = ['month' => $month, 'visitors' => $count];
-}
-
-// Seit wann die Webseite läuft (erstes Statistikdatum)
-$result_start = $_database->query("
-    SELECT MIN(created_at) AS first_visit
-    FROM visitor_statistics
-");
-$first_visit = $result_start->fetch_assoc()['first_visit'];
-$first_visit_date = $first_visit ? date('d.m.Y', strtotime($first_visit)) : 'unbekannt';
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -260,7 +385,6 @@ $visitsLabel   = $languageService->get('visits');
 $visitorsLabel = $languageService->get('visitors');
 ?>
 
-<!-- Frontend Ausgabe -->
 <div class="card">
     <div class="card-header">
         <?= $languageService->get('visitor_statistics'); ?>
@@ -268,114 +392,121 @@ $visitorsLabel = $languageService->get('visitors');
     <div class="card-body">
         <div class="container py-4">
 
-    <h5 class="mb-4 text-center"><?= $languageService->get('visitor_statistics'); ?></h5>
-  <div class="row g-3">
+            <h5 class="mb-4 text-center"><?= $languageService->get('visitor_statistics'); ?></h5>
+            <div class="row g-3">
+                <!-- Online Users -->
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h6><?php echo $languageService->get('online_users'); ?></h6>
+                            <h4 class="text-right">
+                                <i class="bi bi-person-check float-start"></i>
+                                <span class="ms-3"><?= $counter['online'] ?></span>
+                            </h4>
+                            <p class="mb-0">Gerade eingeloggt<span class="float-end"><?= $counter['online'] ?></span></p>
+                        </div>
+                    </div>
+                </div>
 
-  <div class="col-md-6 col-xl-3">
-    <div class="card bg-primary text-white">
-      <div class="card-body">
-        <h6><?php echo $languageService->get('online_users'); ?></h6>
-        <h4 class="text-right">
-          <i class="bi bi-person-check float-start"></i>
-          <span class="ms-3"><?php echo $online_users; ?></span>
-        </h4>
-        <p class="mb-0">Gerade eingeloggt<span class="float-end"><?php echo $online_users; ?></span></p>
-      </div>
-    </div>
-  </div>
+                <!-- Besucher heute -->
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h6>Besucher heute</h6>
+                            <h4 class="text-right">
+                                <i class="bi bi-calendar float-start"></i>
+                                <span class="ms-3"><?= $counter['today'] ?></span>
+                            </h4>
+                            <p class="mb-0">Neu heute<span class="float-end"><?= $counter['today'] ?></span></p>
+                        </div>
+                    </div>
+                </div>
 
-  <div class="col-md-6 col-xl-3">
-    <div class="card bg-success text-white">
-      <div class="card-body">
-        <h6>Besucher heute</h6>
-        <h4 class="text-right">
-          <i class="bi bi-calendar float-start"></i>
-          <span class="ms-3"><?= $visitors_today ?></span>
-        </h4>
-        <p class="mb-0">Neu heute<span class="float-end"><?php echo $visitors_today; ?></span></p>
-      </div>
-    </div>
-  </div>
+                <!-- Besucher gestern -->
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h6><?php echo $languageService->get('visitors_yesterday'); ?></h6>
+                            <h4 class="text-right">
+                                <i class="bi bi-calendar2 float-start"></i>
+                                <span class="ms-3"><?= $counter['yesterday'] ?></span>
+                            </h4>
+                            <p class="mb-0">Gestern<span class="float-end"><?= $counter['yesterday'] ?></span></p>
+                        </div>
+                    </div>
+                </div>
 
-  <div class="col-md-6 col-xl-3">
-    <div class="card bg-warning text-white">
-      <div class="card-body">
-        <h6><?php echo $languageService->get('visitors_yesterday'); ?></h6>
-        <h4 class="text-right">
-          <i class="bi bi-calendar2 float-start"></i>
-          <span class="ms-3"><?php echo $visitors_yesterday; ?></span>
-        </h4>
-        <p class="mb-0">Gestern<span class="float-end"><?php echo $visitors_yesterday; ?></span></p>
-      </div>
-    </div>
-  </div>
+                <!-- Besucher diese Woche -->
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h6><?php echo $languageService->get('visitors_week'); ?> Monat</h6>
+                            <h4 class="text-right">
+                                <i class="bi bi-calendar3-week float-start"></i>
+                                <span class="ms-3"><?= $counter['month'] ?></span>
+                            </h4>
+                            <p class="mb-0">Diesen Monat<span class="float-end"><?= $counter['month'] ?></span></p>
+                        </div>
+                    </div>
+                </div>
 
-  <div class="col-md-6 col-xl-3">
-    <div class="card bg-info text-white">
-      <div class="card-body">
-        <h6><?php echo $languageService->get('visitors_week'); ?></h6>
-        <h4 class="text-right">
-          <i class="bi bi-calendar3-week float-start"></i>
-          <span class="ms-3"><?php echo $visitors_week; ?></span>
-        </h4>
-        <p class="mb-0">Diese Woche<span class="float-end"><?php echo $visitors_week; ?></span></p>
-      </div>
-    </div>
-  </div>
+                <!-- Gesamtbesuche -->
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body">
+                            <h6>Gesamtbesuche</h6>
+                            <h4 class="text-right">
+                                <i class="bi bi-people float-start"></i>
+                                <span class="ms-3"><?= $counter['total'] ?></span>
+                            </h4>
+                            <p class="mb-0">Eindeutige Besucher<span class="float-end"><?= $counter['total'] ?></span></p>
+                        </div>
+                    </div>
+                </div>
 
-  <div class="col-md-6 col-xl-3">
-    <div class="card bg-danger text-white">
-      <div class="card-body">
-        <h6>Gesamtbesuche</h6>
-        <h4 class="text-right">
-          <i class="bi bi-people float-start"></i>
-          <span class="ms-3"><?php echo $visitors_total; ?></span>
-        </h4>
-        <p class="mb-0">Eindeutige Besucher<span class="float-end"><?php echo $unique_visitors; ?></span></p>
-      </div>
-    </div>
-  </div>
+                <!-- Durchschnitt pro Tag -->
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bg-secondary text-white">
+                        <div class="card-body">
+                            <h6>Ø Besuche pro Tag</h6>
+                            <h4 class="text-right">
+                                <i class="bi bi-bar-chart-line float-start"></i>
+                                <span class="ms-3"><?= $counter['average_per_day'] ?></span>
+                            </h4>
+                            <p class="mb-0">Im Durchschnitt<span class="float-end"><?= $counter['average_per_day'] ?></span></p>
+                        </div>
+                    </div>
+                </div>
 
-  <div class="col-md-6 col-xl-3">
-    <div class="card bg-secondary text-white">
-      <div class="card-body">
-        <h6>Ø Besuche pro Tag</h6>
-        <h4 class="text-right">
-          <i class="bi bi-bar-chart-line float-start"></i>
-          <span class="ms-3"><?php echo $avg_per_day; ?></span>
-        </h4>
-        <p class="mb-0">Im Durchschnitt<span class="float-end"><?= round($avg_per_day, 2) ?></span></p>
-      </div>
-    </div>
-  </div>
+                <!-- Online letzte 10 Minuten -->
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bg-dark text-white">
+                        <div class="card-body">
+                            <h6>Besucher online</h6>
+                            <h4 class="text-right">
+                                <i class="bi bi-clock float-start"></i>
+                                <span class="ms-3"><?= $counter['online'] ?></span>
+                            </h4>
+                            <p class="mb-0">Letzte 10 Min.<span class="float-end"><?= $counter['online'] ?></span></p>
+                        </div>
+                    </div>
+                </div>
 
-  <div class="col-md-6 col-xl-3">
-    <div class="card bg-dark text-white">
-      <div class="card-body">
-        <h6>Besucher online</h6>
-        <h4 class="text-right">
-          <i class="bi bi-clock float-start"></i>
-          <span class="ms-3"><?php echo $online_visitors; ?></span>
-        </h4>
-        <p class="mb-0">Letzte 10 Min.<span class="float-end"><?php echo $online_visitors; ?></span></p>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-6 col-xl-3">
-    <div class="card bg-light">
-      <div class="card-body">
-        <h6>Webseite online seit</h6>
-        <h4 class="text-right">
-          <i class="bi bi-clock float-start"></i>
-          <span class="ms-3"><?= $first_visit_date ?></span>
-        </h4>
-        <p class="mb-0">Erste Statistik<span class="float-end"><?= $first_visit_date ?></span></p>
-      </div>
-    </div>
-  </div>
-
-</div>
+                <!-- Erste Statistik -->
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6>Webseite online seit</h6>
+                            <h4 class="text-right">
+                                <i class="bi bi-clock float-start"></i>
+                                <span class="ms-3"><?= $counter['first_visit'] ?></span>
+                            </h4>
+                            <p class="mb-0">Erste Statistik<span class="float-end"><?= $counter['first_visit'] ?> / Tage online: <?= $counter['days'] ?></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
 <div class="card mb-4">
     <div class="card-header">Besucherstatistik</div>
@@ -397,7 +528,7 @@ $visitorsLabel = $languageService->get('visitors');
     </a>
   </form>
 
-  <h3>Besucher pro Tag</h3>
+  <h3>Aufrufe pro Tag</h3>
   <canvas id="visitorsChart" height="100"></canvas>
 
   </div></div>
@@ -562,23 +693,66 @@ const chartOptions = (yLabel = '') => ({
 });
 
 // Besucher (Line Chart)
+// Besucher + MaxOnline (Line Chart)
 const visitorsCtx = document.getElementById('visitorsChart').getContext('2d');
 new Chart(visitorsCtx, {
     type: 'line',
     data: {
         labels: <?= json_encode($labels) ?>,
-        datasets: [{
-            label: <?= json_encode($visitsLabel) ?>,
-            data: <?= json_encode($visits) ?>,
-            borderColor: 'rgba(54, 162, 235, 1)',
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            tension: 0.3,
-            fill: true,
-            pointRadius: 3
-        }]
+        datasets: [
+            {
+                label: <?= json_encode($visitsLabel) ?>,
+                data: <?= json_encode($visitors) ?>,
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                tension: 0.3,
+                fill: true,
+                pointRadius: 3,
+                yAxisID: 'yHits'
+            },
+            {
+                label: 'MaxOnline',
+                data: <?= json_encode($maxonline_values) ?>,
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.3,
+                fill: false,
+                pointRadius: 3,
+                yAxisID: 'yMax'
+            }
+        ]
     },
-    options: chartOptions(<?= json_encode($visitsLabel) ?>)
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            tooltip: {
+                enabled: true,
+                callbacks: {
+                    label: function(context) {
+                        return context.dataset.label + ': ' + context.parsed.y;
+                    }
+                }
+            }
+        },
+        scales: {
+            yHits: {
+                type: 'linear',
+                position: 'left',
+                beginAtZero: true,
+                title: { display: true, text: 'Hits' }
+            },
+            yMax: {
+                type: 'linear',
+                position: 'right',
+                beginAtZero: true,
+                title: { display: true, text: 'MaxOnline' },
+                grid: { drawOnChartArea: false } // linke Y-Achse nicht überschreiben
+            }
+        }
+    }
 });
+
 
 // Top Pages (Bar Chart)
 const ctxPages = document.getElementById('topPagesChart').getContext('2d');

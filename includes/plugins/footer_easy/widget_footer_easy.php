@@ -6,15 +6,13 @@ if (session_status() === PHP_SESSION_NONE) {
 use nexpell\LanguageService;
 use nexpell\SeoUrlHandler;
 
-global $languageService;
+global $languageService, $myclanname, $since;
 
 $lang = $languageService->detectLanguage();
 $languageService->readModule('footer_easy');
 
 
 $tpl = Template::getInstance();
-
-GLOBAL $myclanname, $since;
 
 // Links aus DB holen
 $res = safe_query("SELECT * FROM plugins_footer_easy ORDER BY link_number");

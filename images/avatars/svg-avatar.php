@@ -6,12 +6,26 @@ $name = isset($_GET['name']) ? strtoupper(trim($_GET['name'])) : 'U';
 $words = explode(" ", $name);
 
 // Initialen extrahieren
-$initials = '';
+/*$initials = '';
 if (!empty($words[0])) {
     $initials .= $words[0][0];
 }
 if (count($words) > 1 && !empty($words[count($words) - 1])) {
     $initials .= $words[count($words) - 1][0];
+}*/
+
+// Initialen extrahieren
+if (strtoupper($name) === 'GAST') {
+    $initials = 'G';
+} else {
+    $words = explode(" ", $name);
+    $initials = '';
+    if (!empty($words[0])) {
+        $initials .= $words[0][0];
+    }
+    if (count($words) > 1 && !empty($words[count($words) - 1])) {
+        $initials .= $words[count($words) - 1][0];
+    }
 }
 
 // Hintergrundfarbe ermitteln

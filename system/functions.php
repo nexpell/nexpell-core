@@ -524,6 +524,12 @@ if (file_exists('classes/SeoUrlHandler.php')) {
     systeminc('../system/classes/SeoUrlHandler');
 }
 
+if (file_exists('visitor_log_statistic.php')) {
+    systeminc('visitor_log_statistic');
+} else {
+    systeminc('../system/visitor_log_statistic');
+}
+
 function getCurrentLanguage(): string
 {
     global $languageService;

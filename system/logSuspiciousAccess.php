@@ -29,8 +29,6 @@ function anonymize_ip($ip) {
     return $ip;
 }
 
-
-
 // ==========================
 // FUNKTIONEN
 // ==========================
@@ -110,7 +108,6 @@ function detectSuspiciousInput(array $input): ?array {
     return null;
 }
 
-
 // ==========================
 // IP-BLOCK SYSTEM
 // ==========================
@@ -126,7 +123,6 @@ $blocked = file_exists($blockfile) ? json_decode(file_get_contents($blockfile), 
 
 $now = time();
 $blocked = array_filter($blocked, function($b) use ($now) {
-    // 'until' muss existieren, und nur behalten, wenn 'until' in der Zukunft ist
     return isset($b['until']) && $b['until'] > $now;
 });
 
@@ -146,8 +142,8 @@ foreach ($blocked as $b) {
     }
 }
 
-// Funktion zum Sperren einer IP
-function blockIP($ip, $reason = '', $level = 'warning', $duration = 3600) {
+// Funktion zum Sperren einer IP (mit Details ins Log)
+function blockIP($ip, $reason = '', $level = 'warning', $duration = 3600, $details = []) {
     global $blockfile, $blocked, $logfile;
 
     $entry = [
@@ -161,11 +157,18 @@ function blockIP($ip, $reason = '', $level = 'warning', $duration = 3600) {
     $blocked[] = $entry;
     file_put_contents($blockfile, json_encode($blocked, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-    $logEntry = date('Y-m-d H:i:s') . " - IP blocked: $ip, reason: $reason, level: $level, until: " 
-                . date('Y-m-d H:i:s', $entry['until']) . PHP_EOL;
+    $extra = '';
+    if (!empty($details)) {
+        $extra = " | Details: " . json_encode($details, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    $logEntry = date('Y-m-d H:i:s') 
+        . " - IP blocked: $ip, reason: $reason, level: $level, until: " 
+        . date('Y-m-d H:i:s', $entry['until'])
+        . $extra . PHP_EOL;
+
     file_put_contents($logfile, $logEntry, FILE_APPEND);
 }
-
 
 // ==========================
 // Verdächtige Eingaben prüfen
@@ -176,15 +179,12 @@ foreach (['GET' => $_GET, 'POST' => $_POST] as $method => $data) {
         $reason = "Verdächtige Eingabe in $method";
 
         logSuspiciousAccess($reason, $suspicious);
-        blockIP($ip, $reason, $level, 3600);
+        blockIP($ip, $reason, $level, 3600, $suspicious);
 
         http_response_code(403);
         exit;
     }
 }
-
-
-
 
 // ==========================
 // URL-PRÜFUNG & WHITELIST FÜR ALLE INPUTS
@@ -264,7 +264,6 @@ $raw = file_get_contents('php://input');
 if ($raw && $json = json_decode($raw, true)) {
     checkInputForUrls($json, 'JSON');
 }*/
-
 
 // Ausgabe-Puffer freigeben
 ob_end_flush();
