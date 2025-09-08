@@ -101,8 +101,8 @@ if (isset($_POST['add']) && empty($_POST['id'])) {
     $website_cat_id     = (int)($_POST['nav_website_cat'] ?? 0);
     $admin_title        = escape($_POST['nav_admin_title']);
     $website_title      = escape($_POST['nav_website_title']);
-    $admin_file_url     = "admincenter.php?site=" . escape($_POST['admin_file']);
-    $index_file_url     = "index.php?site=" . escape($_POST['index']);
+    $admin_file_url     = escape($_POST['nav_admin_link']);
+    $index_file_url     = escape($_POST['nav_website_link']);
 
     try {
         // Plugin speichern
@@ -256,8 +256,8 @@ if (isset($_POST['edit']) && isset($_POST['id']) && is_numeric($_POST['id'])) {
     $website_cat_id     = (int)($_POST['nav_website_cat'] ?? 0);
     $admin_title        = escape($_POST['nav_admin_title']);
     $website_title      = escape($_POST['nav_website_title']);
-    $admin_file_url     = "admincenter.php?site=" . escape($_POST['admin_file']);
-    $index_file_url     = "index.php?site=" . escape($_POST['index']);
+    $admin_file_url     = escape($_POST['nav_admin_link']);
+    $index_file_url     = escape($_POST['nav_website_link']);
 
     try {
         // Plugin aktualisieren
@@ -626,14 +626,16 @@ if ($action == "edit") {
 
         $modulname = escape($ds['modulname']); // ACHTUNG: muss vorher korrekt befüllt sein (z. B. aus settings_plugins)
 
-        $adminNavQuery = safe_query("SELECT name, catID FROM navigation_dashboard_links WHERE modulname = '$modulname' LIMIT 1");
+        $adminNavQuery = safe_query("SELECT name, url, catID FROM navigation_dashboard_links WHERE modulname = '$modulname' LIMIT 1");
         if ($adminNav = mysqli_fetch_assoc($adminNavQuery)) {
+            $navAdminLink = $adminNav['url'];
             $navAdminTitle = $adminNav['name'];
             $navAdminCatID = (int)$adminNav['catID'];
         }
 
-        $websiteNavQuery = safe_query("SELECT name, mnavID FROM navigation_website_sub WHERE modulname = '$modulname' LIMIT 1");
+        $websiteNavQuery = safe_query("SELECT name, url, mnavID FROM navigation_website_sub WHERE modulname = '$modulname' LIMIT 1");
         if ($websiteNav = mysqli_fetch_assoc($websiteNavQuery)) {
+            $navWebsiteLink = $websiteNav['url'];
             $navWebsiteTitle = $websiteNav['name'];
             $navWebsiteCatID = (int)$websiteNav['mnavID'];
         }
@@ -655,7 +657,11 @@ if ($action == "edit") {
         }
 
 
-        echo '
+        echo '<hr>
+        <div class="mb-3 row">
+            <label class="col-sm-5 col-form-label">Admin Navigations-Titel:<br><small>(admincenter.php?site=)</small></label>
+            <div class="col-sm-6"><input type="text" name="nav_admin_link" class="form-control" value="' . escape($navAdminLink) . '"></div>
+        </div>
         <div class="mb-3 row">
             <label class="col-sm-5 col-form-label">Admin Navigations-Titel:</label>
             <div class="col-sm-6"><input type="text" name="nav_admin_title" class="form-control" value="' . escape($navAdminTitle) . '"></div>
@@ -669,6 +675,12 @@ if ($action == "edit") {
             </div>
         </div>
 
+        <hr>
+
+        <div class="mb-3 row">
+            <label class="col-sm-5 col-form-label">Website Navigations-Titel:<br><small>(index.php?site=)</small></label>
+            <div class="col-sm-6"><input type="text" name="nav_website_link" class="form-control" value="' . escape($navWebsiteLink) . '"></div>
+        </div>
         <div class="mb-3 row">
             <label class="col-sm-5 col-form-label">Website Navigations-Titel:</label>
             <div class="col-sm-6"><input type="text" name="nav_website_title" class="form-control" value="' . escape($navWebsiteTitle) . '"></div>
@@ -938,7 +950,7 @@ if ($action == "edit") {
                 </div>
                 <div class="col-sm-11">
                 <input type="hidden" name="original_widget_key" value="'.htmlspecialchars($db['widget_key']).'">
-<input type="hidden" name="id" value="'.(int)$_GET['id'].'">
+                <input type="hidden" name="id" value="'.(int)$_GET['id'].'">
                     
                     <button class="btn btn-warning" type="submit" name="widget_edit"  /><i class="bi bi-pencil-square"></i> ' . $languageService->get('edit_widget') . '</button>
                 </div>
@@ -1071,7 +1083,12 @@ if ($action == "edit") {
 
 
 
-        echo '
+        echo '<hr>
+        <div class="mb-3 row">
+            <label class="col-sm-5 col-form-label">Admin Navigations-Link:<br><small>(admincenter.php?site=)</small></label>
+            <div class="col-sm-6"><input type="text" name="nav_admin_link" class="form-control"></div>
+        </div>
+
         <div class="mb-3 row">
             <label class="col-sm-5 col-form-label">Admin Navigations-Titel:</label>
             <div class="col-sm-6"><input type="text" name="nav_admin_title" class="form-control"></div>
@@ -1084,7 +1101,11 @@ if ($action == "edit") {
                 </select>
             </div>
         </div>
-
+        <hr>
+        <div class="mb-3 row">
+            <label class="col-sm-5 col-form-label">Website Navigations-Link:<br><small>(index.php?site=)</small></label>
+            <div class="col-sm-6"><input type="text" name="nav_website_link" class="form-control"></div>
+        </div>
         <div class="mb-3 row">
             <label class="col-sm-5 col-form-label">Website Navigations-Titel:</label>
             <div class="col-sm-6"><input type="text" name="nav_website_title" class="form-control"></div>

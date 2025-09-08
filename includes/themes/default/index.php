@@ -119,7 +119,10 @@ header('X-UA-Compatible: IE=edge');
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="format-detection" content="telephone=no">
 
-    <link rel="SHORTCUT ICON" href="./includes/themes/<?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/images/favicon.ico">
+    <link rel="icon" href="./includes/themes/<?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="./includes/themes/<?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/images/favicon-192.png" sizes="192x192" type="image/png">
+    <link rel="apple-touch-icon" href="./includes/themes/<?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/images/favicon-180.png" sizes="180x180">
+
     <base href="/">
 
     <!-- Stylesheets -->

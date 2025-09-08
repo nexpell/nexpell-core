@@ -39,3 +39,16 @@ echo'<nav id="mainNavbar" class="sticky-top navbar navbar-expand-lg ' . $ds['nav
         </div>
   </div>
 </nav>';
+
+
+// Messenger Plugin prüfen
+$messenger_active = false;
+$result = safe_query("SELECT 1 FROM settings_plugins WHERE modulname='messenger' AND activate=1");
+if (mysqli_num_rows($result)) {
+    $messenger_active = true;
+}
+?>
+<script>
+const messengerActive = <?= $messenger_active ? 'true' : 'false' ?>;
+</script>
+<script src="/includes/plugins/messenger/js/update_mail_badge.js"></script>
