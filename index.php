@@ -54,6 +54,7 @@ if ($suspiciousPost !== null) {
 // === Sprachsystem vorbereiten ===
 $_SESSION['language'] = $_SESSION['language'] ?? 'de';
 
+
 // === System-Dateien einbinden ===
 include_once("system/config.inc.php");
 include_once("system/settings.php");
@@ -63,7 +64,6 @@ include_once("system/init.php");
 include_once("system/plugin.php");
 include_once("system/widget.php");
 include_once("system/multi_language.php");
-//include_once("system/classes/track_visitor.php");
 include_once("system/init_language.php"); // setzt $languageService
 include_once("system/classes/Template.php");
 include_once("system/classes/SeoUrlHandler.php");
@@ -161,7 +161,6 @@ if (file_exists($langfile)) {
 
 // Sprachauswahl an LanguageService übergeben – hier nur die Sprachkennung
 $languageService->setLanguage($lang);  // $lang ist ein String, z.B. 'de'
-
 
 // Template laden
 $themeFile = BASE_PATH . '/' . $tpl->themes_path . 'index.php';

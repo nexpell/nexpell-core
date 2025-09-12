@@ -191,7 +191,7 @@ if ($row['installed'] > 0) {
     $badgeContent = $unreadCount > 0 ? $unreadCount : '';
 
     // Messenger-Link ausgeben
-    $messenger = '<a class="nav-link messenger-link" href="index.php?site=messenger">
+    $messenger = '<a class="nav-link messenger-link" href="' . htmlspecialchars(SeoUrlHandler::convertToSeoUrl('index.php?site=messenger')) . '">
                       <i id="mail-icon" class="bi bi-envelope-dash"></i>
                       <span id="total-unread-badge" style="display:' . $badgeStyle . ';">' 
                           . $badgeContent . '</span>

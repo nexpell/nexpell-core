@@ -32,8 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_style'])) {
     mysqli_stmt_close($stmt);
 
     echo '<div class="alert alert-success alert-dismissible fade show" role="alert">';
-    echo 'Überschriften-Stil <strong>' . htmlspecialchars($style) . '</strong> gespeichert!';
-    echo '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+    echo sprintf($languageService->get('alert_save_success'), htmlspecialchars($style));
+    echo '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="' . $languageService->get('close') . '"></button>';
     echo '</div>';
 }
 
@@ -46,41 +46,39 @@ $selected = $current['selected_style'] ?? '';
 $styles = [];
 for ($i = 1; $i <= 10; $i++) {
     $key = "head-boxes-$i";
-    $styles[$key] = "Überschrift $i";
+    $styles[$key] = sprintf($languageService->get('headline_style'), $i);
 }
 
 ?>
 <style>
-  input[type="radio"]:checked + label {
-    font-weight: bold;
-    font-size: 0.9rem;
-    color: #fe821d;
-  }
+    input[type="radio"]:checked + label {
+        font-weight: bold;
+        font-size: 0.9rem;
+        color: #fe821d;
+    }
 
-  input[type="radio"]:checked + label::before {
-    content: '✔ ';
-    font-size: 1.2rem;
-    color: #fe821d;
-  }
+    input[type="radio"]:checked + label::before {
+        content: '✔ ';
+        font-size: 1.2rem;
+        color: #fe821d;
+    }
 
-  input[type="radio"]:checked {
-    transform: scale(1.2);
-  }
+    input[type="radio"]:checked {
+        transform: scale(1.2);
+    }
 
-  input[type="radio"].form-check-input:checked {
-    accent-color: #0d6efd;
-  }
-  .form-check-label.custom-height {
-    height: 30px;
-    line-height: 30px;
-  }
-
-
+    input[type="radio"].form-check-input:checked {
+        accent-color: #0d6efd;
+    }
+    .form-check-label.custom-height {
+        height: 30px;
+        line-height: 30px;
+    }
 </style>
 
 <div class="card">
-<div class="card-header">
-        Überschriften-Stil wählen
+    <div class="card-header">
+        <?= $languageService->get('select_headline_style'); ?>
     </div>
     <div class="card-body"><div class="container py-5">
 
@@ -94,19 +92,19 @@ for ($i = 1; $i <= 10; $i++) {
                         <div class="card">
                             <div class="card-body text-center">
                                 <input class="form-check-input mb-2"
-                                       type="radio"
-                                       name="selected_style"
-                                       id="style_<?= $key ?>"
-                                       value="<?= htmlspecialchars($key) ?>"
-                                       <?= $selected === $key ? 'checked' : '' ?> />
+                                        type="radio"
+                                        name="selected_style"
+                                        id="style_<?= $key ?>"
+                                        value="<?= htmlspecialchars($key) ?>"
+                                        <?= $selected === $key ? 'checked' : '' ?> />
 
                                 <label class="form-check-label d-block mb-2 custom-height" for="style_<?= $key ?>">
-                                  <?= htmlspecialchars($label) ?>
+                                    <?= htmlspecialchars($label) ?>
                                 </label>
-                                <img src="/admin/images/headlines/<?= str_replace('head-boxes-', 'headlines-', $key) ?>.jpg" 
-                                     alt="<?= htmlspecialchars($label) ?>" 
-                                     class="img-fluid rounded" 
-                                     style="max-height: 180px; border:1px solid #dee2e6;" />
+                                <img src="/admin/images/headlines/<?= str_replace('head-boxes-', 'headlines-', $key) ?>.jpg"
+                                            alt="<?= htmlspecialchars($label) ?>"
+                                            class="img-fluid rounded"
+                                            style="max-height: 180px; border:1px solid #dee2e6;" />
                             </div>
                         </div>
                     </div>
@@ -116,7 +114,7 @@ for ($i = 1; $i <= 10; $i++) {
     <?php endforeach; ?>
     <br class="mb-3">
     <div class="col-12 mb-3">
-        <button type="submit" class="btn btn-primary">Speichern</button>
+        <button type="submit" class="btn btn-primary"><?= $languageService->get('save'); ?></button>
     </div>
 </form>
 </div></div></div>

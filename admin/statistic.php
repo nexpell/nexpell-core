@@ -8,19 +8,16 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Standard setzen, wenn nicht vorhanden
+// Standard setzen, wenn nicht vorhanden
 $_SESSION['language'] = $_SESSION['language'] ?? 'de';
 
 // Initialisieren
 global $languageService;
+$lang = $languageService->detectLanguage();
 $languageService = new LanguageService($_database);
 
 // Admin-Modul laden
 $languageService->readModule('statistic', true);
-
-// Überprüfen, ob die Session bereits gestartet wurde
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
 
 use nexpell\AccessControl;
 // Den Admin-Zugriff für das Modul überprüfen
@@ -120,12 +117,12 @@ $result = $_database->query($sql);
 ?>
 
 <?php echo '<div class="card">
-    <div class="card-header">' . $languageService->get('theme_installer') . '</div>
+    <div class="card-header">' . $languageService->get('user_statistics') . '</div>
     <div class="card-body">
         <div class="container py-4">';
 ?>
 
-<div class="row g-4 mb-4">
+<div class="row g-4">
     <div class="col-md-4">
         <div class="card h-100 shadow-sm">
             <div class="card-header bg-primary text-white">
@@ -209,54 +206,66 @@ $result = $_database->query($sql);
         </div>
     </div>
 </div>
-<hr class="my-5">
+<br>
 
-<div class="card mb-4 shadow-sm">
+<div class="card mb-4 shadow-sm mt-4">
     <div class="card-header bg-success text-white">
         <h5 class="mb-0"><i class="bi bi-bar-chart-line"></i> <?= $languageService->get('link_click_analysis') ?></h5>
     </div>
     <div class="card-body">
         <div class="row g-4">
+
+            <!-- Klicks pro Tag -->
             <div class="col-md-4">
                 <h6><i class="bi bi-calendar-week"></i> <?= $languageService->get('clicks_per_day') ?></h6>
-                <table class="table table-striped table-sm mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th><?= $languageService->get('date') ?></th>
-                            <th><?= $languageService->get('clicks') ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while ($row = $clicksPerDayRes->fetch_assoc()): ?>
+                <div class="table-responsive">
+                    <table class="table table-striped table-sm mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <td><?= htmlspecialchars($row['day']) ?></td>
-                                <td><?= $row['clicks'] ?></td>
+                                <th><?= $languageService->get('date') ?></th>
+                                <th><?= $languageService->get('clicks') ?></th>
                             </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php while ($row = $clicksPerDayRes->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($row['day']) ?></td>
+                                    <td><?= $row['clicks'] ?></td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
+            <!-- Top 10 URLs -->
             <div class="col-md-4">
                 <h6><i class="bi bi-link-45deg"></i> <?= $languageService->get('top_10_urls') ?></h6>
-                <table class="table table-striped table-sm mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>URL</th>
-                            <th><?= $languageService->get('clicks') ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while ($row = $topUrlsRes->fetch_assoc()): ?>
+                <div class="table-responsive">
+                    <table class="table table-striped table-sm mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <td class="text-truncate" style="max-width: 250px;"><a href="<?= htmlspecialchars($row['url']) ?>" target="_blank" rel="nofollow"><?= htmlspecialchars($row['url']) ?></a></td>
-                                <td><?= $row['clicks'] ?></td>
+                                <th>URL</th>
+                                <th><?= $languageService->get('clicks') ?></th>
                             </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php while ($row = $topUrlsRes->fetch_assoc()): ?>
+                                <tr>
+                                    <td class="text-truncate" style="max-width: 250px;">
+                                        <a href="<?= htmlspecialchars($row['url']) ?>" target="_blank" rel="nofollow">
+                                            <?= htmlspecialchars($row['url']) ?>
+                                        </a>
+                                    </td>
+                                    <td><?= $row['clicks'] ?></td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
+            <!-- Top IPs -->
             <div class="col-md-4">
                 <h6><i class="bi bi-pc-display"></i> <?= $languageService->get('top_ips') ?></h6>
                 <ul class="list-group list-group-flush">
@@ -268,12 +277,13 @@ $result = $_database->query($sql);
                     <?php endwhile; ?>
                 </ul>
             </div>
+
         </div>
     </div>
 </div>
-<hr class="my-5">
 
-<div class="card mb-4 shadow-sm">
+
+<div class="card mb-4 shadow-sm mt-4">
     <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><?= $languageService->get('click_management') ?></h5>
         <span class="badge bg-info"><?= $languageService->get('total') ?>: <?= $totalClicks ?></span>

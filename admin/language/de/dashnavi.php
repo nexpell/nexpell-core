@@ -26,5 +26,6 @@ $language_array = array(
     'text'                           => 'Linkname',
     'transaction_invalid'            => 'Transaktions ID ungültig',
     'url'                            => 'Url',
+    'category'                       => 'Kategorie',
 );
 

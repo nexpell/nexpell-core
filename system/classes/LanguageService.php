@@ -13,29 +13,28 @@ class LanguageService
         $this->_database = $database;
 
         if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+        session_start();
+        }
 
-if (isset($_SESSION['language'])) {
-    $this->currentLanguage = $_SESSION['language'];
-} else {
-    $result = $this->_database->query("SELECT default_language FROM settings LIMIT 1");
+        if (isset($_SESSION['language'])) {
+            $this->currentLanguage = $_SESSION['language'];
+        } else {
+            $result = $this->_database->query("SELECT default_language FROM settings LIMIT 1");
 
-    if ($result && $row = $result->fetch_assoc()) {
-        $this->currentLanguage = $row['default_language'] ?: 'de';
-    } else {
-        $this->currentLanguage = 'de';
-    }
+            if ($result && $row = $result->fetch_assoc()) {
+                $this->currentLanguage = $row['default_language'] ?: 'de';
+            } else {
+                $this->currentLanguage = 'de';
+            }
 
-    $_SESSION['language'] = $this->currentLanguage;
-}
+            $_SESSION['language'] = $this->currentLanguage;
+        }
     }
 
     public function readModule(string $module, bool $isAdmin = false): void
     {
         $lang = $this->currentLanguage;
 
-        // Erkennung des Basis-Pfads
         $basePath = $isAdmin
             ? $_SERVER['DOCUMENT_ROOT'] . '/admin/language'
             : $_SERVER['DOCUMENT_ROOT'] . '/languages';
@@ -55,6 +54,7 @@ if (isset($_SESSION['language'])) {
             $this->module = [];
         }
     }
+
 
     public function readPluginModule(string $pluginName): void
     {

@@ -8,8 +8,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-
-
 require_once '../system/visitor_log_statistic.php';
 
 // Standardsprache setzen
@@ -37,7 +35,7 @@ $maxonline_values = [];
 
 switch ($range) {
     case 'week':
-        // letzte 7 Tage inkl. heute
+        // Letzte 7 Tage inkl. heute
         $since_date = date('Y-m-d', strtotime("-6 days"));
         $end_date   = date('Y-m-d');
 
@@ -68,7 +66,7 @@ switch ($range) {
         break;
 
     case 'month':
-        // letzte 30 Tage inkl. heute
+        // Letzte 30 Tage inkl. heute
         $since_date = date('Y-m-d', strtotime("-29 days"));
         $end_date   = date('Y-m-d');
 
@@ -99,7 +97,7 @@ switch ($range) {
         break;
 
     case '6months':
-        // letzte 6 Monate inkl. aktueller
+        // Letzte 6 Monate inkl. aktueller
         $since_date = date('Y-m-01', strtotime("-5 months"));
         $end_date   = date('Y-m-01', strtotime("+1 month"));
 
@@ -130,7 +128,7 @@ switch ($range) {
         break;
 
     case '12months':
-        // letzte 12 Monate inkl. aktueller
+        // Letzte 12 Monate inkl. aktueller
         $since_date = date('Y-m-01', strtotime("-11 months"));
         $end_date   = date('Y-m-01', strtotime("+1 month"));
 
@@ -161,10 +159,6 @@ switch ($range) {
         break;
 }
 
-
-
-
-
 ###############################
 
 $time_limit = time() - 300; // 5 Minuten
@@ -177,17 +171,8 @@ $online_users = (int) $result->fetch_assoc()['online_users'];
 
 // --- Besucherstatistiken berechnen ---
 
-
-
-
-
-
-
-
-
-
 function getVisitorCounter(mysqli $_database): array {
-    $bot_condition    = getBotCondition(); // deine bestehende Funktion
+    $bot_condition    = getBotCondition(); // Ihre bestehende Funktion
     $today_date       = date('Y-m-d');
     $yesterday        = date('Y-m-d', strtotime('-1 day'));
     $month_start      = date('Y-m-01');
@@ -244,7 +229,7 @@ function getVisitorCounter(mysqli $_database): array {
     $first_visit = $range['first_visit'];
     $last_visit  = $range['last_visit'];
 
-    $first_visit_date = $first_visit ? date('d.m.Y', strtotime($first_visit)) : 'unbekannt';
+    $first_visit_date = $first_visit ? date('d.m.Y', strtotime($first_visit)) : $languageService->get('unknown');
 
     // Anzahl Tage seit Start berechnen (inkl. Starttag)
     $days = ($first_visit && $last_visit)
@@ -275,14 +260,7 @@ function getVisitorCounter(mysqli $_database): array {
     ];
 }
 
-
-
-
 $counter = getVisitorCounter($_database);
-
-
-
-
 
 // Geräte-Auswertung
 $res_devices = safe_query(
@@ -360,7 +338,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="visits_export.csv"');
     $output = fopen('php://output', 'w');
-    fputcsv($output, ['Datum', 'IP (hash)', 'Gerät', 'OS', 'Browser', 'Referer']);
+    fputcsv($output, [$languageService->get('date'), $languageService->get('ip_hash'), $languageService->get('device'), $languageService->get('os'), $languageService->get('browser'), $languageService->get('referer')]);
 
     $res_export = safe_query("SELECT * FROM visitor_statistics WHERE created_at >= '$since_date' ORDER BY created_at ASC");
     while ($row = mysqli_fetch_assoc($res_export)) {
@@ -377,12 +355,11 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     exit;
 }
 
-
-
-
 // Sprachlabels
 $visitsLabel   = $languageService->get('visits');
 $visitorsLabel = $languageService->get('visitors');
+
+
 ?>
 
 <div class="card">
@@ -391,280 +368,240 @@ $visitorsLabel = $languageService->get('visitors');
     </div>
     <div class="card-body">
         <div class="container py-4">
-
             <h5 class="mb-4 text-center"><?= $languageService->get('visitor_statistics'); ?></h5>
             <div class="row g-3">
-                <!-- Online Users -->
                 <div class="col-md-6 col-xl-3">
                     <div class="card bg-primary text-white">
                         <div class="card-body">
-                            <h6><?php echo $languageService->get('online_users'); ?></h6>
+                            <h6><?= $languageService->get('online_users'); ?></h6>
                             <h4 class="text-right">
                                 <i class="bi bi-person-check float-start"></i>
                                 <span class="ms-3"><?= $counter['online'] ?></span>
                             </h4>
-                            <p class="mb-0">Gerade eingeloggt<span class="float-end"><?= $counter['online'] ?></span></p>
+                            <p class="mb-0"><?= $languageService->get('currently_online'); ?><span class="float-end"><?= $counter['online'] ?></span></p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Besucher heute -->
                 <div class="col-md-6 col-xl-3">
                     <div class="card bg-success text-white">
                         <div class="card-body">
-                            <h6>Besucher heute</h6>
+                            <h6><?= $languageService->get('visitors_today'); ?></h6>
                             <h4 class="text-right">
                                 <i class="bi bi-calendar float-start"></i>
                                 <span class="ms-3"><?= $counter['today'] ?></span>
                             </h4>
-                            <p class="mb-0">Neu heute<span class="float-end"><?= $counter['today'] ?></span></p>
+                            <p class="mb-0"><?= $languageService->get('new_today'); ?><span class="float-end"><?= $counter['today'] ?></span></p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Besucher gestern -->
                 <div class="col-md-6 col-xl-3">
                     <div class="card bg-warning text-white">
                         <div class="card-body">
-                            <h6><?php echo $languageService->get('visitors_yesterday'); ?></h6>
+                            <h6><?= $languageService->get('visitors_yesterday'); ?></h6>
                             <h4 class="text-right">
                                 <i class="bi bi-calendar2 float-start"></i>
                                 <span class="ms-3"><?= $counter['yesterday'] ?></span>
                             </h4>
-                            <p class="mb-0">Gestern<span class="float-end"><?= $counter['yesterday'] ?></span></p>
+                            <p class="mb-0"><?= $languageService->get('yesterday'); ?><span class="float-end"><?= $counter['yesterday'] ?></span></p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Besucher diese Woche -->
                 <div class="col-md-6 col-xl-3">
                     <div class="card bg-info text-white">
                         <div class="card-body">
-                            <h6><?php echo $languageService->get('visitors_week'); ?> Monat</h6>
+                            <h6><?= $languageService->get('visitors_this_month'); ?></h6>
                             <h4 class="text-right">
                                 <i class="bi bi-calendar3-week float-start"></i>
                                 <span class="ms-3"><?= $counter['month'] ?></span>
                             </h4>
-                            <p class="mb-0">Diesen Monat<span class="float-end"><?= $counter['month'] ?></span></p>
+                            <p class="mb-0"><?= $languageService->get('this_month'); ?><span class="float-end"><?= $counter['month'] ?></span></p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Gesamtbesuche -->
                 <div class="col-md-6 col-xl-3">
                     <div class="card bg-danger text-white">
                         <div class="card-body">
-                            <h6>Gesamtbesuche</h6>
+                            <h6><?= $languageService->get('total_visits'); ?></h6>
                             <h4 class="text-right">
                                 <i class="bi bi-people float-start"></i>
                                 <span class="ms-3"><?= $counter['total'] ?></span>
                             </h4>
-                            <p class="mb-0">Eindeutige Besucher<span class="float-end"><?= $counter['total'] ?></span></p>
+                            <p class="mb-0"><?= $languageService->get('unique_visitors'); ?><span class="float-end"><?= $counter['total'] ?></span></p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Durchschnitt pro Tag -->
                 <div class="col-md-6 col-xl-3">
                     <div class="card bg-secondary text-white">
                         <div class="card-body">
-                            <h6>Ø Besuche pro Tag</h6>
+                            <h6><?= $languageService->get('avg_visits_per_day'); ?></h6>
                             <h4 class="text-right">
                                 <i class="bi bi-bar-chart-line float-start"></i>
                                 <span class="ms-3"><?= $counter['average_per_day'] ?></span>
                             </h4>
-                            <p class="mb-0">Im Durchschnitt<span class="float-end"><?= $counter['average_per_day'] ?></span></p>
+                            <p class="mb-0"><?= $languageService->get('on_average'); ?><span class="float-end"><?= $counter['average_per_day'] ?></span></p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Online letzte 10 Minuten -->
                 <div class="col-md-6 col-xl-3">
                     <div class="card bg-dark text-white">
                         <div class="card-body">
-                            <h6>Besucher online</h6>
+                            <h6><?= $languageService->get('online_visitors'); ?></h6>
                             <h4 class="text-right">
                                 <i class="bi bi-clock float-start"></i>
                                 <span class="ms-3"><?= $counter['online'] ?></span>
                             </h4>
-                            <p class="mb-0">Letzte 10 Min.<span class="float-end"><?= $counter['online'] ?></span></p>
+                            <p class="mb-0"><?= $languageService->get('last_10_minutes'); ?><span class="float-end"><?= $counter['online'] ?></span></p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Erste Statistik -->
                 <div class="col-md-6 col-xl-3">
                     <div class="card bg-light">
                         <div class="card-body">
-                            <h6>Webseite online seit</h6>
+                            <h6><?= $languageService->get('website_online_since'); ?></h6>
                             <h4 class="text-right">
                                 <i class="bi bi-clock float-start"></i>
                                 <span class="ms-3"><?= $counter['first_visit'] ?></span>
                             </h4>
-                            <p class="mb-0">Erste Statistik<span class="float-end"><?= $counter['first_visit'] ?> / Tage online: <?= $counter['days'] ?></span></p>
+                            <p class="mb-0"><?= $languageService->get('first_statistic'); ?><span class="float-end"><?= $counter['first_visit'] ?> / <?= $languageService->get('days_online'); ?>: <?= $counter['days'] ?></span></p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-<div class="card mb-4">
-    <div class="card-header">Besucherstatistik</div>
-    <div class="card-body">
+        <div class="card mb-4">
+            <div class="card-header"><?= $languageService->get('visitor_statistics'); ?></div>
+            <div class="card-body">
+                <form method="get" action="admincenter.php" class="mb-4 d-flex justify-content-between align-items-center" style="max-width: 400px;">
+                    <input type="hidden" name="site" value="visitor_statistic">
+                    <select name="range" class="form-select" onchange="this.form.submit()">
+                        <option value="week" <?= ($range === 'week' ? 'selected' : '') ?>><?= $languageService->get('last_7_days'); ?></option>
+                        <option value="month" <?= ($range === 'month' ? 'selected' : '') ?>><?= $languageService->get('last_30_days'); ?></option>
+                        <option value="6months" <?= ($range === '6months' ? 'selected' : '') ?>><?= $languageService->get('last_6_months'); ?></option>
+                        <option value="12months" <?= ($range === '12months' ? 'selected' : '') ?>><?= $languageService->get('last_12_months'); ?></option>
+                    </select>
+                    <a href="?site=visitor_statistic&range=<?= htmlspecialchars($range) ?>&export=csv"
+                       class="btn btn-outline-secondary ms-3"
+                       title="<?= $languageService->get('csv_export_title'); ?>"
+                       style="min-width: 180px;">
+                        <i class="bi bi-file-earmark-arrow-down"></i> <?= $languageService->get('csv_export'); ?>
+                    </a>
+                </form>
 
-  <form method="get" action="admincenter.php" class="mb-4 d-flex justify-content-between align-items-center" style="max-width: 400px;">
-    <input type="hidden" name="site" value="visitor_statistic">
-        <select name="range" class="form-select" onchange="this.form.submit()">
-        <option value="week" <?= ($range === 'week' ? 'selected' : '') ?>>Letzte 7 Tage</option>
-        <option value="month" <?= ($range === 'month' ? 'selected' : '') ?>>Letzte 30 Tage</option>
-        <option value="6months" <?= ($range === '6months' ? 'selected' : '') ?>>Letzte 6 Monate</option>
-        <option value="12months" <?= ($range === '12months' ? 'selected' : '') ?>>Letzte 12 Monate</option>
-    </select>
-    <a href="?site=visitor_statistic&range=<?= htmlspecialchars($range) ?>&export=csv"
-       class="btn btn-outline-secondary ms-3"
-       title="CSV Export"
-       style="min-width: 180px;">
-      <i class="bi bi-file-earmark-arrow-down"></i> CSV-Export
-    </a>
-  </form>
-
-  <h3>Aufrufe pro Tag</h3>
-  <canvas id="visitorsChart" height="100"></canvas>
-
-  </div></div>
-
-  <!-- Chart Top Seiten -->
-  <div class="card mb-4">
-    <div class="card-header"><?php echo $languageService->get('top_pages'); ?></div>
-    <div class="card-body">
-      <canvas id="topPagesChart"></canvas>
-    </div>
-  </div>
-
-  <!-- Chart Top Länder -->
-  <div class="card mb-4">
-    <div class="card-header"><?php echo $languageService->get('top_countries'); ?></div>
-    <div class="card-body">
-      <canvas id="topCountriesChart"></canvas>
-    </div>
-  </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <div class="row">
-
-                <div class="col-md-4">
-                    <div class="card mb-4 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Gerätetypen</h5>
-                            <canvas id="deviceChart" height="150"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="card mb-4 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Betriebssysteme</h5>
-                            <canvas id="osChart" height="150"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="card mb-4 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Browser</h5>
-                            <canvas id="browserChart" height="150"></canvas>
-                        </div>
-                    </div>
-                </div>
-    </div>            
-
-    <div class="row mt-4">
-        <div class="col-md-4">
-            <h4>Geräte</h4>
-            <ul class="list-group">
-                <?php foreach ($device_data as $device => $count): ?>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <?= htmlspecialchars($device) ?>
-                        <span class="badge bg-info rounded-pill"><?php echo $count; ?></span>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
+                <h3><?= $languageService->get('daily_page_views'); ?></h3>
+                <canvas id="visitorsChart" height="100"></canvas>
+            </div>
         </div>
 
-        <div class="col-md-4">
-            <h4>Betriebssysteme</h4>
-            <ul class="list-group">
-                <?php foreach ($os_data as $os => $count): ?>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <?= htmlspecialchars($os) ?>
-                        <span class="badge bg-info rounded-pill"><?php echo $count; ?></span>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
+        <div class="card mb-4">
+            <div class="card-header"><?= $languageService->get('top_pages'); ?></div>
+            <div class="card-body">
+                <canvas id="topPagesChart"></canvas>
+            </div>
         </div>
 
-        <div class="col-md-4">
-            <h4>Browser</h4>
-            <ul class="list-group">
-                <?php foreach ($browser_data as $browser => $count): ?>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <?= htmlspecialchars($browser) ?>
-                        <span class="badge bg-info rounded-pill"><?php echo $count; ?></span>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
+        <div class="card mb-4">
+            <div class="card-header"><?= $languageService->get('top_countries'); ?></div>
+            <div class="card-body">
+                <canvas id="topCountriesChart"></canvas>
+            </div>
         </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title"><?= $languageService->get('device_types'); ?></h5>
+                        <canvas id="deviceChart" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title"><?= $languageService->get('operating_systems'); ?></h5>
+                        <canvas id="osChart" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title"><?= $languageService->get('browsers'); ?></h5>
+                        <canvas id="browserChart" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <h4><?= $languageService->get('devices'); ?></h4>
+                <ul class="list-group">
+                    <?php foreach ($device_data as $device => $count): ?>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <?= htmlspecialchars($device) ?>
+                            <span class="badge bg-info rounded-pill"><?= $count; ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+
+            <div class="col-md-4">
+                <h4><?= $languageService->get('operating_systems'); ?></h4>
+                <ul class="list-group">
+                    <?php foreach ($os_data as $os => $count): ?>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <?= htmlspecialchars($os) ?>
+                            <span class="badge bg-info rounded-pill"><?= $count; ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+
+            <div class="col-md-4">
+                <h4><?= $languageService->get('browsers'); ?></h4>
+                <ul class="list-group">
+                    <?php foreach ($browser_data as $browser => $count): ?>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <?= htmlspecialchars($browser) ?>
+                            <span class="badge bg-info rounded-pill"><?= $count; ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        </div>
+
+        <h3 class="mt-4"><?= $languageService->get('top_10_pages'); ?></h3>
+        <ul class="list-group mb-4">
+            <?php foreach ($top_pages as $page): ?>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <?= htmlspecialchars($page['page']) ?>
+                    <span class="badge bg-secondary rounded-pill"><?= $page['visits']; ?></span>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+
+        <h4 class="mt-4"><?= $languageService->get('top_5_referers'); ?></h4>
+        <ul class="list-group mb-4">
+            <?php foreach ($top_referers as $referer): ?>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <?= htmlspecialchars($referer['referer']) ?>
+                    <span class="badge bg-warning rounded-pill"><?= $referer['hits']; ?></span>
+                </li>
+            <?php endforeach; ?>
+        </ul>
     </div>
-
-    <h3 class="mt-4">Top 10 Seiten nach Klicks</h3>
-    <ul class="list-group mb-4">
-        <?php foreach ($top_pages as $page): ?>
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <?= htmlspecialchars($page['page']) ?>
-                <span class="badge bg-secondary rounded-pill"><?php echo $page['visits']; ?></span>
-            </li>
-        <?php endforeach; ?>
-    </ul>
-
-    <h4 class="mt-4">Top 5 Referer</h4>
-    <ul class="list-group mb-4">
-        <?php foreach ($top_referers as $referer): ?>
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <?= htmlspecialchars($referer['referer']) ?>
-                <span class="badge bg-warning rounded-pill"><?php echo $referer['hits']; ?></span>
-            </li>
-        <?php endforeach; ?>
-    </ul>
 </div>
-
-
-
-
-</div></div>
-
-
-
-
-
-
-
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

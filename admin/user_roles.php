@@ -16,18 +16,12 @@ $languageService = new LanguageService($_database);
 
 // Admin-Modul laden
 $languageService->readModule('user_roles', true);
-#$_language->readModule('user_roles', false, true);
-#$_language->readModule('access_rights', false, true);
-#$_language->readModule('user_roles', false, true);
-
-#use nexpell\AccessControl;
-// Den Admin-Zugriff für das Modul überprüfen
-#AccessControl::checkAdminAccess('ac_user_roles');
 
 use nexpell\LoginSecurity;
 use nexpell\Email;
-
-
+use nexpell\AccessControl;
+// Den Admin-Zugriff für das Modul überprüfen
+AccessControl::checkAdminAccess('ac_user_roles');
 
 if (isset($_GET[ 'action' ])) {
     $action = $_GET[ 'action' ];
@@ -36,8 +30,6 @@ if (isset($_GET[ 'action' ])) {
 }
 
 if ($action == "edit_role_rights") {
-
-
  
 // CSRF-Token generieren
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && !isset($_SESSION['csrf_token'])) {
@@ -438,10 +430,10 @@ if (isset($_SESSION['csrf_success'])): ?>
                         <td><?= htmlspecialchars($assignment['username']) ?></td>
                         <td><?= htmlspecialchars($assignment['role_name']) ?></td>
                         <td>
-                            <a href="admincenter.php?site=user_roles&action=user_role_details&userID=<?= $assignment['userID'] ?>" class="btn btn-sm btn-warning">
+                            <a href="admincenter.php?site=user_roles&action=user_role_details&userID=<?= $assignment['userID'] ?>" class="btn btn-warning">
                                 <?= $languageService->get('view_assigned_rights') ?>
                             </a>
-                            <a href="admincenter.php?site=user_roles&action=admins&delete_assignment=<?= $assignment['userID'] ?>&roleID=<?= $assignment['roleID'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('<?= $languageService->get('remove_role_confirm') ?>')">
+                            <a href="admincenter.php?site=user_roles&action=admins&delete_assignment=<?= $assignment['userID'] ?>&roleID=<?= $assignment['roleID'] ?>" class="btn btn-danger" onclick="return confirm('<?= $languageService->get('remove_role_confirm') ?>')">
                                 <?= $languageService->get('remove') ?>
                             </a>
                         </td>
@@ -567,7 +559,7 @@ if (isset($_SESSION['csrf_error'])): ?>
                             <td><?= htmlspecialchars($role['role_name']) ?></td>
                             <td><?= htmlspecialchars($role['description'] ?? $languageService->get('no_permissions_defined')) ?></td>
                             <td>
-                                <a href="admincenter.php?site=user_roles&action=edit_role_rights&roleID=<?= (int)$role['roleID'] ?>" class="btn btn-sm btn-warning">
+                                <a href="admincenter.php?site=user_roles&action=edit_role_rights&roleID=<?= (int)$role['roleID'] ?>" class="btn btn-warning">
                                     <?= $languageService->get('edit_rights') ?>
                                 </a>
                             </td>
@@ -1018,7 +1010,7 @@ $users = safe_query("SELECT * FROM users ORDER BY userID LIMIT $offset, $users_p
             <h2 class="mb-4"><?= $languageService->get('regular_users') ?></h2>
         <!-- Button zum Hinzufügen eines neuen Benutzers -->
         <div class="mb-3">
-            <a href="admincenter.php?site=user_roles&action=user_create" class="btn btn-sm btn-success">
+            <a href="admincenter.php?site=user_roles&action=user_create" class="btn btn-success">
                 <?= $languageService->get('add_user') ?>
             </a>
         </div>
@@ -1045,46 +1037,46 @@ $users = safe_query("SELECT * FROM users ORDER BY userID LIMIT $offset, $users_p
                         <td><?= $user['is_active'] ? '✔️' : '❌' ?>
 
                             <?php if (!$user['is_active']) : ?>
-    <form method="POST" action="" class="d-inline">
-        <input type="hidden" name="userID" value="<?= $user['userID'] ?>">
-        <button type="submit" name="activate_user" class="btn btn-success btn-sm">
-            <?= $languageService->get('activate_user') ?>
-        </button>
-    </form>
-<?php else : ?>
-    <form method="POST" action="" class="d-inline">
-        <input type="hidden" name="userID" value="<?= $user['userID'] ?>">
-        <button type="submit" name="deactivate_user" class="btn btn-warning btn-sm">
-            <?= $languageService->get('deactivate_user') ?>
-        </button>
-    </form>
-<?php endif; ?>
+                            <form method="POST" action="" class="d-inline">
+                                <input type="hidden" name="userID" value="<?= $user['userID'] ?>">
+                                <button type="submit" name="activate_user" class="btn btn-success">
+                                    <?= $languageService->get('activate_user') ?>
+                                </button>
+                            </form>
+                        <?php else : ?>
+                            <form method="POST" action="" class="d-inline">
+                                <input type="hidden" name="userID" value="<?= $user['userID'] ?>">
+                                <button type="submit" name="deactivate_user" class="btn btn-warning">
+                                    <?= $languageService->get('deactivate_user') ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
 
-</td>
+                        </td>
                         <td>
 
 
                             <?php if ($user['is_locked']) : ?>
                                 <form method="POST" action="" class="d-inline">
                                     <input type="hidden" name="userID" value="<?= $user['userID'] ?>">
-                                    <button type="submit" name="unban_user" class="btn btn-success btn-sm">
+                                    <button type="submit" name="unban_user" class="btn btn-success">
                                         <?= $languageService->get('unban_user') ?>
                                     </button>
                                 </form>
                             <?php else : ?>
                                 <form method="POST" action="" class="d-inline">
                                     <input type="hidden" name="userID" value="<?= $user['userID'] ?>">
-                                    <button type="submit" name="ban_user" class="btn btn-danger btn-sm">
+                                    <button type="submit" name="ban_user" class="btn btn-danger">
                                         <?= $languageService->get('ban_user') ?>
                                     </button>
                                 </form>
                             <?php endif; ?>
 
-                            <a href="admincenter.php?site=user_roles&action=edit_user&userID=<?= $user['userID'] ?>" class="btn btn-sm btn-warning">
+                            <a href="admincenter.php?site=user_roles&action=edit_user&userID=<?= $user['userID'] ?>" class="btn btn-warning">
                                 <?= $languageService->get('edit') ?>
                             </a>
 
-                            <a href="admincenter.php?site=user_roles&action=delete_user&userID=<?= $user['userID'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('<?= $languageService->get('confirm_delete') ?>')">
+                            <a href="admincenter.php?site=user_roles&action=delete_user&userID=<?= $user['userID'] ?>" class="btn btn-danger" onclick="return confirm('<?= $languageService->get('confirm_delete') ?>')">
                                 <?= $languageService->get('delete') ?>
                             </a>
                         </td>

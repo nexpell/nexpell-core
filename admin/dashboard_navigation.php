@@ -644,7 +644,7 @@ if ($action == "add") {
                 <div class="mb-3 row">
                     <div class="col-md-offset-2 col-md-10">
                         <input type="hidden" name="captcha_hash" value="' . htmlspecialchars($hash) . '">
-                        <button class="btn btn-success btn-sm" type="submit" name="save"><i class="bi bi-box-arrow-down"></i> ' . $languageService->get('add_link') . '</button>
+                        <button class="btn btn-success" type="submit" name="save"><i class="bi bi-box-arrow-down"></i> ' . $languageService->get('add_link') . '</button>
                     </div>
                 </div>
             </form>
@@ -763,7 +763,7 @@ if ($action == "add") {
                     <div class="col-md-offset-2 col-md-10">
                         <input type="hidden" name="captcha_hash" value="' . $hash . '" />
                         <input type="hidden" name="linkID" value="' . $linkID . '">
-                        <button class="btn btn-warning btn-sm" type="submit" name="saveedit">
+                        <button class="btn btn-warning" type="submit" name="saveedit">
                             <i class="bi bi-box-arrow-down"></i> ' . $languageService->get('edit_link') . '
                         </button>
                     </div>
@@ -851,7 +851,7 @@ $hash = $_SESSION['captcha_hash'];
       <div class="mb-3 row">
         <div class="col-md-offset-2 col-md-10">
           <input type="hidden" name="captcha_hash" value="' . $hash . '" />
-          <button class="btn btn-success btn-sm" type="submit" name="saveaddcat"><i class="bi bi-box-arrow-down"></i> ' . $languageService->get('add_category') . '</button>
+          <button class="btn btn-success" type="submit" name="saveaddcat"><i class="bi bi-box-arrow-down"></i> ' . $languageService->get('add_category') . '</button>
         </div>
       </div>
 
@@ -940,7 +940,7 @@ $hash = $_SESSION['captcha_hash'];
                 <div class="col-md-offset-2 col-md-10">
                     <input type="hidden" name="captcha_hash" value="' . $hash . '" />
                     <input type="hidden" name="catID" value="' . $catID . '">
-                    <button class="btn btn-warning btn-sm" type="submit" name="savecat">
+                    <button class="btn btn-warning" type="submit" name="savecat">
                         <i class="bi bi-box-arrow-down"></i> ' . $languageService->get('edit_category') . '
                     </button>
                 </div>
@@ -967,9 +967,9 @@ echo '<div class="card">
         <div class="mb-3 row">
             <label class="col-md-1 control-label">' . $languageService->get('options') . ':</label>
             <div class="col-md-8">
-                <a class="btn btn-primary btn-sm" href="admincenter.php?site=dashboard_navigation&amp;action=addcat" class="input"><i class="bi bi-plus-circle"></i> ' .
+                <a class="btn btn-primary" href="admincenter.php?site=dashboard_navigation&amp;action=addcat" class="input"><i class="bi bi-plus-circle"></i> ' .
                     $languageService->get('new_category') . '</a>
-                <a class="btn btn-primary btn-sm" href="admincenter.php?site=dashboard_navigation&amp;action=add" class="input"><i class="bi bi-plus-circle"></i> ' .
+                <a class="btn btn-primary" href="admincenter.php?site=dashboard_navigation&amp;action=add" class="input"><i class="bi bi-plus-circle"></i> ' .
                     $languageService->get('new_link') . '</a>
             </div>
         </div>';
@@ -1016,11 +1016,11 @@ while ($ds = mysqli_fetch_array($ergebnis)) {
     } else {
         $sort = $list;
         $catactions = '
-            <a class="btn btn-warning btn-sm" href="admincenter.php?site=dashboard_navigation&amp;action=editcat&amp;catID=' . $ds[ 'catID' ] .
+            <a class="btn btn-warning" href="admincenter.php?site=dashboard_navigation&amp;action=editcat&amp;catID=' . $ds[ 'catID' ] .
             '" class="input"><i class="bi bi-pencil-square"></i> ' . $languageService->get('edit') . '</a>            
 
             <!-- Button trigger modal -->
-<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" 
+<button type="button" class="btn btn-danger" data-bs-toggle="modal" 
         data-bs-target="#confirm-delete-' . $ds['catID'] . '" 
         data-href="admincenter.php?site=dashboard_navigation&delcat=true&catID=' . $ds['catID'] . '&captcha_hash=' . $hash . '">
     <i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '
@@ -1034,16 +1034,16 @@ while ($ds = mysqli_fetch_array($ergebnis)) {
                 <h5 class="modal-title" id="confirm-delete-' . $ds['catID'] . 'Label">
                     <i class="bi bi-menu-app"></i> ' . $languageService->get('dashnavi') . '
                 </h5>
-                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
             </div>
             <div class="modal-body">
                 <p><i class="bi bi-trash3"></i> ' . $languageService->get('really_delete_category') . '</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="bi bi-x-lg"></i> ' . $languageService->get('close') . '
                 </button>
-                <a class="btn btn-danger btn-ok btn-sm">
+                <a class="btn btn-danger btn-ok">
                     <i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '
                 </a>
             </div>
@@ -1113,10 +1113,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td class="' . $td . '"><small>' . $db[ 'url' ] . '</small></td>
                 <td class="' . $td . '"><small>' . $db[ 'modulname' ] . '</small></td>
                 <td class="' . $td . '">
-                    <a href="admincenter.php?site=dashboard_navigation&amp;action=edit&amp;linkID=' . $db[ 'linkID' ] .'" class="btn btn-warning btn-sm"><i class="bi bi-pencil-square"></i> ' . $languageService->get('edit') . '</a>
+                    <a href="admincenter.php?site=dashboard_navigation&amp;action=edit&amp;linkID=' . $db[ 'linkID' ] .'" class="btn btn-warning"><i class="bi bi-pencil-square"></i> ' . $languageService->get('edit') . '</a>
 
                 <!-- Button trigger modal -->
-<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#' . $modalID . '" data-href="admincenter.php?site=dashboard_navigation&delete=true&linkID=' . $db['linkID'] . '&captcha_hash=' . $hash . '">
+<button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#' . $modalID . '" data-href="admincenter.php?site=dashboard_navigation&delete=true&linkID=' . $db['linkID'] . '&captcha_hash=' . $hash . '">
     <i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '
 </button>
 
@@ -1126,14 +1126,14 @@ document.addEventListener("DOMContentLoaded", function () {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="' . $modalID . 'Label"><i class="bi bi-menu-app"></i> ' . $languageService->get('dashnavi') . '</h5>
-                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
             </div>
             <div class="modal-body">
                 <p><i class="bi bi-trash3"></i> ' . $languageService->get('really_delete_link') . '</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> ' . $languageService->get('close') . '</button>
-                <a class="btn btn-danger btn-ok btn-sm"><i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '</a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> ' . $languageService->get('close') . '</button>
+                <a class="btn btn-danger btn-ok"><i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '</a>
             </div>
         </div>
     </div>
@@ -1166,7 +1166,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 echo '  <tr>
             <td class="td_head" colspan="6" align="right">
-                <button class="btn btn-primary btn-sm" type="submit" name="sortieren"><i class="bi bi-sort-numeric-up"></i>  ' . $languageService->get('to_sort') . '</button>
+                <button class="btn btn-primary" type="submit" name="sortieren"><i class="bi bi-sort-numeric-up"></i>  ' . $languageService->get('to_sort') . '</button>
             </td>
         </tr>
     </table>

@@ -291,62 +291,20 @@ class LoginSecurity
         return mysqli_num_rows($result) > 0;
     }
 
-    // Funktion zum Speichern der Session nach erfolgreichem Login
-   /* public static function saveSession(int $userID): void {
-        global $_database;
-
-        $sessionID = session_id();
-        $userIP = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-        $browser = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
-        $sessionData = serialize($_SESSION); // optional
-        $lastActivity = time();
-
-        // Prüfen, ob bereits eine Session mit dieser ID existiert
-        $checkStmt = $_database->prepare("SELECT id FROM user_sessions WHERE session_id = ?");
-        $checkStmt->bind_param('s', $sessionID);
-        $checkStmt->execute();
-        $checkStmt->store_result();
-
-        if ($checkStmt->num_rows > 0) {
-            // Update bestehender Session
-            $updateStmt = $_database->prepare("
-                UPDATE user_sessions 
-                SET userID = ?, user_ip = ?, session_data = ?, browser = ?, last_activity = ?
-                WHERE session_id = ?
-            ");
-            $updateStmt->bind_param('isssis', $userID, $userIP, $sessionData, $browser, $lastActivity, $sessionID);
-            $updateStmt->execute();
-        } else {
-            // Neue Session speichern
-            $insertStmt = $_database->prepare("
-                INSERT INTO user_sessions (session_id, userID, user_ip, session_data, browser, last_activity)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ");
-            $insertStmt->bind_param('sisssi', $sessionID, $userID, $userIP, $sessionData, $browser, $lastActivity);
-            $insertStmt->execute();
-        }
-    }*/
-
-    // Funktion zum Anonymisieren der IP für DSGVO
-    // Funktion zum Anonymisieren der IP für DSGVO
-    function anonymize_ip($ip) {
+    
+    private static function anonymize_ip(string $ip): string {
         if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
             $parts = explode('.', $ip);
-            if (count($parts) === 4) {
-                $parts[2] = 'xxx';
-                $parts[3] = 'xxx';
-                return implode('.', $parts);
-            }
-        } elseif (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-            $parts = explode(':', $ip);
-            if (count($parts) >= 8) {
-                $parts[4] = 'xxxx';
-                $parts[5] = 'xxxx';
-                $parts[6] = 'xxxx';
-                $parts[7] = 'xxxx';
-                return implode(':', $parts);
-            }
+            $parts[3] = '0';
+            return implode('.', $parts);
         }
+
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $parts = explode(':', $ip);
+            $parts[count($parts) - 1] = '0000';
+            return implode(':', $parts);
+        }
+
         return $ip;
     }
 
@@ -354,10 +312,10 @@ class LoginSecurity
     public static function saveSession(int $userID): void {
         global $_database;
 
-        $sessionID = session_id();
-        $userIP = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-        $userIP = anonymize_ip($userIP); // IP anonymisieren
-        $browser = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+        $sessionID   = session_id();
+        $userIP      = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $userIP      = self::anonymize_ip($userIP); // IP anonymisieren
+        $browser     = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
         $sessionData = serialize($_SESSION); // optional
         $lastActivity = time();
 
@@ -398,7 +356,6 @@ class LoginSecurity
         $deleteOldStmt->execute();
     }
 
-
     // Funktion zur Überprüfung, ob die IP-Adresse des Nutzers gesperrt ist
     public static function isIpBanned(string $ip, ?string $email = null): bool {
         global $_database;
@@ -436,8 +393,6 @@ class LoginSecurity
         return ($count >= $max);
     }
 
-
-
     public static function escape(?string $value): string
     {
         return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
@@ -455,6 +410,5 @@ class LoginSecurity
         }
         return $_SESSION['csrf_token'];
     }
-
 
 }

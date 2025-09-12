@@ -3,7 +3,15 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
+use nexpell\LanguageService;
+
+// Standardsprache setzen
 $_SESSION['language'] = $_SESSION['language'] ?? 'de';
+
+// Sprachservice initialisieren
+global $languageService,$_database;;
+$languageService = new LanguageService($_database);
+$languageService->readModule('log_viewer', true);
 
 use nexpell\AccessControl;
 AccessControl::checkAdminAccess('ac_log_viewer');
@@ -28,7 +36,7 @@ $searchBlocked = isset($_GET['search_blocked']) ? trim($_GET['search_blocked']) 
 $linesPerPage = 50;
 
 /* =========================
-   POST-Handler: IP block/unblock
+    POST-Handler: IP block/unblock
 ========================= */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $blockedData = file_exists($blockedIPsFile) ? json_decode(file_get_contents($blockedIPsFile), true) : [];
@@ -56,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 /* =========================
-   Funktionen laden Logs
+    Funktionen laden Logs
 ========================= */
 function loadLogLines(string $file, string $search, int $page, int $entriesPerPage): array {
     if (!file_exists($file)) return ['lines' => [], 'total' => 0, 'pages' => 1, 'page' => 1];
@@ -117,7 +125,7 @@ function loadBlockedIPs(string $file, string $search, int $page, int $linesPerPa
 
 
 /* =========================
-   Logs laden
+    Logs laden
 ========================= */
 $accessLog = loadLogLines($logFileAccess, $searchAccess, $pageAccess, $linesPerPage);
 $suspiciousLog = loadLogLines($logFileSuspicious, $searchSuspicious, $pageSuspicious, $linesPerPage);
@@ -127,9 +135,9 @@ $blockedIPs = loadBlockedIPs($blockedIPsFile, $searchBlocked, $pageBlocked, $lin
 
 // Level automatisch bestimmen
 foreach ($blockedIPs['lines'] as &$item) {
-    if (stripos($item['reason'], 'fehlgeschlagen') !== false) {
+    if (stripos($item['reason'], $languageService->get('reason_failed_logins')) !== false) {
         $item['level'] = 'critical';
-    } elseif (stripos($item['reason'], 'test') !== false) {
+    } elseif (stripos($item['reason'], $languageService->get('reason_test')) !== false) {
         $item['level'] = 'warning';
     } else {
         $item['level'] = 'info';
@@ -139,39 +147,36 @@ unset($item);
 ?>
 
 <style>
-  pre { background: #222; color: #eee; padding: 10px; max-height: 400px; overflow-x: auto; white-space: pre-wrap; }
-  .container { margin-bottom: 3rem; }
+    pre { background: #222; color: #eee; padding: 10px; max-height: 400px; overflow-x: auto; white-space: pre-wrap; }
+    .container { margin-bottom: 3rem; }
 </style>
 
 <div class="card">
     <div class="card-header">
-        <i class="bi bi-paragraph"></i> Log Viewer
+        <i class="bi bi-paragraph"></i> <?= $languageService->get('log_viewer'); ?>
     </div>
 
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb t-5 p-2 bg-light">
-            <li class="breadcrumb-item active" aria-current="page">Log Viewer - Übersicht</li>
+            <li class="breadcrumb-item active" aria-current="page"><?= $languageService->get('log_viewer_overview'); ?></li>
         </ol>
-    </nav>  
+    </nav>   
 
     <div class="card-body">
 
-<!-- =========================
-   Access Control Log
-========================= -->
 <div class="container">
-    <h5>Access Control Log</h5>
+    <h5><?= $languageService->get('access_control_log'); ?></h5>
 
     <form method="get" class="mb-3 row g-2">
         <div class="col-auto">
-            <input type="text" name="search_access" class="form-control" placeholder="Filter (IP, userID, Modulname)" value="<?= htmlspecialchars($searchAccess) ?>">
+            <input type="text" name="search_access" class="form-control" placeholder="<?= $languageService->get('filter_placeholder_access'); ?>" value="<?= htmlspecialchars($searchAccess) ?>">
         </div>
         <div class="col-auto">
-            <button type="submit" class="btn btn-primary">Suchen</button>
+            <button type="submit" class="btn btn-primary"><?= $languageService->get('search'); ?></button>
         </div>
     </form>
 
-    <p>Zeige <?= count($accessLog['lines']) ?> von <?= $accessLog['total'] ?> Einträgen (Seite <?= $accessLog['page'] ?> von <?= $accessLog['pages'] ?>)</p>
+    <p><?= sprintf($languageService->get('display_log_entries'), count($accessLog['lines']), $accessLog['total'], $accessLog['page'], $accessLog['pages']); ?></p>
     <pre><?= htmlspecialchars(implode("\n", $accessLog['lines'])) ?></pre>
 
     <nav>
@@ -185,22 +190,19 @@ unset($item);
     </nav>
 </div>
 
-<!-- =========================
-   Suspicious Log
-========================= -->
 <div class="container">
-    <h5>Suspicious Access Log</h5>
+    <h5><?= $languageService->get('suspicious_access_log'); ?></h5>
 
     <form method="get" class="mb-3 row g-2">
         <div class="col-auto">
-            <input type="text" name="search_suspicious" class="form-control" placeholder="Filter (IP, userID, Modulname)" value="<?= htmlspecialchars($searchSuspicious) ?>">
+            <input type="text" name="search_suspicious" class="form-control" placeholder="<?= $languageService->get('filter_placeholder_suspicious'); ?>" value="<?= htmlspecialchars($searchSuspicious) ?>">
         </div>
         <div class="col-auto">
-            <button type="submit" class="btn btn-danger">Suchen</button>
+            <button type="submit" class="btn btn-danger"><?= $languageService->get('search'); ?></button>
         </div>
     </form>
 
-    <p>Zeige <?= count($suspiciousLog['lines']) ?> von <?= $suspiciousLog['total'] ?> Einträgen (Seite <?= $suspiciousLog['page'] ?> von <?= $suspiciousLog['pages'] ?>)</p>
+    <p><?= sprintf($languageService->get('display_log_entries'), count($suspiciousLog['lines']), $suspiciousLog['total'], $suspiciousLog['page'], $suspiciousLog['pages']); ?></p>
     <pre><?= htmlspecialchars(implode("\n", $suspiciousLog['lines'])) ?></pre>
 
     <nav>
@@ -214,38 +216,33 @@ unset($item);
     </nav>
 </div>
 
-<!-- =========================
-   Blocked IPs
-========================= -->
 <div class="container">
-    <h5>Gesperrte IPs</h5>
+    <h5><?= $languageService->get('blocked_ips_title'); ?></h5>
 
-    <!-- Formular: Neue IP sperren -->
     <form method="post" class="mb-3 row g-2">
         <div class="col-auto">
-            <input type="text" name="block_ip" class="form-control" placeholder="IP-Adresse" required>
+            <input type="text" name="block_ip" class="form-control" placeholder="<?= $languageService->get('ip_address_placeholder'); ?>" required>
         </div>
         <div class="col-auto">
-            <input type="text" name="block_reason" class="form-control" placeholder="Grund">
+            <input type="text" name="block_reason" class="form-control" placeholder="<?= $languageService->get('reason_placeholder'); ?>">
         </div>
         <div class="col-auto">
-            <button type="submit" class="btn btn-warning">IP sperren</button>
+            <button type="submit" class="btn btn-warning"><?= $languageService->get('block_ip_button'); ?></button>
         </div>
     </form>
 
-    <!-- Suchformular -->
     <form method="get" class="mb-3 row g-2">
         <div class="col-auto">
-            <input type="text" name="search_blocked" class="form-control" placeholder="Filter IP/Grund" value="<?= htmlspecialchars($searchBlocked) ?>">
+            <input type="text" name="search_blocked" class="form-control" placeholder="<?= $languageService->get('filter_placeholder_blocked'); ?>" value="<?= htmlspecialchars($searchBlocked) ?>">
         </div>
         <div class="col-auto">
-            <button type="submit" class="btn btn-secondary">Suchen</button>
+            <button type="submit" class="btn btn-secondary"><?= $languageService->get('search'); ?></button>
         </div>
     </form>
 
     <table class="table table-striped">
         <thead>
-            <tr><th>IP</th><th>Grund</th><th>Datum</th><th>Status</th><th>Aktion</th></tr>
+            <tr><th><?= $languageService->get('ip'); ?></th><th><?= $languageService->get('reason'); ?></th><th><?= $languageService->get('date'); ?></th><th><?= $languageService->get('status'); ?></th><th><?= $languageService->get('action'); ?></th></tr>
         </thead>
         <tbody>
             <?php foreach ($blockedIPs['lines'] as $item): ?>
@@ -257,15 +254,15 @@ unset($item);
                         switch ($item['level']) {
                             case 'critical':
                                 $rowClass = 'table-danger'; // rot
-                                $statusBadge = '<span class="badge bg-danger">Kritisch</span>';
+                                $statusBadge = '<span class="badge bg-danger">' . $languageService->get('critical_status') . '</span>';
                                 break;
                             case 'warning':
                                 $rowClass = 'table-warning'; // gelb
-                                $statusBadge = '<span class="badge bg-warning text-dark">Warnung</span>';
+                                $statusBadge = '<span class="badge bg-warning text-dark">' . $languageService->get('warning_status') . '</span>';
                                 break;
                             case 'info':
                                 $rowClass = 'table-info'; // blau
-                                $statusBadge = '<span class="badge bg-info text-dark">Info</span>';
+                                $statusBadge = '<span class="badge bg-info text-dark">' . $languageService->get('info_status') . '</span>';
                                 break;
                         }
                     }
@@ -278,7 +275,7 @@ unset($item);
                     <td>
                         <form method="post" style="margin:0;">
                             <input type="hidden" name="unblock_ip" value="<?= htmlspecialchars($item['ip'] ?? '') ?>">
-                            <button type="submit" class="btn btn-success btn-sm">Freigeben</button>
+                            <button type="submit" class="btn btn-success btn-sm"><?= $languageService->get('unblock_button'); ?></button>
                         </form>
                     </td>
                 </tr>
@@ -286,7 +283,7 @@ unset($item);
         </tbody>
     </table>
 
-    <p>Zeige <?= count($blockedIPs['lines']) ?> von <?= $blockedIPs['total'] ?> Einträgen (Seite <?= $blockedIPs['page'] ?> von <?= $blockedIPs['pages'] ?>)</p>
+    <p><?= sprintf($languageService->get('display_log_entries'), count($blockedIPs['lines']), $blockedIPs['total'], $blockedIPs['page'], $blockedIPs['pages']); ?></p>
 
     <nav>
         <ul class="pagination">

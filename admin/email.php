@@ -111,7 +111,7 @@ if (isset($_POST[ 'submit' ])) {
 
                         <div class="mb-3 row">
                             <div class="offset-sm-2 col-sm-8">
-                                <button class="btn btn-success btn-sm" type="submit" name="send">
+                                <button class="btn btn-success" type="submit" name="send">
                                     ' . $languageService->get('send') . '
                                 </button>
                             </div>
@@ -192,7 +192,7 @@ if (isset($_POST[ 'submit' ])) {
 <div class="mb-3 row">
     <label class="col-md-1 control-label">' . $languageService->get('options') . ':</label>
     <div class="col-md-8">
-      <a href="admincenter.php?site=email&amp;action=test" class="btn btn-primary btn-sm" type="button">' . $languageService->get('test_email') . '</a>
+      <a href="admincenter.php?site=email&amp;action=test" class="btn btn-primary" type="button">' . $languageService->get('test_email') . '</a>
     </div>
   </div>';
 
@@ -364,7 +364,7 @@ if (isset($_POST[ 'submit' ])) {
 
         <div style="clear: both; padding-top: 20px;">
             <input type="hidden" name="captcha_hash" value="' . $hash . '">
-            <input class="btn btn-success btn-sm" type="submit" name="submit" value="' . $languageService->get('update') . '">
+            <input class="btn btn-success" type="submit" name="submit" value="' . $languageService->get('update') . '">
         </div>
 
     </form>

@@ -29,6 +29,9 @@ function anonymize_ip($ip) {
     return $ip;
 }
 
+
+
+
 // ==========================
 // FUNKTIONEN
 // ==========================
@@ -79,11 +82,14 @@ function logSuspiciousAccess(string $reason = '', array $details = []): void {
 
 // Prüfen auf verdächtige Eingaben
 function detectSuspiciousInput(array $input): ?array {
-    // SQL-Injection relevante Muster
-    $pattern = '/(\bUNION\b|\bSELECT\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b|\bDROP\b|--|#|\/\*|\*\/)/i';
+    // SQL-Injection relevante Muster (entschärft)
+    $pattern = '/\b(UNION|SELECT|INSERT|UPDATE|DELETE|DROP)\b\s+\w+/i';
 
-    // Felder, die Content enthalten dürfen (Forum, Kommentare etc.)
-    $whitelist = ['message', 'post_text', 'comment', 'content', 'body', 'description'];
+    // Felder, die Content enthalten dürfen
+    $whitelist = [
+        'message', 'post_text', 'comment', 'content', 'body', 'description',
+        'csrf_token', 'token', 'site', 'action'
+    ];
 
     foreach ($input as $key => $value) {
         // Passwortfelder komplett ignorieren
@@ -91,8 +97,13 @@ function detectSuspiciousInput(array $input): ?array {
             continue;
         }
 
-        // Content-Felder überspringen
-        if (in_array(strtolower($key), $whitelist)) {
+        // Whitelist Felder überspringen
+        if (in_array(strtolower($key), $whitelist, true)) {
+            continue;
+        }
+
+        // Token / Hash Felder überspringen
+        if (preg_match('/token|hash|nonce/i', $key)) {
             continue;
         }
 
@@ -102,11 +113,12 @@ function detectSuspiciousInput(array $input): ?array {
                 return $result;
             }
         } elseif (preg_match($pattern, (string)$value)) {
-            return ['param' => $key, 'value' => $value];
+            return ['param' => $key, 'value' => $value, 'reason' => 'SQL pattern detected'];
         }
     }
     return null;
 }
+
 
 // ==========================
 // IP-BLOCK SYSTEM

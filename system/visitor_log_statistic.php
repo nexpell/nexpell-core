@@ -3,6 +3,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . '/logSuspiciousAccess.php';
+
 $_database = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 if ($_database->connect_error) {
     die('DB Connection failed: ' . $_database->connect_error);
@@ -368,8 +370,10 @@ function getCountry(string $ip): string {
 function log_visitor_statistics() {
     global $_database, $_SESSION;
 
-    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-    $ip_hash = hash('sha256', $ip);
+    #$ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    #$ip = anonymize_ip($ip); // Jetzt korrekt anonymisiert
+    $ip = anonymize_ip($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    $ip_hash = hash('sha256', $ip); // Hash auf anonymisierte IP
     $page = $_SERVER['REQUEST_URI'] ?? 'unknown';
     $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
     $user_id = $_SESSION['userID'] ?? null;
@@ -387,7 +391,7 @@ function log_visitor_statistics() {
     $os = getOS($user_agent);
     $browser = getBrowser($user_agent);
     $referer = getReferer();
-    $country_code = getCountry($ip);
+    $country_code = getCountry($ip); // optional: Land auf Basis anonymisierter IP
 
     // Prüfen, ob IP heute schon eingetragen
     $bot_condition_sql = getBotCondition();
@@ -411,7 +415,7 @@ function log_visitor_statistics() {
         $insert->bind_param(
             'isssssssssss',
             $user_id,
-            $ip,
+            $ip, // anonymisierte IP speichern
             $pageviews,
             $page,
             $country_code,
@@ -455,6 +459,7 @@ function log_visitor_statistics() {
         $update->execute();
     }
 }
+
 
 // --- Alle Funktionen aufrufen ---
 live_visitor_track();

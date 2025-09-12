@@ -5,17 +5,26 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
+use nexpell\LanguageService;
 use nexpell\LoginSecurity;
 use nexpell\AccessControl;
 // Den Admin-Zugriff für das Modul überprüfen
 AccessControl::checkAdminAccess('ac_security_overview');
 
+// Standardsprache setzen
+$_SESSION['language'] = $_SESSION['language'] ?? 'de';
+
+// Sprachservice initialisieren
+global $languageService,$_database;;
+$languageService = new LanguageService($_database);
+$languageService->readModule('security_overview', true);
+
 echo '<div class="card">
 <div class="card-header">
-        <i class="bi bi-paragraph"></i> Registrierungs- und Login-Aktivitäten
-    </div>
-    <div class="card-body"><div class="container py-5">';
-echo '<h4>Registrierungsversuche (Erfolgreich & Fehlgeschlagen)</h4>';
+    <i class="bi bi-paragraph"></i> ' . $languageService->get('registration_login_activities') . '
+</div>
+<div class="card-body"><div class="container py-5">';
+echo '<h4>' . $languageService->get('registration_attempts_title') . '</h4>';
 
 // Pagination-Einstellungen
 $limit = 10;
@@ -33,23 +42,23 @@ $totalPages = ceil($totalAttempts / $limit);
 $query = safe_query("SELECT * FROM user_register_attempts ORDER BY attempt_time DESC LIMIT $limit OFFSET $offset");
 
 echo '<table class="table table-bordered table-striped bg-white shadow-sm">
-        <thead class="table-light">
-            <tr>
-                <th scope="col">#</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th scope="col">IP-Adresse</th>
-                <th scope="col">Zeitpunkt</th>
-                <th scope="col">Status</th>
-                <th scope="col">Grund</th>
-            </tr>
-        </thead>
-        <tbody>';
+    <thead class="table-light">
+        <tr>
+            <th scope="col">' . $languageService->get('id_short') . '</th>
+            <th>' . $languageService->get('username') . '</th>
+            <th>' . $languageService->get('email') . '</th>
+            <th scope="col">' . $languageService->get('ip_address') . '</th>
+            <th scope="col">' . $languageService->get('timestamp') . '</th>
+            <th scope="col">' . $languageService->get('status') . '</th>
+            <th scope="col">' . $languageService->get('reason') . '</th>
+        </tr>
+    </thead>
+    <tbody>';
 
 while ($row = mysqli_fetch_array($query)) {
     $status_badge = $row['status'] === 'success'
-        ? '<span class="badge bg-success">Erfolg</span>'
-        : '<span class="badge bg-danger">Fehlgeschlagen</span>';
+        ? '<span class="badge bg-success">' . $languageService->get('success') . '</span>'
+        : '<span class="badge bg-danger">' . $languageService->get('failed') . '</span>';
 
     echo '<tr>
             <td>' . (int)$row['id'] . '</td>
@@ -70,15 +79,15 @@ if ($totalPages > 1) {
     for ($i = 1; $i <= $totalPages; $i++) {
         $activeClass = ($i == $page) ? 'active' : '';
         echo '<li class="page-item ' . $activeClass . '">
-                  <a class="page-link" href="?site=security_overview&regpage=' . $i . '">' . $i . '</a>
-              </li>';
+                    <a class="page-link" href="?site=security_overview&regpage=' . $i . '">' . $i . '</a>
+                </li>';
     }
     echo '</ul></nav>';
 }
 
 
 echo '';
-echo '<h4>Benutzer</h4>';
+echo '<h4>' . $languageService->get('users') . '</h4>';
 
 // Pagination-Einstellungen
 $limit = 10;
@@ -101,15 +110,15 @@ $get = $_database->query("
 ");
 
 echo '<table class="table table-bordered table-striped bg-white shadow-sm">
-        <thead class="table-light">
-            <tr>
-                <th>ID</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Aktiviert</th>
-                <th>Registriert</th>
-            </tr>
-        </thead>';
+    <thead class="table-light">
+        <tr>
+            <th>' . $languageService->get('id') . '</th>
+            <th>' . $languageService->get('username') . '</th>
+            <th>' . $languageService->get('email') . '</th>
+            <th>' . $languageService->get('activated') . '</th>
+            <th>' . $languageService->get('registered') . '</th>
+        </tr>
+    </thead>';
 echo '<tbody>';
 
 while ($ds = $get->fetch_assoc()) {
@@ -130,12 +139,11 @@ if ($totalPages > 1) {
     for ($i = 1; $i <= $totalPages; $i++) {
         $activeClass = ($i == $page) ? 'active' : '';
         echo '<li class="page-item ' . $activeClass . '">
-                  <a class="page-link" href="?site=security_overview&userpage=' . $i . '">' . $i . '</a>
-              </li>';
+                    <a class="page-link" href="?site=security_overview&userpage=' . $i . '">' . $i . '</a>
+                </li>';
     }
     echo '</ul></nav>';
 }
-
 
 
 // ------------------------------------
@@ -155,7 +163,7 @@ if (isset($_POST['delete_selected']) && !empty($_POST['selected_sessions'])) {
 }
 // Erfolgsmeldung (wird nur bei vollem Seitenaufruf angezeigt)
 if (isset($_GET['deleted'])) {
-    echo '<div class="alert alert-success">Session wurde erfolgreich gelöscht.</div>';
+    echo '<div class="alert alert-success">' . $languageService->get('session_deleted_success') . '</div>';
 }
 
 
@@ -183,19 +191,18 @@ $getSessions = $_database->query("
 
 ?>
 <div class="container py-5">
-    <h4>Aktive Sessions</h4>
+    <h4><?= $languageService->get('active_sessions'); ?></h4>
 
-    <!-- Formular für Mehrfach-Löschung -->
-    <form method="POST" action="" onsubmit="return confirm('Ausgewählte Sessions wirklich löschen?');">
+    <form method="POST" action="" onsubmit="return confirm('<?= $languageService->get('confirm_delete_sessions'); ?>');">
         <div id="session-table-container">
             <table class="table table-bordered table-striped bg-white shadow-sm">
                 <thead class="table-light">
                     <tr>
-                        <th>Session ID</th>
-                        <th>Username</th>
-                        <th>IP</th>
-                        <th>Letzte Aktion</th>
-                        <th>Browser</th>
+                        <th><?= $languageService->get('session_id'); ?></th>
+                        <th><?= $languageService->get('username'); ?></th>
+                        <th><?= $languageService->get('ip'); ?></th>
+                        <th><?= $languageService->get('last_activity'); ?></th>
+                        <th><?= $languageService->get('browser'); ?></th>
                         <th>
                             <input type="checkbox" id="select-all">
                         </th>
@@ -204,19 +211,19 @@ $getSessions = $_database->query("
                 <tbody>
                 <?php
                 while ($ds = $getSessions->fetch_assoc()) {
-                    $username = isset($ds['username']) && !empty($ds['username']) ? $ds['username'] : 'Unbekannt';
+                    $username = isset($ds['username']) && !empty($ds['username']) ? $ds['username'] : $languageService->get('unknown');
                     $lastActivityTimestamp = (int)$ds['last_activity'];
                     if ($lastActivityTimestamp == 0) {
                         $lastActivityTimestamp = time();
                     }
                     $sessionTime = date("d.m.Y H:i", $lastActivityTimestamp);
 
-                    echo '<tr>                        
+                    echo '<tr>
                         <td>' . htmlspecialchars($ds['session_id']) . '</td>
                         <td>' . htmlspecialchars($username) . '</td>
                         <td>' . htmlspecialchars($ds['user_ip']) . '</td>
                         <td>' . $sessionTime . '</td>
-                        <td>' . htmlspecialchars(substr($ds['browser'], 0, 40)) . '...</td>                        
+                        <td>' . htmlspecialchars(substr($ds['browser'], 0, 40)) . '...</td>
                         <td>
                             <input type="checkbox" name="selected_sessions[]" value="' . htmlspecialchars($ds['session_id']) . '">
                         </td>
@@ -225,12 +232,9 @@ $getSessions = $_database->query("
                 ?>
                 </tbody>
             </table>
-        </div> <!-- session-table-container -->
-
-        <!-- Mehrfach-Löschbutton -->
-        <div class="text-end mt-2">
+        </div> <div class="text-end mt-2">
             <button type="submit" name="delete_selected" class="btn btn-danger">
-                Ausgewählte löschen
+                <?= $languageService->get('delete_selected'); ?>
             </button>
         </div>
     </form>
@@ -284,18 +288,20 @@ function loadPage(page) {
 
 <?php
 // AJAX-Anfrage erkennen und nur reinen Inhalt liefern
+
+
 if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
     ob_clean(); // Ausgabe-Puffer leeren für saubere Antwort
 
     $tableHTML = '<table class="table table-bordered table-striped bg-white shadow-sm">
                     <thead class="table-light">
                         <tr>
-                            <th>Session ID</th>
-                            <th>Username</th>
-                            <th>IP</th>
-                            <th>Letzte Aktion</th>
-                            <th>Browser</th>
-                            <th>Aktion</th>
+                            <th>' . $languageService->get('session_id') . '</th>
+                            <th>' . $languageService->get('username') . '</th>
+                            <th>' . $languageService->get('ip') . '</th>
+                            <th>' . $languageService->get('last_activity') . '</th>
+                            <th>' . $languageService->get('browser') . '</th>
+                            <th>' . $languageService->get('action') . '</th>
                         </tr>
                     </thead>
                     <tbody>';
@@ -309,7 +315,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
     ");
 
     while ($ds = $getSessions->fetch_assoc()) {
-        $username = isset($ds['username']) && !empty($ds['username']) ? $ds['username'] : 'Unbekannt';
+        $username = isset($ds['username']) && !empty($ds['username']) ? $ds['username'] : $languageService->get('unknown');
         $lastActivityTimestamp = (int)$ds['last_activity'];
         if ($lastActivityTimestamp == 0) {
             $lastActivityTimestamp = time();
@@ -323,9 +329,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
             <td>' . $sessionTime . '</td>
             <td>' . htmlspecialchars(substr($ds['browser'], 0, 40)) . '...</td>
             <td>
-                <form method="POST" action="" onsubmit="return confirm(\'Session wirklich löschen?\');" class="d-inline">
+                <form method="POST" action="" onsubmit="return confirm(\'' . $languageService->get('confirm_delete_session') . '\');" class="d-inline">
                     <input type="hidden" name="session_id" value="' . htmlspecialchars($ds['session_id']) . '">
-                    <button type="submit" class="btn btn-danger btn-sm">Löschen</button>
+                    <button type="submit" class="btn btn-danger btn-sm">' . $languageService->get('delete') . '</button>
                 </form>
             </td>
         </tr>';
@@ -353,9 +359,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
     exit;
 }
 
-
-
-
 // AJAX-Handler für IP-Sperren
 if (isset($_POST['ban_ip']) && filter_var($_POST['ban_ip'], FILTER_VALIDATE_IP)) {
     $ipToBan = $_POST['ban_ip'];
@@ -370,9 +373,10 @@ if (isset($_POST['ban_ip']) && filter_var($_POST['ban_ip'], FILTER_VALIDATE_IP))
         // IP eintragen
         $stmt = $_database->prepare("
             INSERT INTO banned_ips (ip, deltime, reason, userID, email)
-            VALUES (?, NOW() + INTERVAL 7 DAY, 'Automatische Sperre nach fehlgeschlagenen Logins', 0, '')
+            VALUES (?, NOW() + INTERVAL 7 DAY, ?, 0, '')
         ");
-        $stmt->bind_param('s', $ipToBan);
+        $reason = $languageService->get('auto_ban_reason');
+        $stmt->bind_param('ss', $ipToBan, $reason);
         $stmt->execute();
     }
 
@@ -381,8 +385,7 @@ if (isset($_POST['ban_ip']) && filter_var($_POST['ban_ip'], FILTER_VALIDATE_IP))
 }
 
 // Fehlgeschlagene Login-Versuche (letzte 15 Minuten) - Anzeige
-
-echo '<h4>Fehlgeschlagene Login-Versuche (letzte 15 Minuten)</h4>';
+echo '<h4>' . $languageService->get('failed_login_attempts_title') . '</h4>';
 
 // Pagination-Einstellungen
 $limit = 10;
@@ -415,15 +418,22 @@ $get = $_database->query("
 ");
 
 echo '<table class="table table-bordered table-striped bg-white shadow-sm">
-        <thead class="table-light">
-            <tr><th>IP-Adresse</th><th>Versuche</th><th>Letzter Versuch</th><th>Aktion</th></tr></thead><tbody>';
+    <thead class="table-light">
+        <tr>
+            <th>' . $languageService->get('ip_address') . '</th>
+            <th>' . $languageService->get('attempts') . '</th>
+            <th>' . $languageService->get('last_attempt') . '</th>
+            <th>' . $languageService->get('action') . '</th>
+        </tr>
+    </thead>
+    <tbody>';
 
 while ($ds = $get->fetch_assoc()) {
     echo '<tr>
             <td>' . htmlspecialchars($ds['ip']) . '</td>
             <td>' . (int)$ds['attempts'] . '</td>
             <td>' . date("d.m.Y H:i:s", $ds['last_attempt']) . '</td>
-            <td><button class="btn btn-sm btn-danger ban-ip-btn" data-ip="' . htmlspecialchars($ds['ip']) . '">Sperren</button></td>
+            <td><button class="btn btn-sm btn-danger ban-ip-btn" data-ip="' . htmlspecialchars($ds['ip']) . '">' . $languageService->get('ban') . '</button></td>
           </tr>';
 }
 
@@ -435,13 +445,11 @@ if ($totalPages > 1) {
     for ($i = 1; $i <= $totalPages; $i++) {
         $activeClass = ($i == $page) ? 'active' : '';
         echo '<li class="page-item ' . $activeClass . '">
-                  <a class="page-link" href="?site=security_overview&failpage=' . $i . '">' . $i . '</a>
-              </li>';
+                    <a class="page-link" href="?site=security_overview&failpage=' . $i . '">' . $i . '</a>
+                </li>';
     }
     echo '</ul></nav>';
 }
-
-
 
 // JavaScript für AJAX-Handling (Sperren-Button)
 ?>
@@ -451,7 +459,7 @@ document.addEventListener('DOMContentLoaded', function() {
     banButtons.forEach(function(button) {
         button.addEventListener('click', function() {
             const ip = this.getAttribute('data-ip');
-            if (confirm('Willst du die IP ' + ip + ' wirklich sperren?')) {
+            if (confirm('<?= $languageService->get('confirm_ban_ip'); ?>'.replace('%s', ip))) {
                 fetch('', {
                     method: 'POST',
                     headers: {
@@ -462,15 +470,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.text())
                 .then(data => {
                     if (data.trim() === 'OK') {
-                        alert('IP wurde gesperrt.');
+                        alert('<?= $languageService->get('ip_banned_success'); ?>');
                         location.reload();
                     } else {
-                        alert('Fehler beim Sperren der IP.');
+                        alert('<?= $languageService->get('ip_ban_error'); ?>');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Netzwerkfehler.');
+                    alert('<?= $languageService->get('network_error'); ?>');
                 });
             }
         });
@@ -480,8 +488,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <?php
 
-
-echo '<h4>Gesperrte IPs</h4>';
+echo '<h4>' . $languageService->get('banned_ips_title') . '</h4>';
 
 // Pagination-Einstellungen für gebannte IPs
 $limit = 10;
@@ -497,12 +504,12 @@ $totalPages = ceil($totalIps / $limit);
 
 // IPs abrufen mit LIMIT und OFFSET
 $query = "
-    SELECT 
-        b.ip, 
-        b.deltime, 
+    SELECT
+        b.ip,
+        b.deltime,
         b.reason,
-        b.email, 
-        u.username, 
+        b.email,
+        u.username,
         r.role_name AS role_name
     FROM banned_ips b
     LEFT JOIN users u ON b.userID = u.userID
@@ -517,27 +524,27 @@ $get = $_database->query($query);
 echo '<table class="table table-bordered table-striped bg-white shadow-sm">
         <thead class="table-light">
             <tr>
-        <th>IP</th>
-        <th>Benutzername</th>
-        <th>Email</th>
-        <th>Rolle</th>
-        <th>Entbannzeit</th>
-        <th>Grund</th>
-        <th>Aktion</th>
+        <th>' . $languageService->get('ip') . '</th>
+        <th>' . $languageService->get('username') . '</th>
+        <th>' . $languageService->get('email') . '</th>
+        <th>' . $languageService->get('role') . '</th>
+        <th>' . $languageService->get('unban_time') . '</th>
+        <th>' . $languageService->get('reason') . '</th>
+        <th>' . $languageService->get('action') . '</th>
     </tr></thead><tbody>';
 
 while ($ds = $get->fetch_assoc()) {
     echo '<tr>
         <td>' . htmlspecialchars($ds['ip']) . '</td>
-        <td>' . (!empty($ds['username']) ? htmlspecialchars($ds['username']) : '<em>Unbekannt</em>') . '</td>
-        <td>' . (!empty($ds['email']) ? htmlspecialchars($ds['email']) : '<em>Unbekannt</em>') . '</td>
-        <td>' . (isset($ds['role_name']) ? htmlspecialchars($ds['role_name']) : '<em>Keine</em>') . '</td>
+        <td>' . (!empty($ds['username']) ? htmlspecialchars($ds['username']) : '<em>' . $languageService->get('unknown') . '</em>') . '</td>
+        <td>' . (!empty($ds['email']) ? htmlspecialchars($ds['email']) : '<em>' . $languageService->get('unknown') . '</em>') . '</td>
+        <td>' . (isset($ds['role_name']) ? htmlspecialchars($ds['role_name']) : '<em>' . $languageService->get('none') . '</em>') . '</td>
         <td>' . date("d.m.Y H:i", strtotime($ds['deltime'])) . '</td>
         <td>' . htmlspecialchars($ds['reason']) . '</td>
         <td>
-            <form method="post" onsubmit="return confirm(\'IP wirklich löschen?\');" style="display:inline;">
+            <form method="post" onsubmit="return confirm(\'' . $languageService->get('confirm_delete_ip') . '\');" style="display:inline;">
                 <input type="hidden" name="delete_ip" value="' . htmlspecialchars($ds['ip']) . '">
-                <button type="submit" class="btn btn-danger btn-sm">Löschen</button>
+                <button type="submit" class="btn btn-danger btn-sm">' . $languageService->get('delete') . '</button>
             </form>
         </td>
     </tr>';
@@ -550,9 +557,11 @@ if ($totalPages > 1) {
     for ($i = 1; $i <= $totalPages; $i++) {
         $activeClass = ($i == $page) ? 'active' : '';
         echo '<li class="page-item ' . $activeClass . '">
-                  <a class="page-link" href="?site=security_overview&banpage=' . $i . '">' . $i . '</a>
-              </li>';
+                    <a class="page-link" href="?site=security_overview&banpage=' . $i . '">' . $i . '</a>
+                </li>';
     }
     echo '</ul></nav>';
 }
 echo '</div></div></div>';
+
+?>
