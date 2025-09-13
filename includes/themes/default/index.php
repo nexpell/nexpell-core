@@ -222,6 +222,7 @@ header('X-UA-Compatible: IE=edge');
 <?php include 'cookie-consent.php'; ?>
 <script src="./components/ckeditor/ckeditor.js"></script>
 <script src="./components/ckeditor/config.js"></script>
+<script src="/includes/themes/default/js/page.js"></script>
 <script src="/includes/plugins/navigation/js/navigation.js"></script>
 <script src="/includes/plugins/footer_easy/js/footer_easy.js"></script>
 </body>

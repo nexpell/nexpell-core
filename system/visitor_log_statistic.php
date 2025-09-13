@@ -2,6 +2,14 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+// Benutzer-ID prüfen
+$user_id = null;
+if (!empty($_SESSION['userID'])) {
+    $user_id = (int)$_SESSION['userID'];
+} elseif (!empty($_SESSION['user_id'])) {
+    // Fallback, falls CMS anderes Feld benutzt
+    $user_id = (int)$_SESSION['user_id'];
+}
 
 require_once __DIR__ . '/logSuspiciousAccess.php';
 
@@ -147,19 +155,6 @@ function live_visitor_track(string $default_site = 'startpage') {
             ");
             $stmt->bind_param('issss', $time_var, $ip_var, $site_var, $country_code_var, $user_agent_var);
             $stmt->execute();
-
-            // visitors_live_history (Gast)
-            /*$stmt = $_database->prepare("
-                INSERT INTO visitors_live_history (time, ip, site, country_code, user_agent)
-                VALUES (?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE
-                    time = VALUES(time),
-                    site = VALUES(site),
-                    country_code = VALUES(country_code),
-                    user_agent = VALUES(user_agent)
-            ");
-            $stmt->bind_param('issss', $time_var, $ip_var, $site_var, $country_code_var, $user_agent_var);
-            $stmt->execute();*/
         }
     }
 }
@@ -370,30 +365,42 @@ function getCountry(string $ip): string {
 function log_visitor_statistics() {
     global $_database, $_SESSION;
 
-    #$ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-    #$ip = anonymize_ip($ip); // Jetzt korrekt anonymisiert
-    $ip = anonymize_ip($_SERVER['REMOTE_ADDR'] ?? 'unknown');
-    $ip_hash = hash('sha256', $ip); // Hash auf anonymisierte IP
+    // --- Benutzer-ID ermitteln ---
+    $user_id = null;
+    if (!empty($_SESSION['userID'])) {
+        $user_id = (int)$_SESSION['userID'];
+    } elseif (!empty($_SESSION['user_id'])) {
+        $user_id = (int)$_SESSION['user_id'];
+    }
+
+    // --- IP / Page / User-Agent ---
+    $user_id = $_SESSION['userID'] ?? 0;
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    $ip = anonymize_ip($ip);
+    $ip_hash = hash('sha256', $ip . '_' . $user_id);
     $page = $_SERVER['REQUEST_URI'] ?? 'unknown';
     $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
-    $user_id = $_SESSION['userID'] ?? null;
     $now = date('Y-m-d H:i:s');
     $today_start = date('Y-m-d 00:00:00');
     $today_end = date('Y-m-d 23:59:59');
 
-    // Bot-Check
+    // --- Bot-Check ---
     if (isBot($user_agent)) {
         return;
     }
-    
-    // Daten ermitteln
-    $device_type = getDeviceType($user_agent);
-    $os = getOS($user_agent);
-    $browser = getBrowser($user_agent);
-    $referer = getReferer();
-    $country_code = getCountry($ip); // optional: Land auf Basis anonymisierter IP
 
-    // Prüfen, ob IP heute schon eingetragen
+    // --- Zusätzliche Felder ---
+    $country_code = getCountry($ip) ?: 'unknown';
+    $device_type  = getDeviceType($user_agent) ?: 'Unknown';
+    $os           = getOS($user_agent) ?: 'Unknown';
+    $browser      = getBrowser($user_agent) ?: 'Unknown';
+    $referer      = getReferer() ?: 'direct';
+    $pageviews    = 1;
+
+    // --- Debug Log (optional) ---
+    error_log("log_visitor: user_id=$user_id, country_code=$country_code, device_type=$device_type, os=$os, browser=$browser, referer=$referer, ip_hash=$ip_hash");
+
+    // --- Prüfen, ob IP heute schon eingetragen ---
     $bot_condition_sql = getBotCondition();
     $check = $_database->prepare("
         SELECT COUNT(*) AS count
@@ -404,18 +411,17 @@ function log_visitor_statistics() {
     $check->execute();
     $count = (int)$check->get_result()->fetch_assoc()['count'];
 
-    // Insert oder Update
+    // --- Insert oder Update ---
     if ($count === 0) {
         $insert = $_database->prepare("
             INSERT INTO visitor_statistics
                 (user_id, ip_address, pageviews, page, country_code, device_type, os, browser, ip_hash, referer, user_agent, last_seen)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
-        $pageviews = 1;
         $insert->bind_param(
             'isssssssssss',
             $user_id,
-            $ip, // anonymisierte IP speichern
+            $ip,
             $pageviews,
             $page,
             $country_code,
@@ -459,6 +465,7 @@ function log_visitor_statistics() {
         $update->execute();
     }
 }
+
 
 
 // --- Alle Funktionen aufrufen ---

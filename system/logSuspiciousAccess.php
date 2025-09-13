@@ -1,4 +1,8 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // ==========================
 // OUTPUT-PUFFER UND SETTINGS
 // ==========================
@@ -12,15 +16,15 @@ function anonymize_ip($ip) {
     if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
         $parts = explode('.', $ip);
         if (count($parts) === 4) {
-            $parts[2] = 'xxx';
-            $parts[3] = 'xxx';
+            //$parts[2] = 'xxx';
+            //$parts[3] = 'xxx';
             return implode('.', $parts);
         }
     } elseif (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
         $parts = explode(':', $ip);
         if (count($parts) >= 8) {
-            $parts[4] = 'xxxx';
-            $parts[5] = 'xxxx';
+            //$parts[4] = 'xxxx';
+            //$parts[5] = 'xxxx';
             $parts[6] = 'xxxx';
             $parts[7] = 'xxxx';
             return implode(':', $parts);
@@ -28,6 +32,20 @@ function anonymize_ip($ip) {
     }
     return $ip;
 }
+/*
+function anonymize_ip(string $ip): string {
+    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        // letzte Stelle nullen (192.168.1.xxx)
+        $parts = explode('.', $ip);
+        $parts[2] = 'xxx';
+        $parts[3] = 'xxx';
+        return implode('.', $parts);
+    } elseif (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+        // IPv6 auf /64 kürzen
+        return preg_replace('/:[0-9a-f]{1,4}$/i', ':0000', $ip);
+    }
+    return '0.0.0.0';
+}*/
 
 
 

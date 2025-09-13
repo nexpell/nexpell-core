@@ -68,6 +68,7 @@ include_once("system/init_language.php"); // setzt $languageService
 include_once("system/classes/Template.php");
 include_once("system/classes/SeoUrlHandler.php");
 include_once("system/session_update.php");
+include_once("system/visitor_log_statistic.php");
 
 // === Globale Variablen ===
 global $tpl;
