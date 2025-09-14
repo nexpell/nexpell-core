@@ -59,33 +59,46 @@ if (isset($_GET[ 'delete' ])) {
             safe_query("UPDATE navigation_website_sub SET sort='$sorter[1]' WHERE snavID='$sorter[0]' ");
         }
     }
-} elseif (isset($_POST[ 'save' ])) {
+} elseif (isset($_POST['save'])) {
     $CAPCLASS = new \nexpell\Captcha;
 
-    $url = $_POST[ 'link' ];
+    $url   = $_POST['link'] ?? '';
+    $mnavID = $_POST['mnavID'] ?? 0;
 
-    if ($CAPCLASS->checkCaptcha(0, $_POST[ 'captcha_hash' ])) {
+    if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
+
+        // Mehrsprachigen Namen zusammensetzen
+        $name = '';
+        if (isset($_POST['name']) && is_array($_POST['name'])) {
+            $name = buildMultiLangString($_POST['name']);
+        }
+
+        // Sort ermitteln (z.B. nächster Wert)
         $anz = mysqli_num_rows(
-            safe_query("SELECT snavID FROM navigation_website_sub WHERE mnavID='" . $_POST[ 'mnavID' ] . "'")
+            safe_query("SELECT snavID FROM navigation_website_sub WHERE mnavID='" . (int)$mnavID . "'")
         );
-        $url = $_POST[ 'link' ];
-        safe_query(
-            "INSERT INTO navigation_website_sub ( mnavID, name, url, sort )
-            values (
-            '" . $_POST[ 'mnavID' ] . "',
-            '" . $_POST[ 'name' ] . "',
-            '" . $url . "',
-            '1'
-            )"
-        );
+        $sort = $anz + 1; // neuer Eintrag hinten anhängen
+
+        // Prepared Statement für Insert
+        $stmt = $_database->prepare("
+            INSERT INTO navigation_website_sub (mnavID, name, url, sort)
+            VALUES (?, ?, ?, ?)
+        ");
+        $stmt->bind_param('issi', $mnavID, $name, $url, $sort);
+        $stmt->execute();
+
+        if ($stmt->affected_rows > 0) {
+            echo '<div class="alert alert-success" role="alert">' . htmlspecialchars($languageService->get('transaction_successful')) . '</div>';
+        } else {
+            echo '<div class="alert alert-danger" role="alert">' . htmlspecialchars($languageService->get('transaction_failed')) . '</div>';
+        }
+        $stmt->close();
+
     } else {
         echo '<div class="alert alert-warning" role="alert">' . htmlspecialchars($languageService->get('transaction_invalid')) . '</div>';
-
     }
-
-
-
-} elseif (isset($_POST['savecat'])) {
+}
+ elseif (isset($_POST['savecat'])) {
     $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
 
@@ -95,8 +108,10 @@ if (isset($_GET[ 'delete' ])) {
 
         // Mehrsprachigen Namen zusammensetzen
         $name = '';
-        if (isset($_POST['name']) && is_array($_POST['name'])) {
+        if (is_array($_POST['name'])) {
             $name = buildMultiLangString($_POST['name']);
+        } else {
+            $name = $_POST['name'];
         }
 
         // Prepared Statement für Insert
@@ -156,30 +171,42 @@ if (isset($_GET[ 'delete' ])) {
         echo '<div class="alert alert-warning" role="alert">' . htmlspecialchars($languageService->get('transaction_invalid')) . '</div>';
     }
 }
-elseif (isset($_POST[ 'saveeditcat' ])) {
+elseif (isset($_POST['saveeditcat'])) {
     $CAPCLASS = new \nexpell\Captcha;
 
-        $url = $_POST[ "link" ];
-        $windows = $_POST[ "windows" ];
-    if (isset($_POST[ "isdropdown" ])) {
-        $isdropdown = 1;
-    } else {
-        $isdropdown = 0;
-    }
-    if ($CAPCLASS->checkCaptcha(0, $_POST[ 'captcha_hash' ])) {
+    $url       = $_POST["link"] ?? '';
+    $windows   = $_POST["windows"] ?? 0;
+    $isdropdown = isset($_POST["isdropdown"]) ? 1 : 0;
 
-    
+    if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
 
-        safe_query(
-            "UPDATE navigation_website_main SET name='" . $_POST[ 'name' ] . "', url='" . $url . "', windows='" . $_POST[ "windows" ] . "', isdropdown='" . $isdropdown . "' WHERE mnavID='" . $_POST[ 'mnavID' ] . "' "
-        );
+        // Mehrsprachigen Namen zusammensetzen
+        $name = '';
+        if (isset($_POST['name']) && is_array($_POST['name'])) {
+            $name = buildMultiLangString($_POST['name']);
+        }
 
-        $id = $_POST[ 'mnavID' ];
+        // Prepared Statement statt direkt SQL
+        $stmt = $_database->prepare("
+            UPDATE navigation_website_main 
+            SET name = ?, url = ?, windows = ?, isdropdown = ? 
+            WHERE mnavID = ?
+        ");
+        $stmt->bind_param('ssiii', $name, $url, $windows, $isdropdown, $_POST['mnavID']);
+        $stmt->execute();
+
+        if ($stmt->affected_rows > 0) {
+            echo '<div class="alert alert-success" role="alert">' . htmlspecialchars($languageService->get('transaction_successful')) . '</div>';
+        } else {
+            echo '<div class="alert alert-danger" role="alert">' . htmlspecialchars($languageService->get('transaction_failed')) . '</div>';
+        }
+        $stmt->close();
+
     } else {
         echo '<div class="alert alert-warning" role="alert">' . htmlspecialchars($languageService->get('transaction_invalid')) . '</div>';
-
     }
 }
+
 
 function buildMultiLangString(array $texts): string {
     $result = '';

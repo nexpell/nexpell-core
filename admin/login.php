@@ -13,13 +13,17 @@ error_reporting(E_ALL);
 
 global $_database;
 
-#session_start();
-include('../system/config.inc.php');
-include('../system/settings.php');
-include('../system/functions.php');
-include('../system/plugin.php');
-include('../system/widget.php');
-include('../system/multi_language.php');
+// Absolute Pfade definieren (anpassen falls nötig)
+define('BASE_PATH', __DIR__ . '/../');
+define('SYSTEM_PATH', BASE_PATH . 'system/');
+
+// Wichtige Systemdateien einbinden
+include SYSTEM_PATH . 'config.inc.php';
+include SYSTEM_PATH . 'settings.php';
+include SYSTEM_PATH . 'functions.php';
+include SYSTEM_PATH . 'plugin.php';
+include SYSTEM_PATH . 'widget.php';
+include SYSTEM_PATH . 'multi_language.php';
 
 // Sprachmodul laden
 use nexpell\LanguageService;
