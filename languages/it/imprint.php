@@ -46,12 +46,14 @@ $language_array = array(
     'company_alert' => 'Avviso importante: Tutte le informazioni fornite sono a scopo puramente informativo.',
 
     'imprint_info' => '<small>
-        Questo sito utilizza Webspell-RM 3.0 (Next Generation) – un moderno sistema di gestione contenuti open source.<br>
+        <img src="/images/logo.png" alt="nexpell Logo" style="height:25px; vertical-align:middle;">&nbsp;
+        Questo sito utilizza <strong>nexpell</strong> – un moderno sistema di gestione dei contenuti open source di nuova generazione.<br>
+        Versione core: <strong>{core_version}</strong><br>
         Il software si basa su PHP 8.1 o superiore, MySQL 8 o MariaDB 10 e utilizza Bootstrap 5 per il layout frontend.<br>
-        Maggiori informazioni e documentazione sono disponibili sul <a href="https://www.webspell-rm.de/wiki" target="_blank" rel="noopener">Wiki di Webspell-RM</a>.<br>
-        Codice sorgente e download: <a href="https://www.webspell-rm.de" target="_blank" rel="noopener">www.webspell-rm.de</a><br>
-        Webspell-RM è rilasciato sotto GNU General Public License (GPL).<br>
-        © 2018–2025 by <a href="https://www.webspell-rm.de" target="_blank" rel="noopener">webspell-rm.de</a> – Webspell-RM
+        Ulteriori informazioni e documentazione sono disponibili nel <a href="https://www.nexpell.de/it/wiki" target="_blank" rel="noopener">nexpell Wiki</a>.<br>
+        Codice sorgente e download: <a href="https://www.nexpell.de/it/forum" target="_blank" rel="noopener">nexpell Forum</a> / <a href="https://www.nexpell.de/it/downloads" target="_blank" rel="noopener">nexpell Download</a><br>
+        nexpell è rilasciato sotto la GNU General Public License (GPL).<br>
+        © 2025 by <a href="https://www.nexpell.de" target="_blank" rel="noopener">https://www.nexpell.de</a>
         <br>
         Librerie di terze parti utilizzate: <strong>jQuery</strong>, <strong>Bootstrap</strong>, <strong>Bootswatch</strong> (tutte sotto licenza MIT).
     </small>'

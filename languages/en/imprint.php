@@ -46,14 +46,16 @@ $language_array = array(
     'company_alert' => 'Important notice: All provided information is for informational purposes only.',
 
     'imprint_info' => '<small>
-        This website uses Webspell-RM 3.0 (Next Generation) – a modern, open-source content management system.<br>
+        <img src="/images/logo.png" alt="nexpell Logo" style="height:25px; vertical-align:middle;">&nbsp;
+        This website uses <strong>nexpell</strong> – a modern, open-source content management system of the next generation.<br>
+        Core version: <strong>{core_version}</strong><br>
         The software is based on PHP 8.1 or higher, MySQL 8 or MariaDB 10, and uses Bootstrap 5 for the frontend layout.<br>
-        More information and documentation can be found in the <a href="https://www.webspell-rm.de/wiki" target="_blank" rel="noopener">Webspell-RM Wiki</a>.<br>
-        Source code and download: <a href="https://www.webspell-rm.de" target="_blank" rel="noopener">www.webspell-rm.de</a><br>
-        Webspell-RM is released under the GNU General Public License (GPL).<br>
-        © 2018–2025 by <a href="https://www.webspell-rm.de" target="_blank" rel="noopener">webspell-rm.de</a> – Webspell-RM
+        More information and documentation can be found in the <a href="https://www.nexpell.de/en/wiki" target="_blank" rel="noopener">nexpell Wiki</a>.<br>
+        Source code and download: <a href="https://www.nexpell.de/en/forum" target="_blank" rel="noopener">nexpell Forum</a> / <a href="https://www.nexpell.de/en/downloads" target="_blank" rel="noopener">nexpell Download</a><br>
+        nexpell is released under the GNU General Public License (GPL).<br>
+        © 2025 by <a href="https://www.nexpell.de" target="_blank" rel="noopener">https://www.nexpell.de</a>
         <br>
-        Used third-party libraries: <strong>jQuery</strong>, <strong>Bootstrap</strong>, <strong>Bootswatch</strong> (all under MIT license).
+        Used third-party libraries: <strong>jQuery</strong>, <strong>Bootstrap</strong>, <strong>Bootswatch</strong> (all under the MIT license).
     </small>'
 );
 

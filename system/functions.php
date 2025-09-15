@@ -68,21 +68,11 @@ function headfiles($var, $path) {
     }
 }
 
-// -- LOGIN SESSION -- //
 
 // Prüfen, ob die Datei 'session.php' existiert und einbinden
-if (file_exists('session.php')) {
-    systeminc('session');
-} else {
-    systeminc('../system/session');
-}
-
+systeminc('session');
 // Prüfen, ob die Datei 'ip.php' existiert und einbinden
-if (file_exists('ip.php')) {
-    systeminc('ip');
-} else {
-    systeminc('../system/ip');
-}
+systeminc('ip');
 
 
 
@@ -405,130 +395,40 @@ if (!defined('USE_SEO_URLS')) {
 
 
 // -- CAPTCHA -- //
-if(file_exists('classes/Captcha.php')) { 
-    systeminc('classes/Captcha'); 
-} else { 
-    systeminc('../system/classes/Captcha'); 
-}
+systeminc('classes/Captcha');
 
 // -- USER INFORMATION -- //
-// Einbinden der Benutzerinformations-Funktionen
-if (file_exists('func/user.php')) {
-    systeminc('func/user');
-} else {
-    systeminc('../system/func/user');
-}
+systeminc('func/user');
 
 // -- ACCESS INFORMATION -- //
-// Einbinden der Zugriffssteuerungs-Funktionen
-if (file_exists('classes/AccessControl.php')) {
-    systeminc('classes/AccessControl');
-} else {
-    systeminc('../system/classes/AccessControl');
-}
-
-if (file_exists('func/check_access.php')) {
-    systeminc('func/check_access');
-} else {
-    systeminc('../system/func/check_access');
-}
+systeminc('classes/AccessControl');
+systeminc('func/check_access');
 
 // -- Page INFORMATION -- //
-// Einbinden der Seiten-Funktionen
-if (file_exists('func/page.php')) {
-    systeminc('func/page');
-} else {
-    systeminc('../system/func/page');
-}
+systeminc('func/page');
 
 // -- Tags -- //
-// Einbinden der Tags-Funktionen
-if (file_exists('func/tags.php')) {
-    systeminc('func/tags');
-} else {
-    systeminc('../system/func/tags');
-}
-
-if (file_exists('classes/NavigationUpdater.php')) {
-    systeminc('classes/NavigationUpdater');
-} else {
-    systeminc('../system/classes/NavigationUpdater');
-}
+systeminc('func/tags');
+systeminc('classes/NavigationUpdater');
 
 // -- INDEX CONTENT -- //
-// Einbinden des Inhalts für die Startseite
-if (file_exists('content.php')) {
-    systeminc('content');
-} else {
-    systeminc('../system/content');
-}
+systeminc('content');
 
-// Für Login unf Rollen
-if (file_exists('classes/LoginSecurity.php')) {
-    systeminc('classes/LoginSecurity');
-} else {
-    systeminc('../system/classes/LoginSecurity');
-}
+// Für Login und Rollen
+systeminc('classes/LoginSecurity');
+systeminc('classes/RoleManager');
+systeminc('classes/PluginSettings');
+systeminc('classes/AdminLogger');
+systeminc('classes/PluginUninstaller');
+systeminc('classes/ThemeUninstaller');
+systeminc('classes/LanguageService');
+systeminc('classes/LanguageManager');
+systeminc('classes/DatabaseMigrationHelper');
+systeminc('classes/SeoUrlHandler');
 
-if (file_exists('classes/RoleManager.php')) {
-    systeminc('classes/RoleManager');
-} else {
-    systeminc('../system/classes/RoleManager');
-}
+// Besucherstatistik
+systeminc('visitor_log_statistic');
 
-if (file_exists('classes/PluginSettings.php')) {
-    systeminc('classes/PluginSettings');
-} else {
-    systeminc('../system/classes/PluginSettings');
-}
-
-if (file_exists('classes/AdminLogger.php')) {
-    systeminc('classes/AdminLogger');
-} else {
-    systeminc('../system/classes/AdminLogger');
-}
-
-if (file_exists('classes/PluginUninstaller.php')) {
-    systeminc('classes/PluginUninstaller');
-} else {
-    systeminc('../system/classes/PluginUninstaller');
-}
-
-if (file_exists('classes/ThemeUninstaller.php')) {
-    systeminc('classes/ThemeUninstaller');
-} else {
-    systeminc('../system/classes/ThemeUninstaller');
-}
-
-if (file_exists('classes/LanguageService.php')) {
-    systeminc('classes/LanguageService');
-} else {
-    systeminc('../system/classes/LanguageService');
-}
-
-if (file_exists('classes/LanguageManager.php')) {
-    systeminc('classes/LanguageManager');
-} else {
-    systeminc('../system/classes/LanguageManager');
-}
-
-if (file_exists('classes/DatabaseMigrationHelper.php')) {
-    systeminc('classes/DatabaseMigrationHelper');
-} else {
-    systeminc('../system/classes/DatabaseMigrationHelper');
-}
-
-if (file_exists('classes/SeoUrlHandler.php')) {
-    systeminc('classes/SeoUrlHandler');
-} else {
-    systeminc('../system/classes/SeoUrlHandler');
-}
-
-if (file_exists('visitor_log_statistic.php')) {
-    systeminc('visitor_log_statistic');
-} else {
-    systeminc('../system/visitor_log_statistic');
-}
 
 function getCurrentLanguage(): string
 {
@@ -601,11 +501,7 @@ safe_query("DELETE FROM banned_ips WHERE deltime < '" . time() . "'");
 // SEO / PAGE TITLE
 // =======================
 if (stristr($_SERVER['PHP_SELF'], "/admin/") === false) {
-    if (file_exists('seo.php')) {
-        systeminc('seo');
-    } else {
-        systeminc('../system/seo');
-    }
+    systeminc('seo');
     define('PAGETITLE', getPageTitle());
 } else {
     define('PAGETITLE', $GLOBALS['hp_title']);
@@ -617,17 +513,13 @@ if (stristr($_SERVER['PHP_SELF'], "/admin/") === false) {
 /*if (file_exists('func/feeds.php')) {
     systeminc('func/feeds');
 } else {
-    systeminc('../system/func/feeds');
+    systeminc('/system/func/feeds');
 }*/
 
 // =======================
 // EMAIL
 // =======================
-if (file_exists('func/email.php')) {
-    systeminc('src/func/email');
-} else {
-    systeminc('../system/func/email');
-}
+systeminc('func/email');
 
 // =======================
 // DIRECTORY CLEANUP

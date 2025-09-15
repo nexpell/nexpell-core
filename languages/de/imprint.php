@@ -14,7 +14,7 @@ $language_array = array(
     'name_placeholder' => 'Vor- und Nachname',
 
     'company_name_label' => 'Firmenname',
-'association_name_label' => 'Vereinsname',
+    'association_name_label' => 'Vereinsname',
 
 
     'association_name_label' => 'Name des Vereins',
@@ -54,10 +54,10 @@ $language_array = array(
             Diese Website verwendet <strong>nexpell</strong> – ein modernes, quelloffenes Content-Management-System der nächsten Generation.<br>
             Core-Version: <strong>{core_version}</strong><br>
             Die Software basiert auf PHP 8.1 oder höher, MySQL 8 bzw. MariaDB 10 und nutzt Bootstrap 5 für das Frontend-Layout.<br>
-            Weitere Informationen und Dokumentation findest du im <a href="https://www.nexpell.de/wiki" target="_blank" rel="noopener">nexpell Wiki</a>.<br>
-            Quellcode und Download: <a href="https://www.nexpell.de" target="_blank" rel="noopener">www.nexpell.de</a><br>
+            Weitere Informationen und Dokumentation findest du im <a href="https://www.nexpell.de/de/wiki" target="_blank" rel="noopener">nexpell Wiki</a>.<br>
+            Quellcode und Download: <a href="https://www.nexpell.de/de/forum" target="_blank" rel="noopener">nexpell Forum</a> / <a href="https://www.nexpell.de/de/downloads" target="_blank" rel="noopener">nexpell Download</a><br>
             nexpell wird unter der GNU General Public License (GPL) veröffentlicht.<br>
-            © 2025 by <a href="https://www.nexpell.de" target="_blank" rel="noopener">nexpell.de</a>
+            © 2025 by <a href="https://www.nexpell.de" target="_blank" rel="noopener">https://www.nexpell.de</a>
             <br>
             Verwendete Drittanbieter-Bibliotheken: <strong>jQuery</strong>, <strong>Bootstrap</strong>, <strong>Bootswatch</strong> (alle unter MIT-Lizenz).
         </small>',

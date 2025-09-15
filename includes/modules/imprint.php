@@ -59,7 +59,6 @@ if (!file_exists($core_version_file)) {
 
 $core_version = file_exists($core_version_file) ? include $core_version_file : null;
 $core_version_text = $core_version ?? 'Bitte Core-Version bei Supportanfragen angeben';
-print_r($core_version);
 
 // Language-Text mit Platzhalter laden und ersetzen
 $imprint_info_template = $languageService->module['imprint_info'] ?? '';
