@@ -125,8 +125,28 @@ if (isset($update_info['updates']) && is_array($update_info['updates'])) {
     .small-muted { color: #6c757d; font-size: .9rem; }
     .fixed-col { min-width: 160px; }
     .activity-pre { max-height: 220px; overflow: auto; background: #f8f9fa; padding: 10px; border-radius: .375rem; }
+
+    /* Standardmäßig Höhe automatisch */
+.card-pair-1,
+.card-pair-2 {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Gleiche Höhe für obere Cards */
+.card-pair-1 {
+    height: auto; /* wird durch JS gesetzt */
+}
+
+/* Gleiche Höhe für untere Cards */
+.card-pair-2 {
+    height: auto; /* wird durch JS gesetzt */
+}
 </style>
 
+
+    
+<!-- Hauptbereich -->
 <div class="container-fluid p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -134,8 +154,9 @@ if (isset($update_info['updates']) && is_array($update_info['updates'])) {
             <div class="small-muted">Übersicht & Schnellzugriffe</div>
         </div>
         <div class="text-end">
+            Aktuelle Version: <strong><?= htmlspecialchars($current_version) ?></strong>
             <?php if ($updateAvailable): ?>
-                <a href="admincenter.php?site=update_core" class="btn btn-warning btn-sm">
+                <a href="admincenter.php?site=update_core" class="btn btn-warning">
                     <i class="bi bi-arrow-up-circle"></i> Update: <?= htmlspecialchars($updateText) ?>
                 </a>
             <?php else: ?>
@@ -144,17 +165,18 @@ if (isset($update_info['updates']) && is_array($update_info['updates'])) {
         </div>
     </div>
 
-    <div class="row g-3 mb-3">
-        <div class="col-6 col-md-3">
+    <!-- Dashboard-Kacheln -->
+    <div class="row">
+        <div class="col-6 col-md-3 mb-2">
             <div class="card shadow-sm">
                 <div class="card-body">
                     <div class="small-muted">Online-Nutzer</div>
                     <div class="metric"><?= number_format($onlineUsers) ?></div>
-                    <div class="small-muted mt-2">Jetzt online</div>
+                    <div class="small-muted">Jetzt online</div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-3 mb-2">
             <div class="card shadow-sm">
                 <div class="card-body">
                     <div class="small-muted">Installierte Plugins</div>
@@ -163,7 +185,7 @@ if (isset($update_info['updates']) && is_array($update_info['updates'])) {
                 </div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-3 mb-2">
             <div class="card shadow-sm">
                 <div class="card-body">
                     <div class="small-muted">Installierte Themes</div>
@@ -172,7 +194,7 @@ if (isset($update_info['updates']) && is_array($update_info['updates'])) {
                 </div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-3 mb-2">
             <div class="card shadow-sm">
                 <div class="card-body">
                     <div class="small-muted">Letztes Backup</div>
@@ -183,56 +205,55 @@ if (isset($update_info['updates']) && is_array($update_info['updates'])) {
         </div>
     </div>
 
-    <div class="row g-3">
-        <div class="col-lg-7">
-            <div class="row g-3">
-                <div class="col-12">
-                    <div class="card card-shortcuts shadow-sm">
-                        <div class="card-body d-flex align-items-center justify-content-between flex-wrap">
-                            <div>
-                                <h5 class="card-title mb-1">Schnellzugriffe</h5>
-                                <div class="small-muted mb-2">Aktionen, die Admins häufig nutzen</div>
-                                <div class="d-flex gap-2 flex-wrap">
-                                    <a href="admincenter.php?site=posts_new" class="btn btn-primary btn-sm"><i class="bi bi-pencil"></i> Neuer Beitrag</a>
-                                    <a href="admincenter.php?site=user_roles" class="btn btn-outline-secondary btn-sm"><i class="bi bi-people"></i> Benutzer</a>
-                                    <a href="admincenter.php?site=plugin_manager" class="btn btn-outline-secondary btn-sm"><i class="bi bi-plug"></i> Plugins</a>
-                                    <a href="admincenter.php?site=settings" class="btn btn-outline-secondary btn-sm"><i class="bi bi-gear"></i> Einstellungen</a>
-                                    <a href="admincenter.php?site=media" class="btn btn-outline-secondary btn-sm"><i class="bi bi-image"></i> Medien</a>
-                                </div>
-                            </div>
-                            <div class="text-end small-muted">
-                                <div>Letzte Anmeldung: <?= date('d.m.Y H:i') ?></div>
-                                <div class="mt-2"><a href="admincenter.php?site=profile" class="link-primary">Profil & Sicherheit</a></div>
-                            </div>
+    <!-- Hauptbereich -->
+    <div class="row mt-2">
+        <!-- Linke Seite -->
+        <div class="col-lg-7 d-flex flex-column">
+            <!-- Schnellzugriffe (obere Card) -->
+            <div class="card card-shortcuts card-pair-1 flex-fill mb-2">
+                <div class="card-body d-flex align-items-center justify-content-between flex-wrap">
+                    <div>
+                        <h5 class="card-title mb-1">Schnellzugriffe</h5>
+                        <div class="small-muted mb-2">Aktionen, die Admins häufig nutzen</div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="admincenter.php?site=posts_new" class="btn btn-primary btn-sm"><i class="bi bi-pencil"></i> <s>Neuer Beitrag</s></a>
+                            <a href="admincenter.php?site=user_roles" class="btn btn-outline-secondary btn-sm"><i class="bi bi-people"></i> Benutzer- und Rechteverwaltung</a>
+                            <a href="admincenter.php?site=plugin_manager" class="btn btn-outline-secondary btn-sm"><i class="bi bi-plug"></i> Plugin-Manager</a>
+                            <a href="admincenter.php?site=settings" class="btn btn-outline-secondary btn-sm"><i class="bi bi-gear"></i> Einstellungen</a>
+                            <a href="admincenter.php?site=media" class="btn btn-outline-secondary btn-sm"><i class="bi bi-image"></i> <s>Medien</s></a>
                         </div>
                     </div>
+                    <div class="text-end small-muted">
+                        <div>Deine letzte Anmeldung: <?= date('d.m.Y H:i') ?></div>
+                        <div class="mt-2"><a href="admincenter.php?site=profile" class="link-primary"><s>Profil & Sicherheit</s></a></div>
+                    </div>
                 </div>
+            </div>
 
-                <div class="col-12">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Kürzliche System-Aktivitäten</h5>
-                            <div class="small-muted mb-2">Wichtige Log-Einträge & Aktionen</div>
-                            <div class="row">
-                                <div class="col-md-7">
-                                    <ul class="list-group list-group-flush">
-                                        <?php if (!empty($recentLogs)): ?>
-                                            <?php foreach ($recentLogs as $log): ?>
-                                                <li class="list-group-item small-muted"><?= htmlspecialchars($log) ?></li>
-                                            <?php endforeach; ?>
-                                        <?php else: ?>
-                                            <li class="list-group-item text-muted">Keine Log-Einträge gefunden.</li>
-                                        <?php endif; ?>
-                                    </ul>
-                                </div>
-                                <div class="col-md-5">
-                                    <div class="small-muted mb-1">Schnellaktionen</div>
-                                    <div class="d-grid gap-2">
-                                        <a href="admincenter.php?site=site_lock" class="btn btn-outline-primary btn-sm">Wartungsmodus</a>
-                                        <a href="admincenter.php?site=database" class="btn btn-outline-success btn-sm">Backup jetzt starten</a>
-                                        <a href="admincenter.php?site=security_overview" class="btn btn-outline-danger btn-sm">Sicherheits-Scan</a>
-                                    </div>
-                                </div>
+            <!-- System-Aktivitäten (untere Card) -->
+            <div class="card shadow-sm card-pair-2 flex-fill">
+                <div class="card-body">
+                    <h5 class="card-title">Kürzliche System-Aktivitäten</h5>
+                    <div class="small-muted mb-2">Wichtige Log-Einträge & Aktionen</div>
+                    <div class="row h-100">
+                        <div class="col-md-7">
+                            <ul class="list-group list-group-flush">
+                                <?php if (!empty($recentLogs)): ?>
+                                    <?php foreach ($recentLogs as $log): ?>
+                                        <li class="list-group-item small-muted"><?= htmlspecialchars($log) ?></li>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <li class="list-group-item text-muted">Keine Log-Einträge gefunden.</li>
+                                <?php endif; ?>
+                            </ul>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="small-muted mb-1">Schnellaktionen</div>
+                            <div class="d-grid gap-2">
+                                <a href="admincenter.php?site=site_lock" class="btn btn-outline-primary btn-sm">Wartungsmodus</a>
+                                <a href="admincenter.php?site=database" class="btn btn-outline-success btn-sm">Backup jetzt starten</a>
+                                <a href="admincenter.php?site=security_overview" class="btn btn-outline-warning btn-sm">Registrierungs- und Login-Aktivitäten</a>
+                                <a href="admincenter.php?site=log_viewer" class="btn btn-outline-danger btn-sm">Zugriffprotokoll</a>
                             </div>
                         </div>
                     </div>
@@ -240,89 +261,75 @@ if (isset($update_info['updates']) && is_array($update_info['updates'])) {
             </div>
         </div>
 
-        <div class="col-lg-5">
-            <div class="row g-3">
-                <div class="col-12">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Webseiten-Statistiken</h5>
-                            <div class="d-flex justify-content-between">
-                                <div class="text-center">
-                                    <div class="metric text-primary"><?= $totalVisitors ?></div>
-                                    <div class="small-muted">Besucher</div>
-                                </div>
-                                <div class="text-center">
-                                    <div class="metric text-primary"><?= $totalPageviews ?></div>
-                                    <div class="small-muted">Seitenaufrufe</div>
-                                </div>
-                            </div>
+        <!-- Rechte Seite -->
+        <div class="col-lg-5 d-flex flex-column">
+            <!-- Webseiten-Statistiken (obere Card) -->
+            <div class="card shadow-sm card-pair-1 flex-fill mb-2">
+                <div class="card-body">
+                    <h5 class="card-title">Webseiten-Statistiken</h5>
+                    <div class="d-flex justify-content-between">
+                        <div class="text-center">
+                            <div class="metric text-primary"><?= $totalVisitors ?></div>
+                            <div class="small-muted">Besucher</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="metric text-primary"><?= $totalPageviews ?></div>
+                            <div class="small-muted">Seitenaufrufe</div>
                         </div>
                     </div>
                 </div>
-                <div class="col-12">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Neueste Benutzer</h5>
-                            <div class="small-muted mb-2">Letzte Registrierungen / Anmeldungen</div>
-                            <div class="table-responsive">
-                                <table class="table table-sm align-middle mb-0">
-                                    <thead class="table-light">
+            </div>
+
+            <!-- Neueste Benutzer (untere Card) -->
+            <div class="card shadow-sm card-pair-2 flex-fill">
+                <div class="card-body">
+                    <h5 class="card-title">Neueste Benutzer</h5>
+                    <div class="small-muted mb-2">Letzte Registrierungen / Anmeldungen</div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th class="text-end">Rolle</th>
+                                    <th class="text-end">Vor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (!empty($latestUsers)): ?>
+                                    <?php foreach ($latestUsers as $u): ?>
                                         <tr>
-                                            <th>Name</th>
-                                            <th class="text-end">Rolle</th>
-                                            <th class="text-end">Vor</th>
+                                            <td><?= htmlspecialchars($u['username']) ?></td>
+                                            <td class="text-end"><span class="badge bg-secondary"><?= htmlspecialchars($u['role']) ?></span></td>
+                                            <td class="text-end small-muted"><?= htmlspecialchars($u['when']) ?></td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php if (!empty($latestUsers)): ?>
-                                            <?php foreach ($latestUsers as $u): ?>
-                                                <tr>
-                                                    <td><?= htmlspecialchars($u['username']) ?></td>
-                                                    <td class="text-end"><span class="badge bg-secondary"><?= htmlspecialchars($u['role']) ?></span></td>
-                                                    <td class="text-end small-muted"><?= htmlspecialchars($u['when']) ?></td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        <?php else: ?>
-                                            <tr>
-                                                <td colspan="3" class="text-center text-muted">Keine neuen Benutzer gefunden.</td>
-                                            </tr>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-2 text-end"><a href="admincenter.php?site=user_roles" class="link-primary">Alle Benutzer</a></div>
-                        </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">Keine neuen Benutzer gefunden.</td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
                     </div>
+                    <div class="mt-2 text-end"><a href="admincenter.php?site=user_roles" class="link-primary">Alle Benutzer</a></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <div class="small-muted">Schnellhilfe: <a href="/docs" class="link-primary">Dokumentation</a> · <a href="/forum" class="link-primary">Forum</a> · <a href="https://discord.gg/..." target="_blank" class="link-primary">Discord</a></div>
-                    <div class="small-muted">Version: <strong><?= htmlspecialchars($current_version) ?></strong></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="container-fluid p-4">
-    <div class="row">
-        <div class="col-12">
+    <!-- News -->
+    <div class="card shadow-sm mt-2">
+        <div class="card-body">
             <h4 class="mb-3">Neuigkeiten vom nexpell-Team</h4>
             <div class="list-group shadow-sm mb-4">
                 <?php if (!empty($news_updates)): ?>
                     <?php foreach ($news_updates as $news): ?>
-                        <a href="<?php echo htmlspecialchars($news['link'] ?? '#'); ?>" class="list-group-item list-group-item-action" target="_blank">
+                        <a href="<?= htmlspecialchars($news['link'] ?? '#'); ?>" class="list-group-item list-group-item-action" target="_blank">
                             <div class="d-flex justify-content-between">
-                                <strong><?php echo htmlspecialchars($news['title']); ?></strong>
-                                <small class="text-muted"><?php echo htmlspecialchars($news['date']); ?></small>
+                                <strong><?= htmlspecialchars($news['title']); ?></strong>
+                                <small class="text-muted"><?= htmlspecialchars($news['date']); ?></small>
                             </div>
-                            <p class="mb-0 small"><?php echo htmlspecialchars($news['summary']); ?></p>
+                            <p class="mb-0 small"><?= htmlspecialchars($news['summary']); ?></p>
                         </a>
                     <?php endforeach; ?>
                 <?php else: ?>
@@ -332,3 +339,21 @@ if (isset($update_info['updates']) && is_array($update_info['updates'])) {
         </div>
     </div>
 </div>
+
+<!-- JS für gleiche Höhe gegenüberliegender Cards -->
+<script>
+function matchCardHeights() {
+    const pair1 = document.querySelectorAll('.card-pair-1');
+    let max1 = 0;
+    pair1.forEach(c => { max1 = Math.max(max1, c.offsetHeight); });
+    pair1.forEach(c => { c.style.height = max1 + 'px'; });
+
+    const pair2 = document.querySelectorAll('.card-pair-2');
+    let max2 = 0;
+    pair2.forEach(c => { max2 = Math.max(max2, c.offsetHeight); });
+    pair2.forEach(c => { c.style.height = max2 + 'px'; });
+}
+
+window.addEventListener('load', matchCardHeights);
+window.addEventListener('resize', matchCardHeights);
+</script>

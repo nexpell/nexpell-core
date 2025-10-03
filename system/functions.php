@@ -69,9 +69,34 @@ function headfiles($var, $path) {
 }
 
 
-// Prüfen, ob die Datei 'session.php' existiert und einbinden
+
+// -- SYSTEM FILE INCLUDE -- //
+// Diese Funktion lädt Systemdateien sicher und gibt eine Fehlermeldung aus, falls die Datei nicht gefunden wird
+if (!defined('BASE_PATH')) {
+    define('BASE_PATH', dirname(__DIR__));
+}
+
+function systeminc($file) {
+    $path = BASE_PATH . '/system/' . $file . '.php';
+
+    if (file_exists($path)) {
+        include $path;
+    } else {
+        $corePath = BASE_PATH . '/system/core/' . $file . '.php';
+        if (file_exists($corePath)) {
+            include $corePath;
+        } else {
+            if (defined('DEBUG') && DEBUG == "OFF") {
+                system_error('Could not get system file for <mark>' . $file . '</mark>');
+            } else {
+                system_error('Could not get system file for <mark>' . $file . '</mark>', 1, 1);
+            }
+        }
+    }
+}
+
+// Direkt prüfen & laden
 systeminc('session');
-// Prüfen, ob die Datei 'ip.php' existiert und einbinden
 systeminc('ip');
 
 

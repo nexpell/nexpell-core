@@ -52,34 +52,64 @@ if (!empty(@$db['active'] == 1) !== false) {
         $modulname = "";
     }
 
-    if ($id != "" && $modulname != "" && $do == "dea") {
-
+    if ($id != "" && $do === "dea") {
         try {
+            // Zuerst den modulname aus settings_plugins holen
+            $res = safe_query("SELECT `modulname` FROM `settings_plugins` WHERE `pluginID` = '" . (int)$id . "'");
+            if ($res && mysqli_num_rows($res) > 0) {
+                $row = mysqli_fetch_assoc($res);
+                $modulname = $row['modulname'];
 
-            safe_query("UPDATE `settings_plugins` SET `activate` = '0' WHERE `pluginID` = '" . $id . "';");
-            safe_query("UPDATE `navigation_website_sub` SET `indropdown` = '0' WHERE `modulname` =  '" . $_GET['modulname'] . "';");
-            echo $languageService->get('success_deactivated');
-            redirect("admincenter.php?site=plugin_manager", "", 1);
-            return false;
+                // Plugin deaktivieren
+                safe_query("UPDATE `settings_plugins` SET `activate` = '0' WHERE `pluginID` = '" . (int)$id . "'");
+
+                // Navigationseintrag anpassen
+                safe_query("UPDATE `navigation_website_sub` SET `indropdown` = '0' WHERE `modulname` = '" . escape($modulname) . "'");
+
+                echo $languageService->get('success_deactivated');
+                redirect("admincenter.php?site=plugin_manager", "", 1);
+                return false;
+            } else {
+                echo "Plugin nicht gefunden.";
+                redirect("admincenter.php?site=plugin_manager", "", 3);
+                return false;
+            }
         } catch (Exception $e) {
-            echo $languageService->get('success_deactivated') . "<br /><br />" . $e->getMessage();
+            echo $languageService->get('success_deactivated') . "<br><br>" . $e->getMessage();
             redirect("admincenter.php?site=plugin_manager", "", 5);
             return false;
         }
     }
-    if ($id != "" && $modulname != "" && $do == "act") {
+
+    if ($id != "" && $do === "act") {
         try {
-            safe_query("UPDATE `settings_plugins` SET `activate` = '1' WHERE `pluginID` = '" . $id . "';");
-            safe_query("UPDATE `navigation_website_sub` SET `indropdown` = '1' WHERE `modulname` =  '" . $_GET['modulname'] . "';");
-            echo $languageService->get('success_activated');
-            redirect("admincenter.php?site=plugin_manager", "", 1);
-            return false;
+            // Modulname aus settings_plugins holen
+            $res = safe_query("SELECT `modulname` FROM `settings_plugins` WHERE `pluginID` = '" . (int)$id . "'");
+            if ($res && mysqli_num_rows($res) > 0) {
+                $row = mysqli_fetch_assoc($res);
+                $modulname = $row['modulname'];
+
+                // Plugin aktivieren
+                safe_query("UPDATE `settings_plugins` SET `activate` = '1' WHERE `pluginID` = '" . (int)$id . "'");
+
+                // Navigationseintrag anpassen
+                safe_query("UPDATE `navigation_website_sub` SET `indropdown` = '1' WHERE `modulname` = '" . escape($modulname) . "'");
+
+                echo $languageService->get('success_activated');
+                redirect("admincenter.php?site=plugin_manager", "", 1);
+                return false;
+            } else {
+                echo "Plugin nicht gefunden.";
+                redirect("admincenter.php?site=plugin_manager", "", 3);
+                return false;
+            }
         } catch (Exception $e) {
-            echo $languageService->get('failed_activated') . "<br /><br />" . $e->getMessage();
+            echo $languageService->get('failed_activated') . "<br><br>" . $e->getMessage();
             redirect("admincenter.php?site=plugin_manager", "", 5);
             return false;
         }
     }
+
     #Aktive und Deaktivieren vom Plugin END
 
     #Erstellt eine neue Plugin-Einstellung START
@@ -619,10 +649,16 @@ if ($action == "edit") {
         </div>';
 
         // Admin Kategorien laden
-        $navAdminTitle = '';
-        $navAdminCatID = 0;
-        $navWebsiteTitle = '';
-        $navWebsiteCatID = 0;
+        // Default-Werte definieren, damit Seite nicht abbricht
+        $navAdminLink   = '';
+        $navAdminTitle  = '';
+        $navAdminCatID  = 0;
+
+        $navWebsiteLink   = '';
+        $navWebsiteTitle  = '';
+        $navWebsiteCatID  = 0;
+
+        $modulname = escape($ds['modulname']); // z. B. aus settings_plugins
 
         $modulname = escape($ds['modulname']); // ACHTUNG: muss vorher korrekt befüllt sein (z. B. aus settings_plugins)
 

@@ -231,18 +231,6 @@ function safe_query($query = "")
     }
 }
 
-// -- SYSTEM FILE INCLUDE -- //
-// Diese Funktion lädt Systemdateien sicher und gibt eine Fehlermeldung aus, falls die Datei nicht gefunden wird
-function systeminc($file) {
-    if (!include('system/' . $file . '.php')) {
-        if (DEBUG == "OFF") {
-            system_error('Could not get system file for <mark>' . $file . '</mark>');
-        } else {
-            system_error('Could not get system file for <mark>' . $file . '</mark>', 1, 1);
-        }
-    }
-}
-
 // -- GLOBAL SETTINGS -- //
 $headlines = '';
 
@@ -266,26 +254,39 @@ if ($result && mysqli_num_rows($result) > 0) {
 // CSS- und JS-Dateien
 $components = array(
     'css' => array(
-        './components/bootstrap/css/bootstrap-icons.min.css',
-        './components/scrolltotop/css/scrolltotop.css',
-        './components/ckeditor/plugins/codesnippet/lib/highlight/styles/school_book_output.css',
-        './components/css/animate.css',
-        './components/css/page.css',
-        './components/css/headstyles.css'
+        '/components/bootstrap/css/bootstrap-icons.min.css',
+        '/components/ckeditor/plugins/codesnippet/lib/highlight/styles/school_book_output.css',
+        '/components/css/animate.css',
+        '/components/css/page.css',
+        '/components/css/headstyles.css',
+        '/includes/plugins/navigation/css/navigation.css',
+        '/includes/plugins/footer_easy/css/footer_easy.css'
     ),
     'js' => array(
-        './components/jquery/jquery.min.js',
-        './components/bootstrap/js/bootstrap.bundle.min.js',
-        './components/scrolltotop/js/scrolltotop.js',
-        './components/js/slick.min.js'
+        '/components/jquery/jquery.min.js',
+        '/components/bootstrap/js/bootstrap.bundle.min.js',
+        '/components/js/slick.min.js',
+        //'/components/ckeditor/ckeditor.js',
+        //'/components/ckeditor/config.js',
+        '/components/cookie/cookie-consent.js',
+        '/includes/themes/default/js/page.js',
+        '/includes/plugins/navigation/js/navigation.js',
+        '/includes/plugins/footer_easy/js/footer_easy.js'
     )
 );
 
 // Funktion zum Prüfen, ob die Dateien existieren (CSS und JS)
 function check_file_exists($file)
 {
-    return file_exists($file) ? $file : ''; // Gibt den Dateipfad zurück, wenn die Datei existiert
+    // Basisverzeichnis auf dein Projekt setzen (hier system/settings.php liegt in /public_html/system)
+    $baseDir = dirname(__DIR__); // geht 1 Ebene hoch von /system -> /public_html
+
+    // Absoluten Pfad bauen
+    $path = $baseDir . '/' . ltrim($file, '/');
+
+    return file_exists($path) ? $file : '';
 }
+
 
 // Dateien nur hinzufügen, wenn sie existieren
 $valid_css = array_filter($components['css'], 'check_file_exists');

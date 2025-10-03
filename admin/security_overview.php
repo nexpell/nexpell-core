@@ -158,7 +158,7 @@ if (isset($_POST['delete_selected']) && !empty($_POST['selected_sessions'])) {
     $stmt->execute();
     $stmt->close();
 
-    header("Location: ?deleted=1");
+    header("Location: admincenter.php?site=security_overview&deleted=1");
     exit;
 }
 // Erfolgsmeldung (wird nur bei vollem Seitenaufruf angezeigt)
@@ -265,26 +265,30 @@ document.getElementById('select-all').addEventListener('click', function() {
 
 
 <script>
-// AJAX-Funktion für das Nachladen der Sessions
-function loadPage(page) {
+function deleteSession(sessionId) {
+    if (!confirm('<?= $languageService->get('confirm_delete_session'); ?>')) return;
+
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', '/admin/admincenter.php?site=security_overview&page=' + page + '&ajax=1', true);
+    xhr.open('POST', '/admin/admincenter.php?site=security_overview&ajax=1&delete_session=1', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
         if (xhr.status === 200) {
             try {
-                var response = JSON.parse(xhr.responseText);
-                document.getElementById('session-table-container').innerHTML = response.table;
-                document.getElementById('pagination-container').innerHTML = response.pagination;
+                var res = JSON.parse(xhr.responseText);
+                if (res.success) {
+                    loadPage(<?= $page ?>); // Tabelle neu laden
+                } else {
+                    alert(res.error || 'Löschen fehlgeschlagen');
+                }
             } catch (e) {
-                console.error("JSON-Parsing fehlgeschlagen", e, xhr.responseText);
+                console.error(e, xhr.responseText);
             }
-        } else {
-            console.error("Fehler beim Laden", xhr.status);
         }
     };
-    xhr.send();
+    xhr.send('session_id=' + encodeURIComponent(sessionId));
 }
 </script>
+
 
 <?php
 // AJAX-Anfrage erkennen und nur reinen Inhalt liefern
@@ -329,10 +333,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
             <td>' . $sessionTime . '</td>
             <td>' . htmlspecialchars(substr($ds['browser'], 0, 40)) . '...</td>
             <td>
-                <form method="POST" action="" onsubmit="return confirm(\'' . $languageService->get('confirm_delete_session') . '\');" class="d-inline">
-                    <input type="hidden" name="session_id" value="' . htmlspecialchars($ds['session_id']) . '">
-                    <button type="submit" class="btn btn-danger btn-sm">' . $languageService->get('delete') . '</button>
-                </form>
+                <button type="button" class="btn btn-danger" onclick="deleteSession('. $ds['session_id'] .')">
+                    '. $languageService->get('delete') .'
+                </button>
             </td>
         </tr>';
     }
@@ -358,6 +361,19 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
     ]);
     exit;
 }
+
+if (!empty($_POST['delete_session']) || !empty($_POST['session_id'])) {
+    $sessionId = (int)$_POST['session_id'];
+    $deleteQuery = "DELETE FROM user_sessions WHERE session_id = $sessionId LIMIT 1";
+
+    if ($_database->query($deleteQuery)) {
+        echo json_encode(['success' => true]);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'Konnte Session nicht löschen']);
+    }
+    exit;
+}
+
 
 // AJAX-Handler für IP-Sperren
 if (isset($_POST['ban_ip']) && filter_var($_POST['ban_ip'], FILTER_VALIDATE_IP)) {
@@ -433,7 +449,7 @@ while ($ds = $get->fetch_assoc()) {
             <td>' . htmlspecialchars($ds['ip']) . '</td>
             <td>' . (int)$ds['attempts'] . '</td>
             <td>' . date("d.m.Y H:i:s", $ds['last_attempt']) . '</td>
-            <td><button class="btn btn-sm btn-danger ban-ip-btn" data-ip="' . htmlspecialchars($ds['ip']) . '">' . $languageService->get('ban') . '</button></td>
+            <td><button class="btn btn-danger ban-ip-btn" data-ip="' . htmlspecialchars($ds['ip']) . '">' . $languageService->get('ban') . '</button></td>
           </tr>';
 }
 
@@ -519,6 +535,19 @@ $query = "
     LIMIT $limit OFFSET $offset
 ";
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['delete_ip'])) {
+    $ipToDelete = $_database->real_escape_string($_POST['delete_ip']);
+
+    // IP aus der Datenbank löschen
+    $deleteQuery = "DELETE FROM banned_ips WHERE ip = '$ipToDelete' LIMIT 1";
+    if ($_database->query($deleteQuery)) {
+        echo '<div class="alert alert-success">' . $languageService->get('ip_deleted') . '</div>';
+    } else {
+        echo '<div class="alert alert-danger">' . $languageService->get('ip_delete_failed') . '</div>';
+    }
+}
+
+
 $get = $_database->query($query);
 
 echo '<table class="table table-bordered table-striped bg-white shadow-sm">
@@ -544,7 +573,7 @@ while ($ds = $get->fetch_assoc()) {
         <td>
             <form method="post" onsubmit="return confirm(\'' . $languageService->get('confirm_delete_ip') . '\');" style="display:inline;">
                 <input type="hidden" name="delete_ip" value="' . htmlspecialchars($ds['ip']) . '">
-                <button type="submit" class="btn btn-danger btn-sm">' . $languageService->get('delete') . '</button>
+                <button type="submit" class="btn btn-danger">' . $languageService->get('delete') . '</button>
             </form>
         </td>
     </tr>';

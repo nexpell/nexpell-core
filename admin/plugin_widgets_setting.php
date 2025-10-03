@@ -49,7 +49,7 @@ $exclude_plugins = ['navigation', 'carousel', 'error_404', 'footer_easy', 'login
 <div class="card">
   <div class="card-header">Widgets verwalten</div>
   <div class="card-body">
-    <div class="container py-5">
+    <div class="cont1ainer py-5">
       <div class="row">
         <!-- Linke Seite -->
         <div class="col-md-3">
@@ -103,40 +103,43 @@ $exclude_plugins = ['navigation', 'carousel', 'error_404', 'footer_easy', 'login
             <ul id="undertop" class="widget-list"></ul>
           </div>
 
-          <div class="row">
+          <div class="row align-items-stretch">
             <!-- Left Sidebar -->
-            <div class="col-md-3">
-              <div class="p-3 border rounded bg-warning-subtle">
+            <div class="col-md-3 d-flex">
+              <div class="p-3 border rounded bg-warning-subtle flex-fill">
                 <h6><i class="bi bi-arrow-bar-left"></i> Left Sidebar</h6>
                 <ul id="left" class="widget-list"></ul>
               </div>
             </div>
 
             <!-- Main Content -->
-            <div class="col-md-6">
-              <div class="mb-3 p-3 border rounded bg-success-subtle">
-                <h6><i class="bi bi-arrow-bar-up"></i> Main Content Top</h6>
-                <ul id="maintop" class="widget-list"></ul>
-              </div>
+            <div class="col-md-6 d-flex">
+              <div class="w-100">
+                <div class="mb-3 p-3 border rounded bg-success-subtle">
+                  <h6><i class="bi bi-arrow-bar-up"></i> Main Content Top</h6>
+                  <ul id="maintop" class="widget-list"></ul>
+                </div>
 
-              <div class="mb-3 p-3 border rounded bg-light">
-                <h6><i class="bi bi-file-text"></i> Main Content</h6>
-              </div>
+                <div class="mb-3 p-3 border rounded bg-light flex-grow-1">
+                  <h6><i class="bi bi-file-text"></i> Main Content</h6>
+                </div>
 
-              <div class="mb-3 p-3 border rounded bg-success-subtle">
-                <h6><i class="bi bi-arrow-bar-down"></i> Main Content Bottom</h6>
-                <ul id="mainbottom" class="widget-list"></ul>
+                <div class="mb-3 p-3 border rounded bg-success-subtle">
+                  <h6><i class="bi bi-arrow-bar-down"></i> Main Content Bottom</h6>
+                  <ul id="mainbottom" class="widget-list"></ul>
+                </div>
               </div>
             </div>
 
             <!-- Right Sidebar -->
-            <div class="col-md-3">
-              <div class="p-3 border rounded bg-warning-subtle">
+            <div class="col-md-3 d-flex">
+              <div class="p-3 border rounded bg-warning-subtle flex-fill">
                 <h6><i class="bi bi-arrow-bar-right"></i> Right Sidebar</h6>
                 <ul id="right" class="widget-list"></ul>
               </div>
             </div>
           </div>
+
 
           <!-- Content Footer -->
           <div class="mt-3 p-3 border rounded bg-danger-subtle">

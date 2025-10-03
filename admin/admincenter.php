@@ -273,6 +273,9 @@ if ($getavatar = getavatar($userID)) {
 	$l_avatar = "noavatar.png";
 }
 
+
+
+
 header('Content-Type: text/html; charset=UTF-8');
 
 ?>
@@ -442,14 +445,14 @@ header('Content-Type: text/html; charset=UTF-8');
 		
 
 		<script type="text/javascript">
-			// setup tools tips trigger
-			const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-			const tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
-				return new Tooltip(tooltipTriggerEl, {
-					html: true // <- this should do the trick!
-				})
-			});
-		</script>
+            // setup tooltips trigger
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl, {
+                    html: true // erlaubt HTML-Inhalt
+                })
+            });
+        </script>
         
 </body>
 

@@ -11,7 +11,7 @@
 ### 🚀 Highlights
 
 - Komplette Neuimplementierung auf Basis moderner objektorientierter PHP-Strukturen
-- Neue Template-Engine mit `{{ placeholder }}`- und `{[de]}Mehrsprachigkeit{[en]}Multilanguage`-Support
+- Neue Template-Engine mit `{ placeholder }`- und `[[lang:de]]Mehrsprachigkeit[[lang:en]]Multilanguage`-Support
 - Intelligenter 6-Schritte-Installer mit Sicherheitscheck
 - Neue rollenbasierte Rechteverwaltung (RBAC) inkl. Admin- und Modulsteuerung
 - Dynamisches Theme- und Plugin-System

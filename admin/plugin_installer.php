@@ -255,15 +255,15 @@ foreach ($plugins_for_template as $plugin) {
         echo '<span class="text-muted fst-italic">Download deaktiviert</span>';
     } else {
         if ($plugin['installed']) {
-            echo '<button class="btn btn-success btn-sm" disabled>' . $languageService->get('installed') . '</button> ';
+            echo '<button class="btn btn-success" disabled>' . $languageService->get('installed') . '</button> ';
             if ($plugin['update']) {
-                echo '<a href="admincenter.php?site=plugin_installer&update=' . urlencode($plugin['modulname']) . '" class="btn btn-warning btn-sm">'
+                echo '<a href="admincenter.php?site=plugin_installer&update=' . urlencode($plugin['modulname']) . '" class="btn btn-warning">'
                     . $languageService->get('update') . '</a> ';
             }
-            echo '<a href="admincenter.php?site=plugin_installer&uninstall=' . urlencode($plugin['modulname']) . '" class="btn btn-danger btn-sm" onclick="return confirm(\'Willst du dieses Plugin wirklich löschen?\')">'
+            echo '<a href="admincenter.php?site=plugin_installer&uninstall=' . urlencode($plugin['modulname']) . '" class="btn btn-danger" onclick="return confirm(\'Willst du dieses Plugin wirklich löschen?\')">'
                 . $languageService->get('delete') . '</a>';
         } else {
-            echo '<a href="admincenter.php?site=plugin_installer&install=' . urlencode($plugin['modulname']) . '" class="btn btn-primary btn-sm">'
+            echo '<a href="admincenter.php?site=plugin_installer&install=' . urlencode($plugin['modulname']) . '" class="btn btn-primary">'
                 . $languageService->get('install') . '</a>';
         }
     }

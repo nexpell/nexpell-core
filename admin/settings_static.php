@@ -325,7 +325,7 @@ if (isset($_GET['action']) && $_GET['action'] == "add") {
                 <div class="mb-3 row">
                     <div class="col-md-12">
                         <input type="hidden" name="captcha_hash" value="' . $hash . '" />
-                        <button class="btn btn-success btn-sm" type="submit" name="save"  />' . $languageService->get('add') . '</button>
+                        <button class="btn btn-success" type="submit" name="save"  />' . $languageService->get('add') . '</button>
                     </div>
                 </div>
             </form>
@@ -534,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="col-md-12">
                         <input type="hidden" name="captcha_hash" value="' . $hash . '" />
                         <input type="hidden" name="staticID" value="' . $staticID . '" />
-                        <button class="btn btn-warning btn-sm" type="submit" name="save">' . $languageService->get('edit') . '</button>
+                        <button class="btn btn-warning" type="submit" name="save">' . $languageService->get('edit') . '</button>
                     </div>
                 </div>
 
@@ -588,7 +588,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="form-group row">
                     <label class="col-md-1 control-label">' . $languageService->get('options') . ':</label>
                     <div class="col-md-8">
-                        <a href="admincenter.php?site=settings_static&amp;action=add" class="btn btn-primary btn-sm" type="button">
+                        <a href="admincenter.php?site=settings_static&amp;action=add" class="btn btn-primary" type="button">
                             ' . $languageService->get('new_static_page') . '
                         </a>
                     </div>
@@ -642,10 +642,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td><a href="../index.php?site=static&amp;staticID=' . $ds['staticID'] . '" target="_blank">' . $title . '</a></td>
                 <td>' . $accesslevel . '</td>
                 <td>
-                    <a href="admincenter.php?site=settings_static&amp;action=edit&amp;staticID=' . $ds['staticID'] . '" class="hidden-xs hidden-sm btn btn-warning btn-sm" type="button">' . $languageService->get('edit') . '</a>
+                    <a href="admincenter.php?site=settings_static&amp;action=edit&amp;staticID=' . $ds['staticID'] . '" class="hidden-xs hidden-sm btn btn-warning" type="button">' . $languageService->get('edit') . '</a>
 
                     <!-- Button trigger modal -->
-                    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirm-delete-' . $ds['staticID'] . '" data-href="admincenter.php?site=settings_static&amp;delete=true&amp;staticID=' . $ds['staticID'] . '&amp;captcha_hash=' . $hash . '">
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirm-delete-' . $ds['staticID'] . '" data-href="admincenter.php?site=settings_static&amp;delete=true&amp;staticID=' . $ds['staticID'] . '&amp;captcha_hash=' . $hash . '">
                         ' . $languageService->get('delete') . '
                     </button>
 
@@ -655,12 +655,12 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <h5 class="modal-title" id="myModalLabel-' . $ds['staticID'] . '">' . $languageService->get('static_pages') . '</h5>
-                                    <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
                                 </div>
                                 <div class="modal-body"><p>' . $languageService->get('really_delete') . '</p></div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">' . $languageService->get('close') . '</button>
-                                    <a href="admincenter.php?site=settings_static&amp;delete=true&amp;staticID=' . $ds['staticID'] . '&amp;captcha_hash=' . $hash . '" class="btn btn-danger btn-sm">' . $languageService->get('delete') . '</a>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' . $languageService->get('close') . '</button>
+                                    <a href="admincenter.php?site=settings_static&amp;delete=true&amp;staticID=' . $ds['staticID'] . '&amp;captcha_hash=' . $hash . '" class="btn btn-danger">' . $languageService->get('delete') . '</a>
                                 </div>
                             </div>
                         </div>

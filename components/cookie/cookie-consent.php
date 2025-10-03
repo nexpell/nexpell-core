@@ -91,5 +91,3 @@ const PLUGIN_INSTALLED = {
     </div>
   </div>
 </div>
-
-<script src="/includes/themes/default/js/cookie-consent.js"></script>

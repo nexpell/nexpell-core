@@ -51,4 +51,3 @@ if (mysqli_num_rows($result)) {
 <script>
 const messengerActive = <?= $messenger_active ? 'true' : 'false' ?>;
 </script>
-<script src="/includes/plugins/messenger/js/update_mail_badge.js"></script>

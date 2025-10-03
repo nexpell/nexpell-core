@@ -49,53 +49,70 @@ class SeoUrlHandler {
      * Wandelt einen Query-String in eine SEO-URL um
      */
     public static function convertToSeoUrl(string $url): string
-    {
-        if (!defined('USE_SEO_URLS') || !USE_SEO_URLS) return $url;
+{
+    if (!defined('USE_SEO_URLS') || !USE_SEO_URLS) return $url;
 
-        $parsed = parse_url($url);
-        parse_str($parsed['query'] ?? '', $query);
+    $parsed = parse_url($url);
+    parse_str($parsed['query'] ?? '', $query);
 
-        $lang   = $query['lang'] ?? ($_SESSION['language'] ?? 'de');
-        $site   = $query['site'] ?? 'index';
-        $action = $query['action'] ?? null;
-        $id     = isset($query['id']) ? (int)$query['id'] : null;
-        $cat    = isset($query['cat']) ? (int)$query['cat'] : null;
+    $lang   = $query['lang'] ?? ($_SESSION['language'] ?? 'de');
+    $site   = $query['site'] ?? 'index';
+    $action = $query['action'] ?? null;
+    $id     = isset($query['id']) ? (int)$query['id'] : null;
+    $cat    = isset($query['cat']) ? (int)$query['cat'] : null;
+    $slug   = $query['slug'] ?? null;
 
-        $segments = [$lang, $site];
+    $segments = [$lang, $site];
 
+    // Speziell für News: immer Slug nutzen, auch ohne action
+    if ($site === 'news') {
+        if ($slug) {
+            $segments[] = $slug;
+        } elseif ($id !== null) {
+            $segments[] = $id;
+        }
+        unset($query['action'], $query['slug'], $query['id']);
+    } else {
+        // sonst wie bisher
         if ($action) {
             $segments[] = $action;
             unset($query['action']);
         }
 
-        if ($id !== null) {
+        if ($slug) {
+            $segments[] = $slug;
+            unset($query['slug'], $query['id']);
+        } elseif ($id !== null) {
             $segments[] = $id;
             unset($query['id']);
         }
-
-        if ($cat !== null) {
-            $segments[] = 'cat';
-            $segments[] = $cat;
-            unset($query['cat']);
-        }
-
-        unset($query['lang'], $query['site']);
-
-        // Restliche Query-Parameter hinten anhängen
-        foreach ($query as $key => $value) {
-            if ($value === null) continue;
-            $segments[] = strtolower($key);
-            $segments[] = $value;
-        }
-
-        $seoUrl = '/' . implode('/', $segments);
-
-        if (isset($parsed['fragment'])) {
-            $seoUrl .= '#' . $parsed['fragment'];
-        }
-
-        return $seoUrl;
     }
+
+    if ($cat !== null) {
+        $segments[] = 'cat';
+        $segments[] = $cat;
+        unset($query['cat']);
+    }
+
+    unset($query['lang'], $query['site']);
+
+    // Restliche Query-Parameter hinten anhängen
+    foreach ($query as $key => $value) {
+        if ($value === null) continue;
+        $segments[] = strtolower($key);
+        $segments[] = $value;
+    }
+
+    $seoUrl = '/' . implode('/', $segments);
+
+    if (isset($parsed['fragment'])) {
+        $seoUrl .= '#' . $parsed['fragment'];
+    }
+
+    return $seoUrl;
+}
+
+
 
     /**
      * Liest SEO-URL und schreibt $_GET-Werte
@@ -160,141 +177,163 @@ class SeoUrlHandler {
         return $params;
     }
 
-    public static function buildPluginUrl(string $type, int $id, string $lang = 'de', $db = null): string
-    {
-        switch ($type) {
-            case 'plugins_articles':
-                $url = "index.php?lang={$lang}&site=articles&action=watch&id={$id}";
-                break;
+public static function buildPluginUrl(string $type, int $id, string $lang = 'de', $db = null): string
+{
+    switch ($type) {
+        case 'plugins_articles':
+            $url = "index.php?lang={$lang}&site=articles&action=watch&id={$id}";
+            break;
 
-            case 'plugins_forum_threads':
-                $threadTitle = self::getThreadTitle($id); // DB-Methode, die den Thread-Titel holt
-                $slug = $threadTitle ? self::slugify($threadTitle) : "thread{$id}";
-                $url = "index.php?lang={$lang}&site=forum&action=showthread&threadID={$id}&title={$slug}";
-                break;
+        case 'plugins_forum_threads':
+            $threadTitle = self::getThreadTitle($id);
+            $slug = $threadTitle ? self::slugify($threadTitle) : "thread{$id}";
+            $url = "index.php?lang={$lang}&site=forum&action=showthread&threadID={$id}&slug={$slug}";
+            break;
 
-            case 'plugins_forum_posts':
-                $threadId = self::getThreadIdByPost($id);
-                $postTitle = self::getPostTitle($id); // DB-Methode, die Post-Titel holt
-                $slug = $postTitle ? self::slugify($postTitle) : "post{$id}";
+        case 'plugins_forum_posts':
+            $threadId = self::getThreadIdByPost($id);
+            $postTitle = self::getPostTitle($id);
+            $slug = $postTitle ? self::slugify($postTitle) : "post{$id}";
 
-                if ($threadId > 0) {
-                    $url = "index.php?lang={$lang}&site=forum&action=showthread&threadID={$threadId}#{$slug}";
-                } else {
-                    $url = "index.php?lang={$lang}&site=forum&action=showpost&postID={$id}&title={$slug}";
-                }
-                break;
-
-            case 'plugins_news':
+            if ($threadId > 0) {
+                $url = "index.php?lang={$lang}&site=forum&action=showthread&threadID={$threadId}#{$slug}";
+            } else {
+                $url = "index.php?lang={$lang}&site=forum&action=showpost&postID={$id}&slug={$slug}";
+            }
+            break;
+        case 'plugins_news_categories':
+            // Slug aus DB holen
+            $catSlug = self::getCategorySlug($id); // Methode in SeoUrlHandler
+            if (!$catSlug) {
+                $catTitle = self::getCategoryTitle($id);
+                $catSlug = $catTitle ? self::slugify($catTitle) : "category{$id}";
+            }
+            // URL ohne action=show, nur /news/slug
+            $url = "index.php?lang={$lang}&site=news&slug={$catSlug}";
+            break;
+    
+        case 'plugins_news':
+            $newsSlug = self::getNewsSlug($id); // Slug aus DB
+            if (!$newsSlug) {
                 $newsTitle = self::getNewsTitle($id);
-                $slug = $newsTitle ? self::slugify($newsTitle) : "news{$id}";
-                $url = "index.php?lang={$lang}&site=news&action=show&id={$id}&title={$slug}";
-                break;
+                $newsSlug = $newsTitle ? self::slugify($newsTitle) : "news{$id}";
+            }
+            // URL ohne action=watch, nur /news/slug
+            $url = "index.php?lang={$lang}&site=news&slug={$newsSlug}";
+            break;
 
-            case 'plugins_gallery':
-                $url = "index.php?lang={$lang}&site=gallery&picID={$id}";
-                break;
+        case 'plugins_gallery':
+            $url = "index.php?lang={$lang}&site=gallery&picID={$id}";
+            break;
 
-            case 'plugins_downloads':
-                $downloadTitle = self::getDownloadTitle($id);
-                $slug = $downloadTitle ? self::slugify($downloadTitle) : "download{$id}";
-                $url = "index.php?lang={$lang}&site=downloads&action=show&id={$id}&title={$slug}";
-                break;
+        case 'plugins_downloads':
+            $downloadTitle = self::getDownloadTitle($id);
+            $slug = $downloadTitle ? self::slugify($downloadTitle) : "download{$id}";
+            $url = "index.php?lang={$lang}&site=downloads&action=show&id={$id}&slug={$slug}";
+            break;
 
-            case 'plugins_userlist':
-                $userName = self::getUserName($id);
-                $slug = $userName ? self::slugify($userName) : "user{$id}";
-                $url = "index.php?lang={$lang}&site=user&id={$id}&name={$slug}";
-                break;
-            case 'plugins_userlist':
-                $page   = isset($params['page'])   ? (int)$params['page'] : 1;
-                $search = isset($params['search']) ? urlencode($params['search']) : '';
-                $role   = isset($params['role'])   ? urlencode($params['role']) : '';
-                $sort   = isset($params['sort'])   ? urlencode($params['sort']) : 'registerdate';
-                $order  = isset($params['order'])  ? urlencode($params['order']) : 'DESC';
+        case 'plugins_userlist':
+            $userName = self::getUserName($id);
+            $slug = $userName ? self::slugify($userName) : "user{$id}";
+            $url = "index.php?lang={$lang}&site=user&id={$id}&slug={$slug}";
+            break;
 
-                $url = "index.php?lang={$lang}"
-                     . "&site=userlist"
-                     . "&page={$page}"
-                     . "&search={$search}"
-                     . "&role={$role}"
-                     . "&sort={$sort}"
-                     . "&order={$order}";
-                break;    
+        case 'plugins_team':
+            $memberName = self::getTeamMemberName($id);
+            $slug = $memberName ? self::slugify($memberName) : "member{$id}";
+            $url = "index.php?lang={$lang}&site=team&action=member&id={$id}&slug={$slug}";
+            break;
 
-            case 'plugins_team':
-                $memberName = self::getTeamMemberName($id);
-                $slug = $memberName ? self::slugify($memberName) : "member{$id}";
-                $url = "index.php?lang={$lang}&site=team&action=member&id={$id}&name={$slug}";
-                break;
+        case 'plugins_calendar':
+            $eventTitle = self::getEventTitle($id);
+            $slug = $eventTitle ? self::slugify($eventTitle) : "event{$id}";
+            $url = "index.php?lang={$lang}&site=calendar&action=show&id={$id}&slug={$slug}";
+            break;
 
-            case 'plugins_calendar':
-                $eventTitle = self::getEventTitle($id);
-                $slug = $eventTitle ? self::slugify($eventTitle) : "event{$id}";
-                $url = "index.php?lang={$lang}&site=calendar&action=show&id={$id}&title={$slug}";
-                break;
+        case 'plugins_gametracker':
+            $action = $db['action'] ?? '';
+            $id     = $db['id'] ?? 0;
+            $url = "index.php?lang={$lang}&site=gametracker";
+            if ($action) $url .= "&action={$action}";
+            if ($id > 0) $url .= "&id={$id}";
+            break;
 
-            case 'plugins_gametracker':
-                $action = isset($params['action']) ? urlencode($params['action']) : '';
-                $id     = isset($params['id'])     ? (int)$params['id'] : 0;
+        case 'plugins_messenger':
+            $threadId = $db['thread'] ?? null;
+            $page = $db['page'] ?? null;
+            $url = "index.php?lang={$lang}&site=messenger";
+            if ($threadId !== null) $url .= "&thread={$threadId}";
+            if ($page !== null) $url .= "&page={$page}";
+            break;
 
-                $url = "index.php?lang={$lang}&site=gametracker";
+        case 'plugins_wiki':
+            $catId = $db['cat'] ?? null;
+            $url = "index.php?lang={$lang}&site=wiki";
+            if ($catId !== null) $url .= "&cat={$catId}";
+            break;
 
-                if ($action !== '') {
-                    $url .= "&action={$action}";
-                }
-                if ($id > 0) {
-                    $url .= "&id={$id}";
-                }
-                break; 
+        default:
+            $url = "index.php?lang={$lang}&site=plugin&plugin={$type}&id={$id}";
+            break;
+    }
 
-            case 'plugins_messenger':
-                $threadId = isset($params['thread']) ? (int)$params['thread'] : null;
-                $page     = isset($params['page']) ? (int)$params['page'] : null;
+    return self::convertToSeoUrl($url);
+}
 
-                $url = "index.php?lang={$lang}&site=messenger";
+/**
+ * Slugify-Funktion innerhalb der Klasse
+ */
+public static function slugify(string $text): string
+{
+    $text = preg_replace('~[^\pL\d]+~u', '-', $text); // Leerzeichen zu Bindestrichen
+    $text = iconv('utf-8', 'us-ascii//TRANSLIT', $text); // Umlaute & Sonderzeichen
+    $text = preg_replace('~[^-\w]+~', '', $text);
+    $text = trim($text, '-');
+    $text = preg_replace('~-+~', '-', $text);
+    $text = strtolower($text);
 
-                if ($threadId !== null) {
-                    $url .= "&thread={$threadId}";
-                }
+    return $text ?: 'item';
+}
 
-                if ($page !== null) {
-                    $url .= "&page={$page}";
-                }
-                break;   
-
-            case 'plugins_wiki':
-                $catId = isset($params['cat']) ? (int)$params['cat'] : null;
-
-                $url = "index.php?lang={$lang}&site=wiki";
-
-                if ($catId !== null) {
-                    $url .= "&cat={$catId}";
-                }
-                break;    
-
-            default:
-                $url = "index.php?lang={$lang}&site=plugin&plugin={$type}&id={$id}";
-                break;
+public static function getNewsSlug(int $id): string
+{
+    $result = safe_query("SELECT slug, title FROM plugins_news WHERE id = " . intval($id));
+    if ($row = mysqli_fetch_assoc($result)) {
+        if (!empty($row['slug'])) {
+            return $row['slug'];
         }
-
-        return self::convertToSeoUrl($url);
+        // Fallback: Titel in Slug umwandeln
+        return self::slugify($row['title']);
     }
+    return 'news' . $id;
+}
 
-    /**
-     * Wandelt einen Titel in einen URL-tauglichen Slug um
-     */
-    private static function slugify(string $text): string
-    {
-        $text = preg_replace('~[^\pL\d]+~u', '-', $text); // Leerzeichen zu Bindestrichen
-        $text = iconv('utf-8', 'us-ascii//TRANSLIT', $text); // Umlaute & Sonderzeichen
-        $text = preg_replace('~[^-\w]+~', '', $text);
-        $text = trim($text, '-');
-        $text = preg_replace('~-+~', '-', $text);
-        $text = strtolower($text);
+public static function getCategorySlug(int $id): ?string {
+    global $_database;
+    $slug = null;
+    $stmt = $_database->prepare("SELECT slug FROM plugins_news_categories WHERE id = ? LIMIT 1");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $stmt->bind_result($slug);
+    $stmt->fetch();
+    $stmt->close();
+    return $slug ?: null;
+}
 
-        return $text ?: 'item';
-    }
+public static function getCategoryTitle(int $id): ?string {
+    global $_database;
+    $title = null;
+    $stmt = $_database->prepare("SELECT name FROM plugins_news_categories WHERE id = ? LIMIT 1");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $stmt->bind_result($title);
+    $stmt->fetch();
+    $stmt->close();
+    return $title ?: null;
+}
+
+
+
 
     /**
      * Hilfsmethode: Thread-ID anhand der Post-ID ermitteln

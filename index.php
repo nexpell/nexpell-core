@@ -112,7 +112,7 @@ $theme_css = headfiles("css", $tpl->themes_path);
 $theme_js = headfiles("js", $tpl->themes_path);
 
 $availableLangs = ['de', 'en', 'it'];
-define('BASE_PATH', realpath(__DIR__));
+#define('BASE_PATH', realpath(__DIR__));
 
 $requestUri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
 $segments = explode('/', $requestUri);

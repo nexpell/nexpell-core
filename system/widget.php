@@ -71,7 +71,7 @@ Bindet das Footer-Widget statisch ein, indem die Widget-Datei widget_footer_easy
     return $output;
 }*/
 
-function renderWidget($widget_key)
+/*function renderWidget($widget_key)
 {
     global $_database;
     global $needed_widget_css, $needed_widget_js;
@@ -105,7 +105,73 @@ function renderWidget($widget_key)
         error_log("Widget-Datei nicht gefunden: $widgetFile");
         return "<!-- Widget " . htmlspecialchars($widget_key) . " nicht gefunden im Plugin " . htmlspecialchars($plugin) . " -->";
     }
+}*/
+
+function renderWidget($widget_key)
+{
+    global $_database;
+    global $needed_widget_css, $needed_widget_js;
+    $needed_widget_css ??= [];
+    $needed_widget_js ??= [];
+
+    // 1. Widget holen
+    $stmt = $_database->prepare("
+        SELECT widget_key, plugin 
+        FROM settings_widgets 
+        WHERE widget_key = ? 
+        LIMIT 1
+    ");
+    if (!$stmt) {
+        error_log("DB-Fehler in renderWidget (prepare fehlgeschlagen)");
+        return "";
+    }
+    $stmt->bind_param("s", $widget_key);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    if (!$res || $res->num_rows === 0) {
+        return ""; // kein Widget
+    }
+
+    $row = $res->fetch_assoc();
+    $plugin = $row['plugin'];
+
+    // 2. Plugin-Status prüfen
+    $stmt2 = $_database->prepare("
+        SELECT activate 
+        FROM settings_plugins 
+        WHERE modulname = ? 
+        LIMIT 1
+    ");
+    if ($stmt2) {
+        $stmt2->bind_param("s", $plugin);
+        $stmt2->execute();
+        $res2 = $stmt2->get_result();
+        if ($res2 && $res2->num_rows > 0) {
+            $row2 = $res2->fetch_assoc();
+            if (empty($row2['activate']) || $row2['activate'] == 0) {
+                return ""; // Plugin deaktiviert -> kein Output
+            }
+        }
+    }
+
+    // 3. Widget-Datei einbinden
+    $basePath = rtrim($_SERVER['DOCUMENT_ROOT'] . "/includes/plugins/$plugin/", '/');
+    $widgetFile = $basePath . "/$widget_key.php";
+
+    if (file_exists($widgetFile)) {
+        ob_start();
+        include $widgetFile;
+        return ob_get_clean();
+    } else {
+        error_log("Widget-Datei nicht gefunden: $widgetFile");
+        return "";
+    }
 }
+
+
+
+
 
 
 
@@ -273,7 +339,7 @@ function get_navigation_modul() {
     }
 
     $plugin = $row['modulname'];
-    $widget_path = $_SERVER['DOCUMENT_ROOT'] . "/includes/plugins//{$plugin}/widget_navigation.php";
+    $widget_path = $_SERVER['DOCUMENT_ROOT'] . "/includes/plugins/{$plugin}/widget_navigation.php";
 
     if (file_exists($widget_path)) {
         include $widget_path;
