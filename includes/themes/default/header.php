@@ -1,4 +1,7 @@
 <?php
+
+use nexpell\PluginManager;
+global $pluginManager;
 // Header-Kompatibilität
 header('X-UA-Compatible: IE=edge');
 ?>
@@ -56,31 +59,16 @@ header('X-UA-Compatible: IE=edge');
 
     <base href="/">
 
-    <!-- 1. Bootstrap CSS des aktuellen Themes -->
     <link rel="stylesheet" href="/includes/themes/<?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/css/dist/<?= htmlspecialchars($currentTheme, ENT_QUOTES, 'UTF-8'); ?>/bootstrap.min.css"/>
 
     <?php
-        // 2. Core-Komponenten CSS
-        // Wird dynamisch über $components_css geladen aus der /system/settings.php
         echo $components_css ?? '';
-
-        // 3. Theme-spezifische CSS-Dateien
-        // Hier können Themes eigene Styles einbinden
         echo $theme_css ?? '';
-
-        // 4. Struktur-Kommentar im HTML: Beginn der Plugin/Widget-CSS
         echo '<!--Plugin & Widget css-->' . PHP_EOL;
-
-        // 5. Plugin- & Widget-CSS dynamisch laden
-        // Jedes Plugin/Widget kann eigene Styles registrieren
-        echo $plugin_loadheadfile_widget_css ?? '';
-
-        echo '<link type="text/css" rel="stylesheet" href="./components/scrolltotop/css/scrolltotop.css" />';
-
-        // 6. Hauptstylesheet des Themes
-        // Überschreibt ggf. vorherige Styles und enthält globale Anpassungen
-        echo '<link rel="stylesheet" href="/includes/themes/' . htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8') . '/css/stylesheet.css" />';
+        echo $plugin_css ?? '';
     ?>
+    <link type="text/css" rel="stylesheet" href="./components/scrolltotop/css/scrolltotop.css" />
+    <link rel="stylesheet" href="/includes/themes/<?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/css/stylesheet.css" />
 
 </head>
 
@@ -88,10 +76,10 @@ header('X-UA-Compatible: IE=edge');
 <div class="d-flex flex-column sticky-footer-wrapper">
     <!-- Widgets: Top -->
     <?php if (!empty($widgetsByPosition['top'])): ?>
-    <?php foreach ($widgetsByPosition['top'] as $widget): ?>                
-        <?= $widget ?>
-    <?php endforeach; ?>
-<?php endif; ?>
+        <?php foreach ($widgetsByPosition['top'] as $widget): ?>                
+            <?= $widget ?>
+        <?php endforeach; ?>
+    <?php endif; ?>
 
-    <?= get_navigation_modul(); ?>
+    <?= $pluginManager->getNavigationModule(); ?>
     <?= get_lock_modul(); ?>

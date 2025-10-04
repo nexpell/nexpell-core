@@ -1,98 +1,100 @@
 <?php
-/**
- * ─────────────────────────────────────────────────────────────────────────────
- * nexpell 1.0 - Modern Content & Community Management System
- * ─────────────────────────────────────────────────────────────────────────────
- */
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 use webspell\LanguageService;
 use nexpell\SeoUrlHandler;
-// Jetzt kannst du SeoUrlHandler verwenden, z.B.
+use nexpell\PluginManager;
+
+// URL-Routing
 SeoUrlHandler::route();
 
+// PluginManager initialisieren
+$pluginManager = new PluginManager($_database);
+$currentSite = $_GET['site'] ?? 'start';
 
 // Sprache aus Session laden oder Standard setzen
-if (isset($_SESSION['language'])) {
-    $currentLang = $_SESSION['language'];
-} else {
-    $currentLang = 'de';
-    $_SESSION['language'] = $currentLang;
-}
-$languageService->setLanguage($currentLang);
+$currentLang = $_SESSION['language'] ?? 'de';
+$_SESSION['language'] = $currentLang;
 
-// LanguageService initialisieren
 if (!isset($languageService)) {
     $languageService = new LanguageService($_database);
 }
-$languageService->setLanguage($lang);
+$languageService->setLanguage($currentLang);
 $_language = $languageService;
 
-// Aktuelle Seite bestimmen
-$page = $_GET['site'] ?? ($segments[1] ?? 'index');
-
-// Theme laden
-$result = safe_query("SELECT * FROM settings_themes WHERE modulname = 'default'");
-$row = mysqli_fetch_assoc($result);
-$currentTheme = $row['themename'] ?? 'lux';
-$theme_name = 'default';
-
-// SEO/Meta-Fallbacks
-$description = $description ?? 'Standard Beschreibung für die Webseite';
-$keywords = $keywords ?? 'keyword1, keyword2, keyword3';
-
-// Wichtige Includes
-require_once BASE_PATH . '/system/widget.php'; // enthält renderWidget()
-
-// SQL-escaped Seitenname
+// Aktuelle Seite für Widgets
+$page = $_GET['site'] ?? 'index';
 $page_escaped = mysqli_real_escape_string($GLOBALS['_database'], $page);
 
 // Widgets laden
 $positions = [];
-$res = safe_query("SELECT * FROM settings_widgets_positions WHERE page='" . $page_escaped . "' ORDER BY position, sort_order ASC");
+$res = safe_query("SELECT * FROM settings_widgets_positions WHERE page='$page_escaped' ORDER BY position, sort_order ASC");
 while ($row = mysqli_fetch_assoc($res)) {
     $positions[$row['position']][] = $row['widget_key'];
 }
 
-if (!empty($positions)) {
-    foreach ($positions as $pos => $widgetKeys) {
-        foreach ($widgetKeys as $widget_key) {
-            loadWidgetHeadAssets($widget_key);
-        }
-    }
-}
-
-loadPluginHeadAssets();
-
-require_once BASE_PATH . '/system/seo_meta_helper.php';
-$site = $_GET['site'] ?? 'index';
-$meta = getSeoMeta($site);
-// Ausgabe $_GET zum Debug
-/*var_dump($_GET);
-echo '<pre>';
-print_r($_GET);
-echo '</pre>';*/
-
-// Live-Visitor Tracking
-$currentSite = $site ?? 'index';
-live_visitor_track($currentSite);
-
-
-$allPositions = ['top', 'undertop', 'left', 'maintop', 'mainbottom', 'right', 'bottom'];
+// Widgets rendern
+$allPositions = ['top','undertop','left','maintop','mainbottom','right','bottom'];
 $widgetsByPosition = [];
-
 foreach ($allPositions as $position) {
     $widgetsByPosition[$position] = [];
     if (!empty($positions[$position])) {
         foreach ($positions[$position] as $widget_key) {
-            $output = renderWidget($widget_key);
+            $output = $pluginManager->renderWidget($widget_key);
             if (!empty(trim($output))) {
                 $widgetsByPosition[$position][] = $output;
             }
         }
     }
 }
-?>
+
+// Plugin nur im Main-Content rendern
+if (!function_exists('get_mainContent')) {
+    function get_mainContent(): string
+    {
+        global $pluginManager, $currentSite;
+
+        $pluginFile = $pluginManager->loadPluginPage($currentSite);
+        if ($pluginFile) {
+            $pluginName = basename($pluginFile, '.php');
+
+            // Plugin-Assets **registrieren**, aber noch nicht ausgeben
+            $pluginManager->loadPluginAssets($pluginName);
+
+            ob_start();
+            include $pluginFile;
+            return ob_get_clean();
+        }
+
+        return '';
+    }
+}
+
+// Theme laden
+$currentTheme = 'lux';
+$theme_name = 'default';
+$result = safe_query("SELECT * FROM settings_themes WHERE modulname='default'");
+if ($row = mysqli_fetch_assoc($result)) {
+    $currentTheme = $row['themename'] ?: 'lux';
+}
+
+// SEO/Meta laden
+require_once BASE_PATH.'/system/seo_meta_helper.php';
+$meta = getSeoMeta($page);
+
+// CSS/JS im <head>
+// Plugin im Main-Content registrieren, aber noch nicht rendern
+$pluginFile = $pluginManager->loadPluginPage($currentSite);
+if ($pluginFile) {
+    $pluginName = basename($pluginFile, '.php');
+    $pluginManager->loadPluginAssets($pluginName); // registriert CSS/JS
+}
+
+// CSS für <head> vorbereiten
+$plugin_css = $pluginManager->cssOutput;
+$plugin_js  = $pluginManager->jsOutput;
+
+// Live-Visitor Tracking
+live_visitor_track($currentSite);

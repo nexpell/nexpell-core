@@ -54,15 +54,12 @@ if ($suspiciousPost !== null) {
 // === Sprachsystem vorbereiten ===
 $_SESSION['language'] = $_SESSION['language'] ?? 'de';
 
-
 // === System-Dateien einbinden ===
 include_once("system/config.inc.php");
 include_once("system/settings.php");
 include_once("system/functions.php");
 include_once("system/themes.php");
 include_once("system/init.php");
-include_once("system/plugin.php");
-include_once("system/widget.php");
 include_once("system/multi_language.php");
 include_once("system/init_language.php"); // setzt $languageService
 include_once("system/classes/Template.php");
@@ -87,9 +84,6 @@ $theme = new Theme();
 $tpl->themes_path = rtrim($theme->get_active_theme(), '/\\') . DIRECTORY_SEPARATOR;
 $tpl->template_path = "templates" . DIRECTORY_SEPARATOR;
 
-// === Plugins initialisieren ===
-$_pluginmanager = new plugin_manager();
-
 // === CSS / JS Komponenten vorbereiten ===
 $components_css = "";
 if (!empty($components['css'])) {
@@ -112,7 +106,6 @@ $theme_css = headfiles("css", $tpl->themes_path);
 $theme_js = headfiles("js", $tpl->themes_path);
 
 $availableLangs = ['de', 'en', 'it'];
-#define('BASE_PATH', realpath(__DIR__));
 
 $requestUri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
 $segments = explode('/', $requestUri);

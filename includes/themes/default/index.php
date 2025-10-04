@@ -32,6 +32,7 @@ require_once 'header.php';
                     </div>
                 <?php endif; ?>
 
+                <!-- Plugin Content -->
                 <?= get_mainContent(); ?>
 
                 <!-- MainBottom Widgets -->

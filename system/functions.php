@@ -450,6 +450,7 @@ systeminc('classes/LanguageService');
 systeminc('classes/LanguageManager');
 systeminc('classes/DatabaseMigrationHelper');
 systeminc('classes/SeoUrlHandler');
+systeminc('classes/PluginManager');
 
 // Besucherstatistik
 systeminc('visitor_log_statistic');

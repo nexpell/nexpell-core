@@ -41,8 +41,6 @@ define('SYSTEM_PATH', BASE_PATH . 'system/');
 include SYSTEM_PATH . 'config.inc.php';
 include SYSTEM_PATH . 'settings.php';
 include SYSTEM_PATH . 'functions.php';
-include SYSTEM_PATH . 'plugin.php';
-include SYSTEM_PATH . 'widget.php';
 include SYSTEM_PATH . 'multi_language.php';
 include SYSTEM_PATH . 'classes/Template.php';
 include SYSTEM_PATH . 'classes/TextFormatter.php';
@@ -51,9 +49,12 @@ include SYSTEM_PATH . 'classes/TextFormatter.php';
 use nexpell\RoleManager;
 use nexpell\LanguageService;
 use nexpell\AccessControl;
+use nexpell\PluginManager;
+global $pluginManager;
 
 // Plugin-Manager laden und Sprachmodul für Admincenter initialisieren
-$load = new plugin_manager();
+#$load = new plugin_manager();
+$load = new \nexpell\PluginManager($_database);
 
 global $languageService;
 $languageService = new LanguageService($_database);

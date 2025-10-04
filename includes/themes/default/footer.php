@@ -1,5 +1,5 @@
 <!-- Footer Consent -->
-<?= get_footer_modul(); ?>
+<?= $pluginManager->getFooterModule(); ?>
 </div>
 
 <!-- Scroll Top Button -->
@@ -20,31 +20,14 @@
 <div id="cookie-overlay" style="display:none;"></div>
 <?php require_once BASE_PATH . '/components/cookie/cookie-consent.php'; ?>
 
-<!-- Scripts -->
-<!-- 1. Google reCAPTCHA API (extern, wird für Formulare benötigt) -->
-<!--<script defer src="https://www.google.com/recaptcha/api.js"></script>-->
-
 <?php
-    // 2. JavaScript der Core-Komponenten (z. B. CKEditor, ScrollToTop, etc.)
-    // Wird dynamisch über $components_js geladen aus der /system/settings.php
     echo $components_js ?? '';
-
-    // 3. Theme-spezifische JavaScript-Dateien
-    // Hier können Themes eigene Funktionen/Anpassungen einbinden
     echo $theme_js ?? '';
-
-    // 4. Struktur-Kommentar im HTML: Beginn der Plugin/Widget-Skripte
     echo '<!--Plugin & Widget js-->' . PHP_EOL;
-
-    // 5. Plugin- & Widget-Skripte dynamisch laden
-    // Jedes Plugin/Widget kann eigene Skripte registrieren
-    echo $plugin_loadheadfile_widget_js ?? '';
-
-    // 6. Struktur-Kommentar im HTML: Ende der Plugin/Widget-Skripte
+    echo $plugin_js ?? '';
     echo '<!--Plugin & Widget js END-->' . PHP_EOL;
-
-    echo '<script src="./components/scrolltotop/js/scrolltotop.js"></script>';
 ?>
+<script src="./components/scrolltotop/js/scrolltotop.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     // --- CKEditor laden, wenn <textarea id="ckeditor"> existiert ---
