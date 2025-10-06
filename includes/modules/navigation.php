@@ -190,13 +190,58 @@ if ($row['installed'] > 0) {
     $badgeStyle = $unreadCount > 0 ? 'inline-block' : 'none';
     $badgeContent = $unreadCount > 0 ? $unreadCount : '';
 
+    $newMailTooltip = ($badgeContent > 0) ? 'Neue Nachrichten' : 'Keine neue Nachrichten';
+
     // Messenger-Link ausgeben
-    $messenger = '<a class="nav-link messenger-link" href="' . htmlspecialchars(SeoUrlHandler::convertToSeoUrl('index.php?site=messenger')) . '">
-                      <i id="mail-icon" class="bi bi-envelope-dash"></i>
-                      <span id="total-unread-badge" style="display:' . $badgeStyle . ';">' 
-                          . $badgeContent . '</span>
-                  </a>';
+    $messenger = '<a class="nav-link messenger-link" 
+                   href="' . htmlspecialchars(SeoUrlHandler::convertToSeoUrl('index.php?site=messenger')) . '"
+                   data-bs-toggle="tooltip" 
+                   data-bs-placement="bottom" 
+                   title="'.$newMailTooltip.'">
+                  <i id="mail-icon" class="bi bi-envelope-dash"></i>
+                  <span id="total-unread-badge" style="display:' . $badgeStyle . ';">' 
+                      . $badgeContent . '</span>
+              </a>';
+
 }
+
+// Forum: neue Beiträge seit letztem Login (Badge)
+$newPostsHtml = '';
+if ($loggedin) {
+    $userID = (int)$_SESSION['userID'];
+
+    // Anzahl neuer Beiträge seit letztem Lesen
+    $postsResult = $_database->query("
+        SELECT COUNT(*) AS new_posts
+        FROM plugins_forum_posts p
+        LEFT JOIN plugins_forum_read r 
+            ON r.userID = $userID AND r.threadID = p.threadID
+        WHERE p.created_at > IFNULL(r.last_read_at, 0)
+    ");
+
+    $newPostsCount = 0;
+    if ($postsResult) {
+        $row = $postsResult->fetch_assoc();
+        $newPostsCount = (int)($row['new_posts'] ?? 0);
+    }
+
+    $badgeStyle = $newPostsCount > 0 ? 'inline-block' : 'none';
+    $badgeContent = $newPostsCount > 0 ? $newPostsCount : '';
+
+    $newPostsTooltip = ($badgeContent > 0) ? 'Neue Beiträge' : 'Keine neuen Beiträge';
+
+    $newPostsHtml = '<a class="nav-link messenger-link" 
+            href="' . htmlspecialchars(SeoUrlHandler::convertToSeoUrl('index.php?site=forum')) . '"
+            data-bs-toggle="tooltip" 
+            data-bs-placement="bottom" 
+            title="' . $newPostsTooltip . '">
+            <i id="mail-icon" class="bi bi-chat-dots"></i>
+            <span id="total-unread-badge" style="display:' . $badgeStyle . ';">' 
+                . $badgeContent . '</span>
+        </a>';
+}
+
+
 
 
     $data_array = [
@@ -207,6 +252,7 @@ if ($row['installed'] > 0) {
         'dashboard' => $dashboard,
         'logout' => $logout,
         'messenger' => $messenger,
+        'new_forum_posts' => $newPostsHtml,
         'lang_overview' => $languageService->module['overview'] ?? 'Übersicht',
         'my_account' => $languageService->module['my_account'] ?? 'Mein Konto',
     ];

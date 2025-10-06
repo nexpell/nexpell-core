@@ -32,23 +32,6 @@ function anonymize_ip($ip) {
     }
     return $ip;
 }
-/*
-function anonymize_ip(string $ip): string {
-    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-        // letzte Stelle nullen (192.168.1.xxx)
-        $parts = explode('.', $ip);
-        $parts[2] = 'xxx';
-        $parts[3] = 'xxx';
-        return implode('.', $parts);
-    } elseif (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-        // IPv6 auf /64 kürzen
-        return preg_replace('/:[0-9a-f]{1,4}$/i', ':0000', $ip);
-    }
-    return '0.0.0.0';
-}*/
-
-
-
 
 // ==========================
 // FUNKTIONEN
@@ -101,12 +84,19 @@ function logSuspiciousAccess(string $reason = '', array $details = []): void {
 // Prüfen auf verdächtige Eingaben
 function detectSuspiciousInput(array $input): ?array {
     // SQL-Injection relevante Muster (entschärft)
-    $pattern = '/\b(UNION|SELECT|INSERT|UPDATE|DELETE|DROP)\b\s+\w+/i';
+    #$pattern = '/\b(UNION|SELECT|INSERT|UPDATE|DELETE|DROP)\b\s+\w+/i';
+    $pattern = '/\b(UNION\s+SELECT|SELECT\s+\*|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|DROP\s+(TABLE|DATABASE))\b/i';
+
 
     // Felder, die Content enthalten dürfen
+    #$whitelist = [
+    #    'message', 'post_text', 'comment', 'content', 'body', 'description',
+    #    'csrf_token', 'token', 'site', 'action'
+    #];
+
     $whitelist = [
         'message', 'post_text', 'comment', 'content', 'body', 'description',
-        'csrf_token', 'token', 'site', 'action'
+        'csrf_token', 'token', 'site', 'action', 'search', 'q'
     ];
 
     foreach ($input as $key => $value) {

@@ -162,7 +162,6 @@ if (!empty($email) && LoginSecurity::isEmailBanned($ip, $email)) {
 
     <link href="/admin/css/bootstrap.min.css" rel="stylesheet">
     <link href="/admin/css/style.css" rel="stylesheet">
-    <link rel="stylesheet" href="../components/css/styles.css.php" />
 </head>
 <body>
 

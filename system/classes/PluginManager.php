@@ -21,48 +21,47 @@ class PluginManager
     }
 
     public function plugin_data($var, $id = 0, $admin = false)
-{
-    if ($id > 0) {
-        $query = safe_query("SELECT * FROM settings_plugins WHERE `activate`='1' AND `pluginID`=" . intval($id));
-        return mysqli_fetch_array($query);
+    {
+        if ($id > 0) {
+            $query = safe_query("SELECT * FROM settings_plugins WHERE `activate`='1' AND `pluginID`=" . intval($id));
+            return mysqli_fetch_array($query);
+        }
+
+        $field = $admin ? 'admin_file' : 'index_link';
+        $result = safe_query("SELECT * FROM settings_plugins WHERE `activate`='1'");
+        while ($row = mysqli_fetch_array($result)) {
+            $files = explode(",", $row[$field]);
+            if (in_array($var, $files)) return $row;
+        }
+        return false;
     }
 
-    $field = $admin ? 'admin_file' : 'index_link';
-    $result = safe_query("SELECT * FROM settings_plugins WHERE `activate`='1'");
-    while ($row = mysqli_fetch_array($result)) {
-        $files = explode(",", $row[$field]);
-        if (in_array($var, $files)) return $row;
+    public function plugin_updatetitle($site)
+    {
+        $arr = $this->plugin_data($site);
+        return $arr['name'] ?? null;
     }
-    return false;
-}
 
-public function plugin_updatetitle($site)
-{
-    $arr = $this->plugin_data($site);
-    return $arr['name'] ?? null;
-}
-
-public function pluginID_by_name($name)
-{
-    $request = safe_query("SELECT * FROM `settings_plugins` WHERE `activate`='1' AND `name` LIKE '%" . $name . "%'");
-    if (mysqli_num_rows($request)) {
-        $tmp = mysqli_fetch_array($request);
-        return $tmp['pluginID'];
+    public function pluginID_by_name($name)
+    {
+        $request = safe_query("SELECT * FROM `settings_plugins` WHERE `activate`='1' AND `name` LIKE '%" . $name . "%'");
+        if (mysqli_num_rows($request)) {
+            $tmp = mysqli_fetch_array($request);
+            return $tmp['pluginID'];
+        }
+        return 0;
     }
-    return 0;
-}
 
-public function plugin_hf($id, $name)
-{
-    $row = $this->plugin_data("", intval($id));
-    if (!$row) return;
-    $hfiles = explode(",", $row['hiddenfiles']);
-    if (in_array($name, $hfiles)) {
-        $file = rtrim($row['path'], '/') . '/' . $name . ".php";
-        if (file_exists($file)) require_once($file);
+    public function plugin_hf($id, $name)
+    {
+        $row = $this->plugin_data("", intval($id));
+        if (!$row) return;
+        $hfiles = explode(",", $row['hiddenfiles']);
+        if (in_array($name, $hfiles)) {
+            $file = rtrim($row['path'], '/') . '/' . $name . ".php";
+            if (file_exists($file)) require_once($file);
+        }
     }
-}
-
 
     /* =========================
        WIDGET-FUNKTIONEN
@@ -119,22 +118,20 @@ public function plugin_hf($id, $name)
        PLUGIN-FUNKTIONEN
        ========================= */
     public function loadPluginPage(string $site): ?string
-{
-    $stmt = $this->_database->prepare("SELECT modulname FROM settings_plugins WHERE modulname = ? LIMIT 1");
-    $stmt->bind_param("s", $site);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    $row = $res->fetch_assoc();
-    if (!$row) return null;
+    {
+        $stmt = $this->_database->prepare("SELECT modulname FROM settings_plugins WHERE modulname = ? LIMIT 1");
+        $stmt->bind_param("s", $site);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $row = $res->fetch_assoc();
+        if (!$row) return null;
 
-    $plugin = $row['modulname'];
+        $plugin = $row['modulname'];
 
-    // Plugin-Datei zurückgeben, wird erst in get_mainContent() included
-    $pluginFile = $_SERVER['DOCUMENT_ROOT'] . "/includes/plugins/{$plugin}/{$plugin}.php";
-    return file_exists($pluginFile) ? $pluginFile : null;
-}
-
-
+        // Plugin-Datei zurückgeben, wird erst in get_mainContent() included
+        $pluginFile = $_SERVER['DOCUMENT_ROOT'] . "/includes/plugins/{$plugin}/{$plugin}.php";
+        return file_exists($pluginFile) ? $pluginFile : null;
+    }
 
     private function isPluginActive(string $plugin): bool
     {
@@ -147,16 +144,15 @@ public function plugin_hf($id, $name)
     }
 
     public function loadPluginAssets(string $plugin): void
-{
-    $basePath = "/includes/plugins/{$plugin}";
+    {
+        $basePath = "/includes/plugins/{$plugin}";
 
-    if (!in_array($plugin, $this->_loadedAssets['plugins'], true)) {
-        $this->loadAsset('css', $basePath, $plugin);
-        $this->loadAsset('js', $basePath, $plugin);
-        $this->_loadedAssets['plugins'][] = $plugin;
+        if (!in_array($plugin, $this->_loadedAssets['plugins'], true)) {
+            $this->loadAsset('css', $basePath, $plugin);
+            $this->loadAsset('js', $basePath, $plugin);
+            $this->_loadedAssets['plugins'][] = $plugin;
+        }
     }
-}
-
 
     /* =========================
        ASSET-HILFSFUNKTION
@@ -229,4 +225,3 @@ public function plugin_hf($id, $name)
         }
     }
 }
-

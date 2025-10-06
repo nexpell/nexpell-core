@@ -44,3 +44,11 @@ $data_array = array_merge([
 // ausgeben
 echo $tpl->loadTemplate("footer_easy", "content", $data_array, 'plugin');
 
+#define('DEBUG', true);
+$debugFile = __DIR__ . '/../../../system/performance_d1ebug.php';
+if (file_exists($debugFile)) {
+    #echo "<pre>DEBUG FILE FOUND: $debugFile</pre>";
+    include $debugFile;
+} else {
+    #echo "<pre>DEBUG FILE NOT FOUND: $debugFile</pre>";
+}

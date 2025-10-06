@@ -381,8 +381,4 @@ class SeoUrlHandler {
         return $row ? $row['title'] : null;
     }
 
-
 }
-
-
-

@@ -52,7 +52,7 @@
 /* Badge */
 #total-unread-badge {
     position: absolute;
-    top: -6px;             /* leicht nach oben über das Icon */
+    top: -16px;             /* leicht nach oben über das Icon */
     right: -6px;           /* leicht nach rechts über das Icon */
 
     display: flex;         /* damit Text mittig */

@@ -164,7 +164,4 @@ class LanguageService
         // Falls kein Sprachblock gefunden wird, als Fallback den kompletten Text zurückgeben
         return $text;
     }
-
-
 }
-

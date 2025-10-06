@@ -5,7 +5,6 @@ namespace nexpell;
 class LoginSecurity 
 {
 
-
     // Key dynamisch aus Konstante holen
     private static function getAesKey(): string
     {
@@ -56,8 +55,7 @@ class LoginSecurity
         }
 
         return $password_hash;
-    }
-    
+    }    
 
     public static function verifyLogin($email, $password_hash, $ip, $is_active , $banned): array {
         // Zuerst prüfen, ob IP gesperrt ist
@@ -103,8 +101,6 @@ class LoginSecurity
             return ['success' => false, 'ip_banned' => false, 'error' => 'Ungültige E-Mail-Adresse oder Passwort.'];
         }
     }
-
-
 
     public static function handleLoginError(array $loginResult, int $failCount, string $ip, ?int $userID, string $email): array
     {
