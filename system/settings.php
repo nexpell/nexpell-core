@@ -256,7 +256,7 @@ $components = array(
     'css' => array(
         '/components/bootstrap/css/bootstrap-icons.min.css',
         '/components/ckeditor/plugins/codesnippet/lib/highlight/styles/school_book_output.css',
-        '/components/css/animate.css',
+        //'/components/css/animate.css',
         '/components/css/page.css',
         '/components/css/headstyles.css',
         '/includes/plugins/navigation/css/navigation.css',
@@ -265,7 +265,7 @@ $components = array(
     'js' => array(
         '/components/jquery/jquery.min.js',
         '/components/bootstrap/js/bootstrap.bundle.min.js',
-        '/components/js/slick.min.js',
+        //'/components/js/slick.min.js',
         //'/components/ckeditor/ckeditor.js',
         //'/components/ckeditor/config.js',
         '/components/cookie/cookie-consent.js',

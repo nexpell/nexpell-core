@@ -30,13 +30,22 @@ if ($result && $row = $result->fetch_assoc()) {
 }
 
 // Theme-Verzeichnis prüfen
-$allThemes = ['brite', 'cerulean', 'cosmo', 'cyborg', 'darkly', 'flatly', 'journal', 'litera', 'lumen', 'lux', 'materia', 'minty', 'morph', 'pulse', 'quartz', 'sandstone', 'simplex', 'sketchy', 'slate', 'solar', 'spacelab', 'superhero', 'united', 'vapor', 'yeti', 'zephyr', 'default'];
+/*$allThemes = ['brite', 'cerulean', 'cosmo', 'cyborg', 'darkly', 'flatly', 'journal', 'litera', 'lumen', 'lux', 'materia', 'minty', 'morph', 'pulse', 'quartz', 'sandstone', 'simplex', 'sketchy', 'slate', 'solar', 'spacelab', 'superhero', 'united', 'vapor', 'yeti', 'zephyr', 'default'];
 $availableThemes = [];
 
 foreach ($allThemes as $theme) {
     $path = __DIR__ . "/../includes/themes/default/css/dist/{$theme}/bootstrap.min.css";
     if (file_exists($path)) {
         $availableThemes[] = $theme;
+    }
+}*/
+
+$availableThemes = [];
+$result = $_database->query("SELECT folder FROM settings_themes_installed ORDER BY name ASC");
+while ($row = $result->fetch_assoc()) {
+    $path = __DIR__ . "/../includes/themes/default/css/dist/{$row['folder']}/bootstrap.min.css";
+    if (file_exists($path)) {
+        $availableThemes[] = $row['folder'];
     }
 }
 ?>

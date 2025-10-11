@@ -165,7 +165,7 @@ class PluginManager
         if ($type === 'css') {
             $this->cssOutput .= "<link rel=\"stylesheet\" href=\"{$basePath}/{$type}/{$name}.css\">\n";
         } elseif ($type === 'js') {
-            $this->jsOutput .= "<script src=\"{$basePath}/{$type}/{$name}.js\"></script>\n";
+            $this->jsOutput .= "<script defer src=\"{$basePath}/{$type}/{$name}.js\"></script>\n";
         }
     }
 

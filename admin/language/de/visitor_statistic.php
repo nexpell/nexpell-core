@@ -41,4 +41,5 @@ $language_array = array(
     'os' => 'OS',
     'browser' => 'Browser',
     'referer' => 'Referer',
+    'visits' => 'Besuche',
 );

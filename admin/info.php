@@ -65,9 +65,11 @@ $lastBackups = $lastBackupDate ? date('d.m.Y H:i', strtotime($lastBackupDate)) :
 
 // 6. Neueste Benutzer
 $stmt = $_database->prepare("
-    SELECT u.username, ur.role_name AS role, u.registerdate AS registered_at
+    SELECT u.userID, u.username, u.registerdate AS registered_at, ur.role_name AS role
     FROM users u
-    JOIN user_roles ur ON u.role = ur.roleID
+    LEFT JOIN user_role_assignments ura ON u.userID = ura.userID
+    LEFT JOIN user_roles ur ON ura.roleID = ur.roleID
+    GROUP BY u.userID
     ORDER BY u.registerdate DESC
     LIMIT 3
 ");
@@ -76,29 +78,37 @@ $result = $stmt->get_result();
 $latestUsers = $result->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 
-// Formatieren der 'when'-Spalte
+// Formatieren der 'when'-Spalte und Markieren von Admins
 foreach ($latestUsers as &$user) {
     $registeredTimestamp = strtotime($user['registered_at']);
     $diff = time() - $registeredTimestamp;
-    $user['when'] = '';
-    if ($diff < 60) {
-        $user['when'] = $diff . ' Sek.';
-    } elseif ($diff < 3600) {
-        $user['when'] = floor($diff / 60) . ' Min.';
-    } elseif ($diff < 86400) {
-        $user['when'] = floor($diff / 3600) . ' Std.';
+
+    // Zeitangabe
+    if ($diff < 60) $user['when'] = $diff . ' Sek.';
+    elseif ($diff < 3600) $user['when'] = floor($diff/60) . ' Min.';
+    elseif ($diff < 86400) $user['when'] = floor($diff/3600) . ' Std.';
+    else $user['when'] = floor($diff/86400) . ' Tagen';
+
+    // Admin markieren
+    if (stripos($user['role'], 'admin') !== false) {
+        $user['username'] = '<strong class="text-danger">' . htmlspecialchars($user['username']) . '</strong>';
+        $user['role'] = '<span class="badge bg-danger">' . htmlspecialchars($user['role']) . '</span>';
     } else {
-        $user['when'] = floor($diff / 86400) . ' Tagen';
+        $user['username'] = htmlspecialchars($user['username']);
+        $user['role'] = '<span class="badge bg-secondary">' . htmlspecialchars($user['role']) . '</span>';
     }
 }
 unset($user);
+
+
+
 
 // 7. Kürzliche System-Aktivitäten
 // Diese Daten sind weiterhin statisch, da keine Log-Tabelle existiert.
 $recentLogs = [
     '2025-08-22 10:15 - Login: user: Admin',
-    '2025-08-22 09:40 - Backup-Erstellung gestartet',
-    '2025-08-21 16:30 - System-Update: v2.0.1 installiert',
+    ''.$lastBackups.' - Letztes Backup gespeichert',
+    ''.$current_version.' - System-Update: v'.htmlspecialchars($current_version).' installiert',
 ];
 
 // 8. Versionsprüfung für Updates
@@ -116,12 +126,30 @@ if (isset($update_info['updates']) && is_array($update_info['updates'])) {
         }
     }
 }
+
+
+$news_updates = [];
+
+// JSON von der zentralen URL abrufen
+#$json = file_get_contents('https://www.nexpell.de/admin/support_admin_news.php');
+
+// JSON von der zentralen URL abrufen
+$news_updates = [];
+$json = @file_get_contents('https://www.nexpell.de/admin/support_admin_news_json.php');
+
+if ($json !== false) {
+    $data = json_decode($json, true);
+    if (is_array($data)) {
+        $news_updates = $data;
+    }
+}
+
 ?>
 
 <style>
     /* UI-Tweaks für ein besseres Layout */
     .card-shortcuts .btn { min-width: 140px; }
-    .metric { font-size: 1.5rem; font-weight: 600; }
+    .metric { font-size: 1.5rem; font-weight: 600;color: #fe821d; }
     .small-muted { color: #6c757d; font-size: .9rem; }
     .fixed-col { min-width: 160px; }
     .activity-pre { max-height: 220px; overflow: auto; background: #f8f9fa; padding: 10px; border-radius: .375rem; }
@@ -169,40 +197,44 @@ if (isset($update_info['updates']) && is_array($update_info['updates'])) {
     <div class="row">
         <div class="col-6 col-md-3 mb-2">
             <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="small-muted">Online-Nutzer</div>
+                <div class="card-body text-center">
+                    <div class="small-muted"><i class="bi bi-people-fill me-1"></i> Online-Nutzer</div>
                     <div class="metric"><?= number_format($onlineUsers) ?></div>
                     <div class="small-muted">Jetzt online</div>
                 </div>
             </div>
         </div>
+
         <div class="col-6 col-md-3 mb-2">
             <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="small-muted">Installierte Plugins</div>
+                <div class="card-body text-center">
+                    <div class="small-muted"><i class="bi bi-plug me-1"></i> Installierte Plugins</div>
                     <div class="metric"><?= (int)$installedPlugins ?></div>
                     <a href="admincenter.php?site=plugin_manager" class="small-muted">Plugins verwalten</a>
                 </div>
             </div>
         </div>
+
         <div class="col-6 col-md-3 mb-2">
             <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="small-muted">Installierte Themes</div>
+                <div class="card-body text-center">
+                    <div class="small-muted"><i class="bi bi-palette me-1"></i> Installierte Themes</div>
                     <div class="metric"><?= (int)$installedThemes ?></div>
                     <a href="admincenter.php?site=theme_installer" class="small-muted">Themes verwalten</a>
                 </div>
             </div>
         </div>
+
         <div class="col-6 col-md-3 mb-2">
             <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="small-muted">Letztes Backup</div>
+                <div class="card-body text-center">
+                    <div class="small-muted"><i class="bi bi-hdd-stack-fill me-1"></i> Letztes Backup</div>
                     <div class="metric"><?= htmlspecialchars($lastBackups) ?></div>
                     <a href="admincenter.php?site=database" class="small-muted">Backup-Verwaltung</a>
                 </div>
             </div>
         </div>
+
     </div>
 
     <!-- Hauptbereich -->
@@ -222,10 +254,6 @@ if (isset($update_info['updates']) && is_array($update_info['updates'])) {
                             <a href="admincenter.php?site=settings" class="btn btn-outline-secondary btn-sm"><i class="bi bi-gear"></i> Einstellungen</a>
                             <a href="admincenter.php?site=media" class="btn btn-outline-secondary btn-sm"><i class="bi bi-image"></i> <s>Medien</s></a>
                         </div>
-                    </div>
-                    <div class="text-end small-muted">
-                        <div>Deine letzte Anmeldung: <?= date('d.m.Y H:i') ?></div>
-                        <div class="mt-2"><a href="admincenter.php?site=profile" class="link-primary"><s>Profil & Sicherheit</s></a></div>
                     </div>
                 </div>
             </div>
@@ -269,11 +297,11 @@ if (isset($update_info['updates']) && is_array($update_info['updates'])) {
                     <h5 class="card-title">Webseiten-Statistiken</h5>
                     <div class="d-flex justify-content-between">
                         <div class="text-center">
-                            <div class="metric text-primary"><?= $totalVisitors ?></div>
+                            <div class="metric"><?= $totalVisitors ?></div>
                             <div class="small-muted">Besucher</div>
                         </div>
                         <div class="text-center">
-                            <div class="metric text-primary"><?= $totalPageviews ?></div>
+                            <div class="metric"><?= $totalPageviews ?></div>
                             <div class="small-muted">Seitenaufrufe</div>
                         </div>
                     </div>
@@ -290,7 +318,7 @@ if (isset($update_info['updates']) && is_array($update_info['updates'])) {
                             <thead class="table-light">
                                 <tr>
                                     <th>Name</th>
-                                    <th class="text-end">Rolle</th>
+                                    <th class="text-start">Rolle</th>
                                     <th class="text-end">Vor</th>
                                 </tr>
                             </thead>
@@ -298,8 +326,8 @@ if (isset($update_info['updates']) && is_array($update_info['updates'])) {
                                 <?php if (!empty($latestUsers)): ?>
                                     <?php foreach ($latestUsers as $u): ?>
                                         <tr>
-                                            <td><?= htmlspecialchars($u['username']) ?></td>
-                                            <td class="text-end"><span class="badge bg-secondary"><?= htmlspecialchars($u['role']) ?></span></td>
+                                            <td><?= $u['username'] ?></td>
+                                            <td class="text-start"><?= $u['role'] ?></td>
                                             <td class="text-end small-muted"><?= htmlspecialchars($u['when']) ?></td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -311,7 +339,7 @@ if (isset($update_info['updates']) && is_array($update_info['updates'])) {
                             </tbody>
                         </table>
                     </div>
-                    <div class="mt-2 text-end"><a href="admincenter.php?site=user_roles" class="link-primary">Alle Benutzer</a></div>
+                    <div class="mt-2 text-end"><a href="admincenter.php?site=user_roles" class="primary">Alle Benutzer</a></div>
                 </div>
             </div>
         </div>
@@ -320,24 +348,51 @@ if (isset($update_info['updates']) && is_array($update_info['updates'])) {
     <!-- News -->
     <div class="card shadow-sm mt-2">
         <div class="card-body">
-            <h4 class="mb-3">Neuigkeiten vom nexpell-Team</h4>
+            <h5 class="mb-3">Neuigkeiten vom Nexpell-Team</h5>
+            <div class="alert alert-info" role="alert">
+              <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Zweck der Neuigkeiten-Sektion</h6>
+              <p>
+                Diese Sektion zeigt allen Administratoren wichtige Informationen an, die für den Betrieb, 
+                die Sicherheit und die Weiterentwicklung von <strong>Nexpell</strong> relevant sind. Beispiele:
+              </p>
+              <ul class="mb-0">
+                <li><i class="bi bi-shield-lock me-1"></i> Sicherheitsupdates oder Patches für den Core</li>
+                <li><i class="bi bi-stars me-1"></i> Neue Features in kommenden Versionen</li>
+                <li><i class="bi bi-gear me-1"></i> Wichtige Änderungen an Plugins oder API</li>
+                <li><i class="bi bi-exclamation-triangle me-1"></i> Hinweise zu kritischen Bugs oder bekannten Problemen</li>
+              </ul>
+            </div>
+
             <div class="list-group shadow-sm mb-4">
                 <?php if (!empty($news_updates)): ?>
                     <?php foreach ($news_updates as $news): ?>
-                        <a href="<?= htmlspecialchars($news['link'] ?? '#'); ?>" class="list-group-item list-group-item-action" target="_blank">
-                            <div class="d-flex justify-content-between">
-                                <strong><?= htmlspecialchars($news['title']); ?></strong>
-                                <small class="text-muted"><?= htmlspecialchars($news['date']); ?></small>
+                        <?php if (!empty($news['link'])): ?>
+                            <a href="<?= htmlspecialchars($news['link']); ?>" class="list-group-item list-group-item-action" target="_blank">
+                                <div class="d-flex justify-content-between">
+                                    <strong><?= htmlspecialchars($news['title']); ?></strong>
+                                    <small class="text-muted"><?= htmlspecialchars($news['date']); ?></small>
+                                </div>
+                                <p class="mb-0 small"><?= htmlspecialchars($news['summary']); ?></p>
+                            </a>
+                        <?php else: ?>
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <strong><?= htmlspecialchars($news['title']); ?></strong>
+                                    <small class="text-muted"><?= htmlspecialchars($news['date']); ?></small>
+                                </div>
+                                <p class="mb-0 small"><?= htmlspecialchars($news['summary']); ?></p>
                             </div>
-                            <p class="mb-0 small"><?= htmlspecialchars($news['summary']); ?></p>
-                        </a>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <div class="list-group-item text-muted">Keine News verfügbar</div>
                 <?php endif; ?>
             </div>
+
         </div>
     </div>
+
+
 </div>
 
 <!-- JS für gleiche Höhe gegenüberliegender Cards -->

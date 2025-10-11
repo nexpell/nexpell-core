@@ -56,7 +56,7 @@ function headfiles($var, $path) {
             // Wenn JS-Dateien gefunden wurden, diese hinzufügen
             if ($fc > 0) {
                 for ($d = 0; $d <= $fc - 2; $d++) {
-                    $js .= '<script src="./' . $g[$d] . '"></script>' . chr(0x0D) . chr(0x0A);
+                    $js .= '<script defer src="./' . $g[$d] . '"></script>' . chr(0x0D) . chr(0x0A);
                 }
             }
             return $js;

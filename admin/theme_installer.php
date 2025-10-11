@@ -24,7 +24,30 @@ use nexpell\Plugininstaller;
 // Admin-Rechte prüfen
 AccessControl::checkAdminAccess('ac_plugin_installer');
 
+$action = $_GET['action'] ?? 'list';
 
+switch ($action) {
+    case 'upload':
+        include('theme_installer_upload.php');
+        break;
+
+    default:
+echo '<div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div><i class="bi bi-journal-text"></i> ' . $languageService->get('theme_installer') . '</div>
+            <div>
+                <a href="admincenter.php?site=theme_installer&action=upload" class="btn btn-success"><i class="bi bi-plus"></i> Neues Theme hochladen / bearbeiten</a>
+            </div>
+        </div>
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb t-5 p-2 bg-light">
+                <li class="breadcrumb-item"><a href="admincenter.php?site=theme_installer">Themes verwalten</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Install / Deinstall</li>
+            </ol>
+        </nav> 
+        <div class="card-body p-0">
+';
 // Konfiguration
 $theme_dir = '../includes/themes/default/css/dist/';
 $theme_path = 'https://www.update.nexpell.de/themes';
@@ -173,10 +196,7 @@ $totalPages = ceil($totalThemes / $cardsPerPage);
 $start = ($page - 1) * $cardsPerPage;
 $themesForCurrentPage = array_slice($themes_for_template, $start, $cardsPerPage);
 
-echo '<div class="card">
-    <div class="card-header">' . $languageService->get('theme_installer') . '</div>
-    <div class="card-body">
-        <div class="container py-4">
+echo '<div class="container py-4">
             <h3>' . $languageService->get('theme_installer_headline') . '</h3>
             <div class="row gx-3 gy-2 my-0">
 ';
@@ -233,7 +253,8 @@ if ($totalPages > 1) {
 
 echo '</div></div></div>';
 
-
+break;
+}
 /**
  * Lädt und entpackt das Theme-ZIP
  */

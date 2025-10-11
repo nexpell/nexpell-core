@@ -38,18 +38,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-include_once("system/logSuspiciousAccess.php");
 
-// Prüfe und logge verdächtige Eingaben
-$suspiciousGet = detectSuspiciousInput($_GET);
-if ($suspiciousGet !== null) {
-    logSuspiciousAccess('Verdächtige Eingabe in GET-Parametern', $suspiciousGet);
-}
-
-$suspiciousPost = detectSuspiciousInput($_POST);
-if ($suspiciousPost !== null) {
-    logSuspiciousAccess('Verdächtige Eingabe in POST-Parametern', $suspiciousPost);
-}
 
 // === Sprachsystem vorbereiten ===
 $_SESSION['language'] = $_SESSION['language'] ?? 'de';
@@ -88,7 +77,7 @@ $tpl->template_path = "templates" . DIRECTORY_SEPARATOR;
 $components_css = "";
 if (!empty($components['css'])) {
     foreach ($components['css'] as $component) {
-        $components_css .= '<link type="text/css" rel="stylesheet" href="' . htmlspecialchars($component) . '" />' . "\n";
+        $components_css .= '    <link type="text/css" rel="stylesheet" href="' . htmlspecialchars($component) . '" />' . "\n";
     }
 }
 
@@ -98,7 +87,7 @@ define("PLUGIN", "./includes/plugins/");
 $components_js = "";
 if (!empty($components['js'])) {
     foreach ($components['js'] as $component) {
-        $components_js .= '<script src="' . htmlspecialchars($component) . '"></script>' . "\n";
+        $components_js .= '<script defer src="' . htmlspecialchars($component) . '"></script>' . "\n";
     }
 }
 

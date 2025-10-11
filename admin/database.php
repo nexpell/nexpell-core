@@ -1,790 +1,418 @@
 <?php
-
-// Überprüfen, ob die Session bereits gestartet wurde
+// Session starten
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
 use nexpell\LanguageService;
+use nexpell\AccessControl;
 
-// Initialisieren
-global $_database,$languageService;
+// Global
+global $_database, $languageService;
 $lang = $languageService->detectLanguage();
 $languageService = new LanguageService($_database);
 
 // Admin-Modul laden
 $languageService->readModule('database', true);
 
-use nexpell\AccessControl;
-// Den Admin-Zugriff für das Modul überprüfen
+// Admin-Zugriff prüfen
 AccessControl::checkAdminAccess('ac_database');
 
+// Captcha erstellen
+$CAPCLASS = new \nexpell\Captcha;
+$CAPCLASS->createTransaction();
+$hash = $CAPCLASS->getHash();
+
+// POST: Backup hochladen
 if (isset($_POST['upload'])) {
-
-
     $upload = $_FILES['sql'];
-    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
-        if ($upload['name'] != "") {
-            $get = safe_query("SELECT DATABASE()");
-            $ret = mysqli_fetch_array($get);
-            $db = $ret[0];
-            //drop all tables from nexpell DB
-            $result = mysqli_query($_database, "SHOW TABLES FROM " . $db);
-            while ($table = mysqli_fetch_array($result)) {
-                safe_query("DROP TABLE `" . $table[0] . "`");
+        if (!empty($upload['name'])) {
+
+            $backupDir = __DIR__ . "/myphp-backup-files/";
+            if (!is_dir($backupDir)) mkdir($backupDir, 0777, true);
+
+            $backupFileName = time() . '_' . basename($upload['name']);
+            $destFile = $backupDir . $backupFileName;
+
+            if (move_uploaded_file($upload['tmp_name'], $destFile)) {
+                $backupDescription = !empty($_POST['description']) 
+                    ? mysqli_real_escape_string($_database, $_POST['description']) 
+                    : mysqli_real_escape_string($_database, basename($upload['name']));
+
+                $createdBy = $userID;
+                $createdDate = date("Y-m-d H:i:s");
+
+                $query = "INSERT INTO backups (filename, description, createdby, createdate)
+                          VALUES ('$backupFileName', '$backupDescription', '$createdBy', '$createdDate')";
+
+                if (mysqli_query($_database, $query)) {
+                    echo '<div class="alert alert-success">Backup erfolgreich hochgeladen und in der Datenbank gespeichert.</div>';
+                } else {
+                    echo '<div class="alert alert-danger">Fehler beim Speichern in der Datenbank: ' . mysqli_error($_database) . '</div>';
+                }
+            } else {
+                echo '<div class="alert alert-danger">Fehler beim Verschieben der Datei.</div>';
             }
 
-            $tmpFile = tempnam('../tmp/', '.database');
-            move_uploaded_file($upload['tmp_name'], $tmpFile);
-            $new_query = file($tmpFile);
-            foreach ($new_query as $query) {
-                @mysqli_query($_database, $query);
-            }
-            @unlink($tmpFile);
+        } else {
+            echo '<div class="alert alert-warning">Keine Datei ausgewählt.</div>';
         }
     } else {
-        echo $languageService->get('transaction_invalid');
+        echo '<div class="alert alert-danger">' . $languageService->get('transaction_invalid') . '</div>';
     }
 }
 
-if (isset($_GET['action'])) {
-    $action = $_GET['action'];
-} else {
-    $action = '';
-}
+// GET-Parameter
+$action = $_GET['action'] ?? '';
+$returnto = $_GET['back'] ?? 'database';
 
-if (isset($_GET['back'])) {
-    $returnto = $_GET['back'];
-} else {
-    $returnto = "database";
-}
-
+// Backup löschen (nur DB-Eintrag, keine Datei!)
 if (isset($_GET['delete'])) {
-
-    $filepath = "myphp-backup-files/";
-    $CAPCLASS = new \nexpell\Captcha;
     if ($CAPCLASS->checkCaptcha(0, $_GET['captcha_hash'])) {
+        $id = intval($_GET['id']);
 
-        $id = $_GET['id'];
-        $dg = mysqli_fetch_array(safe_query("SELECT * FROM backups WHERE id='" . $_GET['id'] . "'"));
-
-        safe_query("DELETE FROM backups WHERE id='" . $_GET['id'] . "'");
-
-        $file = $dg['filename'];
-
-        if (file_exists($filepath . $file)) {
-            @unlink($filepath . $file);
+        $query = "DELETE FROM backups WHERE id='$id'";
+        if (!mysqli_query($_database, $query)) {
+            echo '<div class="alert alert-danger">Fehler beim Löschen des Eintrags: ' . mysqli_error($_database) . '</div>';
+        } else {
+            echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <strong>Hinweis:</strong> Backup-Eintrag wurde gelöscht, die Datei bleibt bestehen.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  </div>';
+            echo '<script>setTimeout(()=>{window.location.href="admincenter.php?site=database";},2000);</script>';
         }
     } else {
-        echo $languageService->get('transaction_invalid');
+        echo '<div class="alert alert-danger">' . $languageService->get('transaction_invalid') . '</div>';
     }
 }
 
-if ($action == "optimize") {
-    $_language->readModule('database', false, true);
-
-    echo '<h1>&curren; ' . $languageService->get('database') . '</h1>';
-
+// Datenbank optimieren
+elseif ($action == "optimize") {
     if (!ispageadmin($userID) || mb_substr(basename($_SERVER['REQUEST_URI']), 0, 15) != "admincenter.php") {
         die($languageService->get('access_denied'));
     }
-
-    $get = safe_query("SELECT DATABASE()");
-    $ret = mysqli_fetch_array($get);
-    $db = $ret[0];
-
-    $result = mysqli_query($_database, "SHOW TABLES FROM " . $db);
+    $db = mysqli_fetch_array(safe_query("SELECT DATABASE()"))[0];
+    $result = mysqli_query($_database, "SHOW TABLES FROM `$db`");
     while ($table = mysqli_fetch_array($result)) {
         safe_query("OPTIMIZE TABLE `" . $table[0] . "`");
     }
     redirect('admincenter.php?site=' . $returnto, '', 0);
-} elseif ($action == "write") {
-
-
-// Definiere Backup-Verzeichnis relativ zum Skriptverzeichnis
-define('BACKUP_DIR', __DIR__ . '/myphp-backup-files');
-
-define('IGNORE_TABLES', ''); // Beispiel: 'table1,table2'
-define('BACKUP_DATABASENAME', 'myphp');
-define('BACKUP_USER', 'root');
-define('BACKUP_PASSWORD', '');
-define('BACKUP_HOST', 'localhost');
-define('BACKUP_CHARSET', 'utf8mb4');
-define('BATCH_SIZE', 1000);
-define('USE_GZIP', true);
-
-class Backup_Database
-{
-    private $conn;
-    private $backupDir;
-    private $backupFile;
-    private $db;
-    private $ignoreTables = [];
-    private $batchSize;
-    private $useGzip;
-
-    public function __construct($dbHost, $dbUser, $dbPass, $dbName, $backupDir = BACKUP_DIR, $ignoreTables = '', $batchSize = BATCH_SIZE, $useGzip = USE_GZIP)
-    {
-        $this->db = $dbName;
-        $this->backupDir = $backupDir;
-        $this->ignoreTables = array_filter(array_map('trim', explode(',', $ignoreTables)));
-        $this->batchSize = $batchSize;
-        $this->useGzip = $useGzip;
-
-        // Verbindung zur DB aufbauen
-        $this->conn = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
-        if ($this->conn->connect_error) {
-            die('MySQL Verbindung fehlgeschlagen: ' . $this->conn->connect_error);
-        }
-        // Zeichensatz setzen
-        $this->conn->set_charset(BACKUP_CHARSET);
-
-        // Backup-Verzeichnis anlegen, falls nicht vorhanden
-        if (!is_dir($this->backupDir)) {
-            if (!mkdir($this->backupDir, 0777, true) && !is_dir($this->backupDir)) {
-                die('Backup-Verzeichnis konnte nicht erstellt werden: ' . $this->backupDir);
-            }
-        }
-
-        $this->backupFile = $this->backupDir . '/' . $this->db . '-' . date('Y-m-d_H-i-s') . '.sql';
-    }
-
-    public function backupTables($tables = '*')
-    {
-        // Tabellenliste ermitteln
-        if ($tables === '*') {
-            $result = $this->conn->query("SHOW TABLES");
-            if (!$result) {
-                die('Fehler bei SHOW TABLES: ' . $this->conn->error);
-            }
-            $tables = [];
-            while ($row = $result->fetch_array()) {
-                $tblName = $row[0];
-                if (!in_array($tblName, $this->ignoreTables)) {
-                    $tables[] = $tblName;
-                }
-            }
-        } else {
-            if (is_string($tables)) {
-                $tables = array_map('trim', explode(',', $tables));
-            }
-            $tables = array_diff($tables, $this->ignoreTables);
-        }
-
-        $sqlDump = "-- MySQL Backup von Datenbank `{$this->db}`\n-- Erzeugt: " . date('Y-m-d H:i:s') . "\n\n";
-        $sqlDump .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
-
-        foreach ($tables as $table) {
-            // Tabellenstruktur sichern
-            $result = $this->conn->query("SHOW CREATE TABLE `$table`");
-            if (!$result) {
-                die('Fehler bei SHOW CREATE TABLE für ' . $table . ': ' . $this->conn->error);
-            }
-            $row = $result->fetch_assoc();
-            $sqlDump .= "--\n-- Tabellenstruktur für Tabelle `$table`\n--\n\n";
-            $sqlDump .= "DROP TABLE IF EXISTS `$table`;\n";
-            $sqlDump .= $row['Create Table'] . ";\n\n";
-
-            // Optional Trigger sichern (auskommentiert, bei Bedarf aktivieren)
-            /*
-            $resultTriggers = $this->conn->query("SHOW TRIGGERS LIKE '$table'");
-            if ($resultTriggers && $resultTriggers->num_rows > 0) {
-                $sqlDump .= "--\n-- Trigger für Tabelle `$table`\n--\n\n";
-                while ($trigger = $resultTriggers->fetch_assoc()) {
-                    $sqlDump .= "DROP TRIGGER IF EXISTS `{$trigger['Trigger']}`;\n";
-                    $sqlDump .= $trigger['SQL Original Statement'] . ";\n\n";
-                }
-            }
-            */
-
-            // Tabellendaten sichern (Batch-weise)
-            $result = $this->conn->query("SELECT COUNT(*) AS numRows FROM `$table`");
-            if (!$result) {
-                die('Fehler bei COUNT(*) für ' . $table . ': ' . $this->conn->error);
-            }
-            $numRows = (int)$result->fetch_assoc()['numRows'];
-            if ($numRows === 0) {
-                continue; // Keine Daten
-            }
-
-            $numBatches = (int)ceil($numRows / $this->batchSize);
-            $sqlDump .= "--\n-- Daten der Tabelle `$table` (insgesamt $numRows Datensätze)\n--\n\n";
-
-            for ($batch = 0; $batch < $numBatches; $batch++) {
-                $offset = $batch * $this->batchSize;
-                $resultData = $this->conn->query("SELECT * FROM `$table` LIMIT $offset, $this->batchSize");
-                if (!$resultData) {
-                    die('Fehler beim Daten-SELECT für ' . $table . ': ' . $this->conn->error);
-                }
-                $rows = $resultData->fetch_all(MYSQLI_NUM);
-                if (count($rows) > 0) {
-                    $sqlDump .= "INSERT INTO `$table` VALUES\n";
-                    $rowCount = count($rows);
-                    foreach ($rows as $i => $row) {
-                        $sqlDump .= "(";
-                        foreach ($row as $j => $value) {
-                            if (is_null($value)) {
-                                $sqlDump .= "NULL";
-                            } elseif (is_numeric($value) && !$this->isBooleanString($value)) {
-                                // Zahlen als solche schreiben, außer 'true'/'false'
-                                $sqlDump .= $value;
-                            } elseif ($this->isBooleanString($value)) {
-                                // Boolean Strings ohne Anführungszeichen
-                                $sqlDump .= strtoupper($value);
-                            } else {
-                                $sqlDump .= '"' . $this->conn->real_escape_string($value) . '"';
-                            }
-                            if ($j < count($row) - 1) {
-                                $sqlDump .= ",";
-                            }
-                        }
-                        $sqlDump .= ")";
-                        $sqlDump .= ($i < $rowCount - 1) ? ",\n" : ";\n\n";
-                    }
-                }
-            }
-        }
-
-        $sqlDump .= "SET FOREIGN_KEY_CHECKS=1;\n";
-
-        // Backup-Datei speichern
-        if ($this->useGzip) {
-            $this->saveBackupGzip($sqlDump);
-        } else {
-            file_put_contents($this->backupFile, $sqlDump);
-        }
-
-        return $this->backupFile . ($this->useGzip ? '.gz' : '');
-    }
-
-    private function saveBackupGzip($data)
-    {
-        $gzipFile = $this->backupFile . '.gz';
-        $gz = gzopen($gzipFile, 'wb9');
-        if (!$gz) {
-            die('Konnte gzip Backup-Datei nicht erstellen.');
-        }
-        gzwrite($gz, $data);
-        gzclose($gz);
-    }
-
-    private function isBooleanString($value)
-    {
-        $lower = strtolower($value);
-        return $lower === 'true' || $lower === 'false';
-    }
-
-    public function close()
-    {
-        $this->conn->close();
-    }
 }
 
-// Beispiel zur Nutzung
+// Backup erstellen
+elseif ($action == "write") {
+    define('BACKUP_DIR', __DIR__ . '/myphp-backup-files');
 
-$backup = new Backup_Database(
-    BACKUP_HOST,
-    BACKUP_USER,
-    BACKUP_PASSWORD,
-    BACKUP_DATABASENAME,
-    BACKUP_DIR,
-    IGNORE_TABLES,
-    BATCH_SIZE,
-    USE_GZIP
-);
-
-$filename = $backup->backupTables(); // Alle Tabellen sichern
-
-echo "Backup erstellt: $filename\n";
-
-$backup->close();
-
-} elseif ($action == "back") {
-
-    /**
-     * This file contains the Restore_Database class wich performs
-     * a partial or complete restoration of any given MySQL database
-     * @author Daniel López Azaña <daniloaz@gmail.com>
-     * @version 1.0
-     */
-
-    /**
-     * Define database parameters here
-     */
-
-    $ds = mysqli_fetch_array(safe_query(
-        "SELECT * FROM backups WHERE id='" . $_GET["id"] . "'AND filename=filename"
-    ));
-    include("../system/sql.php");
-    global $filename;
-
-    define("DB_USER", $user);
-    define("DB_PASS", $pwd);
-    define("DB_NAME", $db);
-    define("DB_HOST", $host);
-    define("BACKUP_DIR", 'myphp-backup-files'); // Comment this line to use same script's directory ('.')
-    define("BACKUP_FILE", $ds['filename']); // Script will autodetect if backup file is gzipped based on .gz extension
-    define("CHARSET", 'utf8');
-    define("DISABLE_FOREIGN_KEY_CHECKS", true); // Set to true if you are having foreign key constraint fails
-    print_r($filename);
-    /**
-     * The Restore_Database class
-     */
-    class Restore_Database
-    {
-        private string $backupDir;
-        private string $backupFile;
-
-        public function setBackupDir($dir)
-        {
-            $this->backupDir = $dir;
+    class Backup_Database {
+        private $conn, $backupDir, $backupFile, $db;
+        public function __construct($conn, $dbName, $backupDir = BACKUP_DIR) {
+            $this->conn = $conn;
+            $this->db = $dbName;
+            $this->backupDir = $backupDir;
+            if (!is_dir($this->backupDir)) mkdir($this->backupDir, 0777, true);
+            $this->backupFile = $this->backupDir . '/' . $this->db . '-' . date('Y-m-d_H-i-s') . '.sql';
         }
+        public function backupTables($tables = '*') {
+            if ($tables === '*') {
+                $result = mysqli_query($this->conn, "SHOW TABLES");
+                $tables = [];
+                while ($row = mysqli_fetch_array($result)) $tables[] = $row[0];
+            }
 
-        public function setBackupFile($file)
-        {
-            $this->backupFile = $file;
-        }
-
-        public function getBackupDir()
-        {
-            return $this->backupDir;
-        }
-
-        public function getBackupFile()
-        {
+            $sqlDump = "-- Backup von {$this->db} erstellt am " . date('Y-m-d H:i:s') . "\n\n";
+            foreach ($tables as $table) {
+                $row = mysqli_fetch_assoc(mysqli_query($this->conn, "SHOW CREATE TABLE `$table`"));
+                $sqlDump .= "DROP TABLE IF EXISTS `$table`;\n" . $row['Create Table'] . ";\n\n";
+                $dataResult = mysqli_query($this->conn, "SELECT * FROM `$table`");
+                while ($dataRow = mysqli_fetch_assoc($dataResult)) {
+                    $vals = array_map(fn($v)=>is_null($v)?"NULL":"'".addslashes($v)."'", array_values($dataRow));
+                    $sqlDump .= "INSERT INTO `$table` VALUES(" . implode(',', $vals) . ");\n";
+                }
+                $sqlDump .= "\n";
+            }
+            file_put_contents($this->backupFile, $sqlDump);
             return $this->backupFile;
         }
-        /**
-         * Host where the database is located
-         */
-        var $host;
-
-        /**
-         * Username used to connect to database
-         */
-        var $user;
-
-        /**
-         * Password used to connect to database
-         */
-        var $pwd;
-
-        /**
-         * Database to backup
-         */
-        var $db;
-
-        /**
-         * Database charset
-         */
-        var $charset;
-
-        /**
-         * Database connection
-         */
-        var $conn;
-
-        /**
-         * Disable foreign key checks
-         */
-        var $disableForeignKeyChecks;
-
-        /**
-         * Constructor initializes database
-         */
-        public function __construct($host, $user, $pwd, $db, $charset = 'utf8')
-        {
-            $this->host                    = $host;
-            $this->user                    = $user;
-            $this->pwd                     = $pwd;
-            $this->db                      = $db;
-            $this->charset                 = $charset;
-            $this->disableForeignKeyChecks = defined('DISABLE_FOREIGN_KEY_CHECKS') ? DISABLE_FOREIGN_KEY_CHECKS : true;
-            $this->conn                    = $this->initializeDatabase();
-            $this->backupDir               = defined('BACKUP_DIR') ? BACKUP_DIR : '.';
-            $this->backupFile              = defined('BACKUP_FILE') ? BACKUP_FILE : null;
-        }
-
-        /**
-         * Destructor re-enables foreign key checks
-         */
-        function __destructor()
-        {
-            /**
-             * Re-enable foreign key checks 
-             */
-            if ($this->disableForeignKeyChecks === true) {
-                mysqli_query($this->conn, 'SET foreign_key_checks = 1');
-            }
-        }
-
-        protected function initializeDatabase()
-        {
-            try {
-                $conn = mysqli_connect($this->host, $this->user, $this->pwd, $this->db);
-                if (mysqli_connect_errno()) {
-                    throw new Exception('ERROR connecting database: ' . mysqli_connect_error());
-                    die();
-                }
-                if (!mysqli_set_charset($conn, $this->charset)) {
-                    mysqli_query($conn, 'SET NAMES ' . $this->charset);
-                }
-
-                /**
-                 * Disable foreign key checks 
-                 */
-                if ($this->disableForeignKeyChecks === true) {
-                    mysqli_query($conn, 'SET foreign_key_checks = 0');
-                }
-            } catch (Exception $e) {
-                print_r($e->getMessage());
-                die();
-            }
-
-            return $conn;
-        }
-
-        /**
-         * Backup the whole database or just some tables
-         * Use '*' for whole database or 'table1 table2 table3...'
-         * @param string $tables
-         */
-        public function restoreDb()
-        {
-            try {
-                $sql = '';
-                $multiLineComment = false;
-
-                $backupDir = $this->backupDir;
-                $backupFile = $this->backupFile;
-
-                /**
-                 * Gunzip file if gzipped
-                 */
-                $backupFileIsGzipped = substr($backupFile, -3, 3) == '.gz' ? true : false;
-                if ($backupFileIsGzipped) {
-                    if (!$backupFile = $this->gunzipBackupFile()) {
-                        throw new Exception("ERROR: couldn't gunzip backup file " . $backupDir . '/' . $backupFile);
-                    }
-                }
-
-                /**
-                 * Read backup file line by line
-                 */
-                $handle = fopen($backupDir . '/' . $backupFile, "r");
-                if ($handle) {
-                    while (($line = fgets($handle)) !== false) {
-                        $line = ltrim(rtrim($line));
-                        if (strlen($line) > 1) { // avoid blank lines
-                            $lineIsComment = false;
-                            if (preg_match('/^\/\*/', $line)) {
-                                $multiLineComment = true;
-                                $lineIsComment = true;
-                            }
-                            if ($multiLineComment or preg_match('/^\/\//', $line)) {
-                                $lineIsComment = true;
-                            }
-                            if (!$lineIsComment) {
-                                $sql .= $line;
-                                if (preg_match('/;$/', $line)) {
-                                    // execute query
-                                    if (mysqli_query($this->conn, $sql)) {
-                                        if (preg_match('/^CREATE TABLE `([^`]+)`/i', $sql, $tableName)) {
-                                            $this->obfPrint("Table succesfully created: `" . $tableName[1] . "`");
-                                        }
-                                        $sql = '';
-                                    } else {
-                                        throw new Exception("ERROR: SQL execution error: " . mysqli_error($this->conn));
-                                    }
-                                }
-                            } else if (preg_match('/\*\/$/', $line)) {
-                                $multiLineComment = false;
-                            }
-                        }
-                    }
-                    fclose($handle);
-                } else {
-                    throw new Exception("ERROR: couldn't open backup file " . $backupDir . '/' . $backupFile);
-                }
-            } catch (Exception $e) {
-                print_r($e->getMessage());
-                return false;
-            }
-
-            if ($backupFileIsGzipped) {
-                unlink($backupDir . '/' . $backupFile);
-            }
-
-            return true;
-        }
-
-        /*
-     * Gunzip backup file
-     *
-     * @return string New filename (without .gz appended and without backup directory) if success, or false if operation fails
-     */
-        protected function gunzipBackupFile()
-        {
-            // Raising this value may increase performance
-            $bufferSize = 4096; // read 4kb at a time
-            $error = false;
-
-            $source = $this->backupDir . '/' . $this->backupFile;
-            $dest = $this->backupDir . '/' . date("Ymd_His", time()) . '_' . substr($this->backupFile, 0, -3);
-
-            $this->obfPrint('Gunzipping backup file ' . $source . '... ', 1, 1);
-
-            // Remove $dest file if exists
-            if (file_exists($dest)) {
-                if (!unlink($dest)) {
-                    return false;
-                }
-            }
-
-            // Open gzipped and destination files in binary mode
-            if (!$srcFile = gzopen($this->backupDir . '/' . $this->backupFile, 'rb')) {
-                return false;
-            }
-            if (!$dstFile = fopen($dest, 'wb')) {
-                return false;
-            }
-
-            while (!gzeof($srcFile)) {
-                // Read buffer-size bytes
-                // Both fwrite and gzread are binary-safe
-                if (!fwrite($dstFile, gzread($srcFile, $bufferSize))) {
-                    return false;
-                }
-            }
-
-            fclose($dstFile);
-            gzclose($srcFile);
-
-            // Return backup filename excluding backup directory
-            return str_replace($this->backupDir . '/', '', $dest);
-        }
-
-        /**
-         * Prints message forcing output buffer flush
-         *
-         */
-        public function obfPrint($msg = '', $lineBreaksBefore = 0, $lineBreaksAfter = 1)
-        {
-            if (!$msg) {
-                return false;
-            }
-
-            $msg = date("Y-m-d H:i:s") . ' - ' . $msg;
-            $output = '';
-
-            if (php_sapi_name() != "cli") {
-                $lineBreak = "<br />";
-            } else {
-                $lineBreak = "\n";
-            }
-
-            if ($lineBreaksBefore > 0) {
-                for ($i = 1; $i <= $lineBreaksBefore; $i++) {
-                    $output .= $lineBreak;
-                }
-            }
-
-            $output .= $msg;
-
-            if ($lineBreaksAfter > 0) {
-                for ($i = 1; $i <= $lineBreaksAfter; $i++) {
-                    $output .= $lineBreak;
-                }
-            }
-
-            if (php_sapi_name() == "cli") {
-                $output .= "\n";
-            }
-
-            echo $output;
-
-            if (php_sapi_name() != "cli") {
-                ob_flush();
-            }
-
-            flush();
-        }
     }
 
-    /**
-     * Instantiate Restore_Database and perform backup
-     */
-    // Report all errors
-    error_reporting(E_ALL);
-    // Set script max execution time
-    set_time_limit(900); // 15 minutes
+    $dbName = mysqli_fetch_array(safe_query("SELECT DATABASE()"))[0];
 
-    if (php_sapi_name() != "cli") {
-        echo '<div class="card">
-  <div class="card-header">
-            Backup
-        </div>
-  <div class="card-body"><div class="alert alert-info" role="alert">';
+    try {
+        $backup = new Backup_Database($_database, $dbName);
+        $filename = $backup->backupTables();
+
+        $relativeFilename = basename($filename);
+        $description = mysqli_real_escape_string($_database, $relativeFilename);
+        $createdBy = $userID;
+        $createdDate = date("Y-m-d H:i:s");
+
+        $query = "INSERT INTO backups (filename, description, createdby, createdate)
+                  VALUES ('$relativeFilename', '$description', '$createdBy', '$createdDate')";          
+
+        if (!mysqli_query($_database, $query)) {
+            echo '<div class="alert alert-danger">Fehler beim Speichern in der DB: ' . mysqli_error($_database) . '</div>';
+        } else {
+            echo '<div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <strong>Erfolg!</strong> Backup erstellt und in der Datenbank gespeichert: <code>' . htmlspecialchars($relativeFilename) . '</code>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>';
+        }
+
+        echo '<a href="admincenter.php?site=database" class="btn btn-secondary mt-2">Zurück zur Datenbankverwaltung</a>';
+        echo '<script>setTimeout(() => { window.location.href = "admincenter.php?site=database"; }, 3000);</script>';
+
+    } catch (Exception $e) {
+        echo '<div class="alert alert-danger">Fehler: ' . htmlspecialchars($e->getMessage()) . '</div>';
     }
-
-    $restoreDatabase = new Restore_Database(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-    $result = $restoreDatabase->restoreDb(BACKUP_DIR, BACKUP_FILE) ? 'OK' : 'KO';
-    $restoreDatabase->obfPrint("Restoration result: " . $result, 1);
-
-    if (php_sapi_name() != "cli") {
-        echo '</div><a class="btn btn-secondary" href="admincenter.php?site=database" role="button">Go Back</a></div></div>';
-    }
-} else {
-    #$_language->readModule('database', false, true);
-
-    //if (!ispageadmin($userID) || mb_substr(basename($_SERVER['REQUEST_URI']), 0, 15) != "admincenter.php") {
-    //    die($languageService->get('access_denied']);
-    //}
-
-    $CAPCLASS = new \nexpell\Captcha;
-    $CAPCLASS->createTransaction();
-    $hash = $CAPCLASS->getHash();
-
-    echo '<div class="card">
-            <div class="card-header"><i class="bi bi-database"></i> 
-                ' . $languageService->get('database') . '
-            </div>
-                <div class="card-body">
-
-<div class="row">
-
-<div class="col-md-6">
-
-    <div class="mb-3 row bt">
-        <label class="col-sm-4 control-label">' . $languageService->get('select_option') . '</label>
-        <div class="col-sm-7"><span class="text-muted small"><em>
-            <a class="btn btn-primary" href="admincenter.php?site=database&amp;action=write&amp;captcha_hash=' . $hash . '"><i class="bi bi-database-down"></i> ' . $languageService->get('export') . '</a><br><br>
-            ' . $languageService->get('import_info1') . '</em></span>
-        </div>
-    </div>
-
-        <div class="mb-4 row bt">
-        <label class="col-sm-4 control-label">' . $languageService->get('optimize') . '</label>
-        <div class="col-sm-7"><span class="text-muted small"><em>
-            <a class="btn btn-primary" href="admincenter.php?site=database&amp;action=optimize"><i class="bi bi-database-gear"></i> ' . $languageService->get('optimize') . '</a></em></span>
-        </div>
-    </div>
-
-</div>
-
-
-<div class="col-md-6">
-    <form class="bt" method="post" action="admincenter.php?site=database" enctype="multipart/form-data">
-
-    <div class="mb-3 row bt">
-        <label class="col-sm-4 control-label">' . $languageService->get('backup_file') . '</label>
-        <div class="col-sm-7"><span class="text-muted small"><em>
-            <input name="sql" type="file" size="40" / ><br><br>
-    
-        <input type="hidden" name="captcha_hash" value="' . $hash . '" />
-        <button class="btn btn-primary" type="submit" name="upload"  /><i class="bi bi-filetype-sql"></i> ' . $languageService->get('upload') . '</button></em></span>
-        </div>
-    </div>
-</form>
-
-</div>
-
-
-
-</div>
-    
-</div>
-
-</div>';
-
-
-
-    echo '<div class="card">
-            <div class="card-header">
-                <i class="bi bi-braces"></i> ' . $languageService->get('sql_query') . '
-            </div>
-            <div class="card-body">';
-
-    echo '<form method="post" action="admincenter.php?site=database">
-  <table class="table">
-  <thead>
-    <tr>
-    <td colspan="8" bgcolor="#ffe6e6" style="font-weight: bold; color: #333; line-height: 20px;padding: 10px;">
-    ' . $languageService->get('import_info2') . '
-    </td></tr>
-    <tr>
-      <th>ID</th>
-      <th>' . $languageService->get('file') . '</th>
-      <th>' . $languageService->get('date') . '</th>
-      <th>' . $languageService->get('created_by') . '</th>
-      <th>' . $languageService->get('actions') . '</th>
-    </tr>
-    </thead>
-  <tbody>';
-
-    $CAPCLASS = new \nexpell\Captcha;
-    $CAPCLASS->createTransaction();
-    $hash = $CAPCLASS->getHash();
-
-    $select_query = "SELECT * FROM `backups`";
-    $result = safe_query($select_query);
-    $backups = array();
-    while ($ds = mysqli_fetch_array($result)) {
-
-
-        $id             = $ds['id'];
-        $filename       = $ds['filename'];
-        $description    = $ds['description'];
-        $createdby      = getusername($ds['createdby']);
-        $createdate     = date("d/m/Y h:i:sa", strtotime($ds['createdate']));
-        $file_exists    = "<img src='../images/icons/offline.gif' alt='' />";
-        $download_url   = "/admin/myphp-backup-files/";
-
-        echo '<tr>
-    <td>' . $ds['id'] . '</td>
-    <td>' . $ds['description'] . '</td>
-    <td>' . $ds['createdate'] . '</td>
-    <td>' . $createdby . '</td>
-    
-    <td>
-        <a class="btn btn-primary" href="' . $download_url . '' . $description . '" role="button"><i class="bi bi-download"></i> Download</a>
-
-        <a type="button" class="btn btn-warning" href="admincenter.php?site=database&amp;action=back&amp;id=' . $ds['id'] . '" ><i class="bi bi-database-up"></i> ' . $languageService->get('upload') . '</a>
-
-<!-- Button trigger modal -->
-    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirm-delete" data-href="admincenter.php?site=database&amp;delete=true&amp;id=' . $ds['id'] . '&amp;captcha_hash=' . $hash . '"><i class="bi bi-trash3"></i> 
-    ' . $languageService->get('delete') . '
-    </button>
-    <!-- Button trigger modal END-->
-
-     <!-- Modal -->
-<div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel"><i class="bi bi-braces"></i> ' . $languageService->get('sql_query') . '</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' . $languageService->get('close') . '"></button>
-      </div>
-      <div class="modal-body"><p>' . $languageService->get('really_delete') . '</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' . $languageService->get('close') . '</button>
-        <a class="btn btn-danger btn-ok"><i class="bi bi-trash3"></i> ' . $languageService->get('delete') . '</a>
-      </div>
-    </div>
-  </div>
-</div>
-<!-- Modal END -->
-
-  </td>
-  </tr>';
-        $first_line = "";
-    }
-
-    echo '</tbody></table>
-
-
-  </form>
-  </div></div>';
 }
+
+// Backup wiederherstellen
+// Backup wiederherstellen
+// Backup wiederherstellen
+// Backup wiederherstellen
+elseif ($action == "back") {
+    $id = intval($_GET['id']);
+    $ds = mysqli_fetch_array(safe_query("SELECT * FROM backups WHERE id='$id'"));
+    $backupFile = __DIR__ . "/myphp-backup-files/" . $ds['filename'];
+
+    class Restore_Database {
+        private $conn;
+        private $backupFile;
+        private $excludeTables = ['backups'];
+
+        public function __construct($conn, $backupFile) {
+            $this->conn = $conn;
+            $this->backupFile = $backupFile;
+        }
+
+        public function restoreDb() {
+            if (!file_exists($this->backupFile)) {
+                throw new Exception("Backup-Datei nicht gefunden: " . htmlspecialchars($this->backupFile));
+            }
+
+            mysqli_query($this->conn, "SET FOREIGN_KEY_CHECKS=0");
+
+            // Alle Tabellen löschen außer excludeTables
+            $result = mysqli_query($this->conn, "SHOW TABLES");
+            while ($row = mysqli_fetch_array($result)) {
+                $table = $row[0];
+                if (!in_array($table, $this->excludeTables, true)) {
+                    mysqli_query($this->conn, "DROP TABLE IF EXISTS `$table`");
+                }
+            }
+
+            $handle = fopen($this->backupFile, 'r');
+            if (!$handle) throw new Exception("Backup-Datei konnte nicht geöffnet werden.");
+
+            $sql = '';
+            $executed = 0;
+            $skipStatement = false;
+            $insideCreateTable = false;
+            $primaryKeySeen = [];
+            $currentTable = '';
+
+            while (($line = fgets($handle)) !== false) {
+                $trim = trim($line);
+
+                // Leerzeilen oder Kommentare überspringen
+                if ($trim === '' || preg_match('/^(--|#)/', $trim) || preg_match('/^\/\*/', $trim)) continue;
+
+                // Skip Statement falls nötig
+                if ($skipStatement) {
+                    if (strpos($trim, ';') !== false) $skipStatement = false;
+                    continue;
+                }
+
+                // BACKUPS-Tabelle ignorieren
+                if (preg_match('/^(DROP\s+TABLE\s+IF\s+EXISTS\s+`?backups`?)/i', $trim)
+                    || preg_match('/^(CREATE\s+TABLE\s+`?backups`?)/i', $trim)
+                    || preg_match('/^(INSERT\s+INTO\s+`?backups`?)/i', $trim)
+                    || preg_match('/^(ALTER\s+TABLE\s+`?backups`?)/i', $trim)) {
+                    if (strpos($trim, ';') === false) $skipStatement = true;
+                    continue;
+                }
+
+                // CREATE TABLE erkennen
+                if (preg_match('/^CREATE\s+TABLE\s+`?(\w+)`?/i', $trim, $matches)) {
+                    $insideCreateTable = true;
+                    $currentTable = $matches[1];
+                    $primaryKeySeen[$currentTable] = false;
+                }
+
+                // PRIMARY KEY Duplikate ignorieren
+                if ($insideCreateTable && preg_match('/PRIMARY\s+KEY/i', $trim)) {
+                    if ($primaryKeySeen[$currentTable]) continue;
+                    $primaryKeySeen[$currentTable] = true;
+                }
+
+                // ALTER TABLE PRIMARY KEY Duplikate ignorieren
+                if (preg_match('/^ALTER\s+TABLE\s+`?(\w+)`?.*ADD\s+PRIMARY\s+KEY/i', $trim, $matches)) {
+                    $table = $matches[1];
+                    if (in_array($table, $this->excludeTables, true)) continue;
+                    if (!empty($primaryKeySeen[$table])) continue;
+                    $primaryKeySeen[$table] = true;
+                    // Zeile trotzdem ausführen, wenn noch kein PK gesetzt
+                }
+
+                $sql .= $line . "\n";
+
+                // Statement Ende
+                if (substr(trim($line), -1) === ';') {
+                    if (!mysqli_query($this->conn, $sql)) {
+                        $err = mysqli_error($this->conn);
+                        fclose($handle);
+                        mysqli_query($this->conn, "SET FOREIGN_KEY_CHECKS=1");
+                        throw new Exception("Fehler beim Ausführen von SQL:\n$sql\nMySQL-Fehler: $err");
+                    }
+                    $sql = '';
+                    $executed++;
+                    $insideCreateTable = false;
+                    $currentTable = '';
+                }
+            }
+
+            fclose($handle);
+            mysqli_query($this->conn, "SET FOREIGN_KEY_CHECKS=1");
+            return $executed;
+        }
+    }
+
+    try {
+        $restore = new Restore_Database($_database, $backupFile);
+        $count = $restore->restoreDb();
+
+        echo '<div class="container my-4">';
+        echo '<div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong>Erfolg!</strong> Backup erfolgreich wiederhergestellt.<br>
+                Tabelle <code>backups</code> blieb unverändert.<br>
+                Ausgeführte SQL-Befehle: ' . $count . '<br>
+                Datei: <code>' . htmlspecialchars(basename($backupFile)) . '</code>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>';
+        echo '<a href="admincenter.php?site=database" class="btn btn-secondary mt-2">Zurück zur Datenbankverwaltung</a>';
+        echo '<script>setTimeout(()=>{window.location.href="admincenter.php?site=database";},3000);</script>';
+        echo '</div>';
+
+    } catch (Exception $e) {
+        echo '<div class="alert alert-danger">Fehler: ' . nl2br(htmlspecialchars($e->getMessage())) . '</div>';
+    }
+}
+
+
+
+
+
+
+
+// Standardansicht
+else {
+?>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header"><i class="bi bi-database me-2"></i> <?= $languageService->get('database') ?></div>
+        <div class="card-body">
+            <div class="container my-4">
+            <div class="row g-4">
+
+                <!-- Export / Optimize -->
+                <div class="col-md-6">
+                    <div class="d-grid gap-3">
+                        <a href="admincenter.php?site=database&amp;action=write&amp;captcha_hash=<?= $hash ?>" class="btn btn-primary">
+                            <i class="bi bi-database-down me-2"></i> <?= $languageService->get('export') ?>
+                        </a>
+                        <small class="text-muted"><?= $languageService->get('export_info') ?></small>
+
+                        <a href="admincenter.php?site=database&amp;action=optimize" class="btn btn-warning mt-3">
+                            <i class="bi bi-database-gear me-2"></i> <?= $languageService->get('optimize') ?>
+                        </a>
+                        <small class="text-muted"><?= $languageService->get('optimize_info') ?></small>
+                    </div>
+                </div>
+
+                <!-- Upload Backup -->
+                <div class="col-md-6">
+                    <form method="post" action="admincenter.php?site=database" enctype="multipart/form-data" class="d-flex flex-column gap-2">
+                        <label for="sqlFile" class="form-label"><?= $languageService->get('backup_file') ?></label>
+                        <input type="file" name="sql" id="sqlFile" class="form-control">
+                        <input type="hidden" name="captcha_hash" value="<?= $hash ?>" />
+                        <button type="submit" name="upload" class="btn btn-success mt-2">
+                            <i class="bi bi-filetype-sql me-2"></i> <?= $languageService->get('upload') ?>
+                        </button>
+                        <small class="text-muted"><?= $languageService->get('upload_info') ?></small>
+                    </form>
+                </div>
+            </div>    
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup Table -->
+    <div class="card shadow-sm">
+        <div class="card-header"><i class="bi bi-braces me-2"></i> <?= $languageService->get('sql_query') ?></div>
+        <div class="card-body p-0">
+            <div class="container my-4">
+            <table class="table table-bordered table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th><?= $languageService->get('file') ?></th>
+                        <th><?= $languageService->get('date') ?></th>
+                        <th><?= $languageService->get('created_by') ?></th>
+                        <th><?= $languageService->get('actions') ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $result = safe_query("SELECT * FROM `backups` ORDER BY id DESC");
+                    while ($ds = mysqli_fetch_array($result)) :
+                        $id = $ds['id'];
+                        $filename = $ds['filename'];
+                        $description = $ds['description'];
+                        $createdby = getusername($ds['createdby']);
+                        $createdate = date("d/m/Y H:i", strtotime($ds['createdate']));
+                        $download_url = "admin/myphp-backup-files/";
+                    ?>
+                        <tr>
+                            <td><?= $id ?></td>
+                            <td><?= htmlspecialchars($description) ?></td>
+                            <td><?= $createdate ?></td>
+                            <td><?= htmlspecialchars($createdby) ?></td>
+                            <td class="d-flex flex-column gap-1">
+                                <a href="<?= $download_url . $filename ?>" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-download"></i> Download
+                                </a>
+                                <a href="admincenter.php?site=database&amp;action=back&amp;id=<?= $id ?>" class="btn btn-outline-warning btn-sm">
+                                    <i class="bi bi-database-up"></i> <?= $languageService->get('upload') ?>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal<?= $id ?>">
+                                    <i class="bi bi-trash3"></i> <?= $languageService->get('delete') ?>
+                                </button>
+
+                                <!-- Delete Modal -->
+                                <div class="modal fade" id="deleteModal<?= $id ?>" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title"><?= $languageService->get('really_delete') ?></h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= $languageService->get('close') ?></button>
+                                                <a href="admincenter.php?site=database&amp;delete=true&amp;id=<?= $id ?>&amp;captcha_hash=<?= $hash ?>" class="btn btn-danger"><?= $languageService->get('delete') ?></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+
+<?php
+} // Ende else Standardansicht
+?>
