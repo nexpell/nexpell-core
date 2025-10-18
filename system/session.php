@@ -3,32 +3,39 @@ namespace nexpell;
 
 // Diese Datei sehr früh einbinden, vor JEDEM Output!
 
-if (session_status() === \PHP_SESSION_NONE) {
-    // Eindeutiger Name (vermeidet Kollisionen mit anderen Apps auf dem Hoster)
-    \session_name('NXSESSID');
 
-    $isHttps  = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
 
-    // Wenn du www UND non-www benutzt, kommentiere die Domain-Zeile ein und setze deine Domain:
-    // $cookieDomain = '.deinedomain.tld';
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    // Session-Name möglichst früh setzen, bevor sie gestartet wird
+    if (session_name() !== 'nexpell') {
+        session_name('nexpell');
+    }
 
+    // Cookie-Parameter setzen, bevor session_start()
     session_set_cookie_params([
-        'lifetime' => 0,          // Session-Cookie (endet beim Browser-Schließen)
+        'lifetime' => 0,
         'path'     => '/',
-        // 'domain'   => $cookieDomain ?? null, // <- nur setzen, wenn nötig (www/non-www)
-        'secure'   => $isHttps,    // true, wenn du HTTPS durchgehend nutzt (empfohlen)
+        'domain'   => '',        // ggf. deine Domain eintragen
+        'secure'   => isset($_SERVER['HTTPS']),
         'httponly' => true,
-        'samesite' => 'Lax',       // WICHTIG: nicht 'Strict'; 'None' nur bei Cross-Site + HTTPS
+        'samesite' => 'Lax',
     ]);
 
-    // Härtung
-    ini_set('session.use_strict_mode', '1');
-    ini_set('session.use_only_cookies', '1');
-    ini_set('session.cookie_httponly', '1');
-    ini_set('session.gc_maxlifetime', '7200'); // z.B. 2 Stunden Server-Lebensdauer
+    // Optional: ini_set nur, wenn Header noch nicht gesendet wurden
+    if (!headers_sent()) {
+        ini_set('session.use_strict_mode', '1');
+        ini_set('session.use_only_cookies', '1');
+        ini_set('session.cookie_httponly', '1');
+        ini_set('session.cookie_samesite', 'Lax');
+    }
 
-    session_start();
+    // Start erst, wenn sicher noch nichts gesendet wurde
+    if (!headers_sent()) {
+        session_start();
+    } else {
+        // Notfall: brich sauber ab oder logge
+        error_log('Session could not start: headers already sent.');
+    }
 }
 
-
-
+?>
