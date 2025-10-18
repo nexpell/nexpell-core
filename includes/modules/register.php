@@ -1,30 +1,17 @@
 <?php
-declare(strict_types=1);
-
-/**
- * register.php – Nexpell Registrierung
- * - Sauberes Session-/Cookie-Setup (SameSite=Lax)
- * - CSRF-Token nur im GET generiert, timing-safe Vergleich im POST
- * - Kein Cache für Formularseite
- * - PRG-Pattern für Erfolg/Fehler
- * - reCAPTCHA-Check (cURL mit Fallback)
- */
-
 if (session_status() === PHP_SESSION_NONE) {
-    // Cookie-Parameter VOR session_start() setzen
+    session_name('NXSESSID');
+    $isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
     session_set_cookie_params([
         'lifetime' => 0,
-        'secure'   => !empty($_SERVER['HTTPS']),
+        'path'     => '/',
+        'secure'   => $isHttps,
         'httponly' => true,
-        'samesite' => 'Lax', // 'Strict' nur wenn alles same-origin bleibt
+        'samesite' => 'Lax',   // nicht Strict
     ]);
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_only_cookies', '1');
     session_start();
-}
-
-// Kein Cache für die Formularseite (hilft gegen veraltete Tokens)
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    header('Pragma: no-cache');
 }
 
     // LoginSecurity laden
@@ -45,10 +32,25 @@ $seckey = $get['seckey'];
 
 $form_data = $_POST ?? [];
 
-if (!isset($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+// Token NUR im GET erzeugen (sonst überschreibst du evtl. das richtige beim POST)
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        $_SESSION['csrf_token_time'] = time();
+    }
+    // Token zusätzlich als Cookie setzen (nicht HttpOnly, damit Browser es sendet)
+    setcookie('NXCSRF', $_SESSION['csrf_token'], [
+        'expires'  => 0,
+        'path'     => '/',
+        'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'httponly' => false,        // WICHTIG: darf nicht HttpOnly sein
+        'samesite' => 'Lax',
+    ]);
+
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
 }
-$csrf_token = $_SESSION['csrf_token'];
+$csrf_token = $_SESSION['csrf_token'] ?? '';
 
 $username = trim($_POST['username'] ?? '');
 $email = trim($_POST['email'] ?? '');
@@ -79,10 +81,35 @@ if ($attempt_count >= $max_attempts) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    // CSRF prüfen
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die("Ungültiges Formular (CSRF-Schutz).");
+    // === DEBUG START (TEMPORÄR) ===
+error_log('REG DBG host='.($_SERVER['HTTP_HOST'] ?? '').' uri='.($_SERVER['REQUEST_URI'] ?? '').' https='.( !empty($_SERVER['HTTPS']) ? '1' : '0' ));
+error_log('REG DBG sid='.(session_id() ?: 'NONE').' cookie('.session_name().')='.(isset($_COOKIE[session_name()]) ? 'YES' : 'NO'));
+error_log('REG DBG POST.csrf='.(isset($_POST['csrf_token']) ? substr((string)$_POST['csrf_token'],0,16).'...' : 'NULL'));
+error_log('REG DBG SESS.csrf='.(isset($_SESSION['csrf_token']) ? substr((string)$_SESSION['csrf_token'],0,16).'...' : 'NULL'));
+error_log('REG DBG action='.($_POST['action'] ?? '-'));
+// === DEBUG END ===
+
+    $postToken    = (string)($_POST['csrf_token'] ?? '');
+    $sessToken    = (string)($_SESSION['csrf_token'] ?? '');
+    $cookieToken  = (string)($_COOKIE['NXCSRF'] ?? '');
+
+    $sessionOk = ($postToken && $sessToken && hash_equals($sessToken, $postToken));
+    $cookieOk  = ($postToken && $cookieToken && hash_equals($cookieToken, $postToken));
+
+    if (!$sessionOk && !$cookieOk) {
+        http_response_code(400);
+        die('Ungültiges Formular (CSRF-Schutz).');
     }
+
+    if (!empty($_SESSION['csrf_token_time']) && time() - $_SESSION['csrf_token_time'] > 7200) {
+        unset($_SESSION['csrf_token'], $_SESSION['csrf_token_time']);
+        setcookie('NXCSRF', '', time() - 3600, '/'); // löschen
+        die('CSRF-Token abgelaufen. Bitte Formular neu laden.');
+    }
+
+    // Erfolg → Token rotieren
+    unset($_SESSION['csrf_token'], $_SESSION['csrf_token_time']);
+    setcookie('NXCSRF', '', time() - 3600, '/'); // Cookie löschen
 
     // Formulardaten validieren
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -230,19 +257,27 @@ unset($_SESSION['success_message']);
 $termsofuse = '<a href="' . SeoUrlHandler::convertToSeoUrl('index.php?site=privacy_policy') . '">' . $languageService->get('terms_of_use') . '</a>';
 $loginlink = '<a href="' . SeoUrlHandler::convertToSeoUrl('index.php?site=login') . '">' . $languageService->get('login_link') . '</a>';
 
+$form_action = \nexpell\SeoUrlHandler::convertToSeoUrl('index.php?site=register');
+if (!$form_action) { $form_action = 'index.php?site=register'; }
+
+
+
 $data_array = [
 
-    'csrf_token' => htmlspecialchars($csrf_token),
+    
     'error_message' => $errormessage,
     'success_message' => $successmessage,
     'isreg' => $registrierung_erfolgreich,
     'username' => htmlspecialchars($username),
     'email' => htmlspecialchars($email),
     'password_repeat' => htmlspecialchars($password_repeat),
+
+
     
     'message_zusatz' => '',
     'isreg' => $registrierung_erfolgreich,
     
+    #'recaptcha_site_key' => 'DEIN_SITE_KEY',  // <-- Hier dein SITE-KEY einfügen
     'security_code' => $languageService->module['security_code'],
     'recaptcha_site_key' => '<div class="g-recaptcha" data-sitekey="' . htmlspecialchars($webkey) . '"></div>',
     'reg_title' => $languageService->get('reg_title'),
@@ -262,6 +297,10 @@ $data_array = [
     'register' => $languageService->get('register'),
     'terms_of_use_text' => $languageService->get('terms_of_use_text'),
     'termsofuse' => $termsofuse,
+
+    'form_action' => htmlspecialchars($form_action, ENT_QUOTES),
+    'csrf_token'  => htmlspecialchars($csrf_token, ENT_QUOTES),
+    'session_id'  => htmlspecialchars(session_id(), ENT_QUOTES),
 ];
 
 echo $tpl->loadTemplate("register", "content", $data_array);

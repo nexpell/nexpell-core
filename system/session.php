@@ -1,28 +1,34 @@
 <?php
-
 namespace nexpell;
 
-// Nur konfigurieren und starten, wenn noch keine Session läuft
-if (session_status() === PHP_SESSION_NONE) {
-    // Eigener Session-Name
-    session_name('nexpell_session');
+// Diese Datei sehr früh einbinden, vor JEDEM Output!
 
-    // Cookie- und Sicherheits-Einstellungen
+if (session_status() === \PHP_SESSION_NONE) {
+    // Eindeutiger Name (vermeidet Kollisionen mit anderen Apps auf dem Hoster)
+    \session_name('NXSESSID');
+
+    $isHttps  = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+
+    // Wenn du www UND non-www benutzt, kommentiere die Domain-Zeile ein und setze deine Domain:
+    // $cookieDomain = '.deinedomain.tld';
+
     session_set_cookie_params([
-        'lifetime' => 3600,       // Cookie gültig für 1 Stunde
-        'path'     => '/',        // Gilt für gesamte Domain
-        'secure'   => true,       // Nur über HTTPS senden
-        'httponly' => true,       // Kein Zugriff via JavaScript
-        'samesite' => 'Strict'    // Schutz vor CSRF (oder 'Lax' falls externe Logins nötig sind)
+        'lifetime' => 0,          // Session-Cookie (endet beim Browser-Schließen)
+        'path'     => '/',
+        // 'domain'   => $cookieDomain ?? null, // <- nur setzen, wenn nötig (www/non-www)
+        'secure'   => $isHttps,    // true, wenn du HTTPS durchgehend nutzt (empfohlen)
+        'httponly' => true,
+        'samesite' => 'Lax',       // WICHTIG: nicht 'Strict'; 'None' nur bei Cross-Site + HTTPS
     ]);
 
-    // Sicherheits-Settings
-    ini_set('session.use_strict_mode', 1);   // Verhindert Session-Fixation
-    ini_set('session.use_only_cookies', 1);  // Session-ID nur per Cookie
-    ini_set('session.gc_maxlifetime', 3600); // Serverseitige Session-Lebensdauer
+    // Härtung
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.cookie_httponly', '1');
+    ini_set('session.gc_maxlifetime', '7200'); // z.B. 2 Stunden Server-Lebensdauer
 
-    // Session starten
     session_start();
 }
+
 
 
