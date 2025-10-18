@@ -520,7 +520,13 @@ if (!isset($_SERVER['REQUEST_URI'])) {
 
 // -- BANNED IPs -- //
 // Löscht abgelaufene Einträge in der Tabelle für gesperrte IPs
-safe_query("DELETE FROM banned_ips WHERE deltime < '" . time() . "'");
+//safe_query("DELETE FROM banned_ips WHERE deltime < '" . time() . "'");
+safe_query("
+  DELETE FROM `banned_ips`
+  WHERE `deltime` IS NOT NULL
+    AND `deltime` <> '0000-00-00 00:00:00'
+    AND `deltime` < NOW()
+");
 
 
 // =======================
