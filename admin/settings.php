@@ -277,23 +277,135 @@ echo '
 
                     // Datum auslesen
 
+                    // === Einheitliche Pfade (oben im Settings-Controller definieren) ===
+                    $rootDir    = dirname(__DIR__);               // von /admin/ eine Ebene hoch -> Webroot
+                    $stateDir   = $rootDir . '/var';
+                    $updateFile = $stateDir . '/sitemap_last_update.txt';
+
+                    if (!is_dir($stateDir)) { @mkdir($stateDir, 0775, true); }
+
+                    // === ANZEIGE ===
                     $lastUpdate = 'Noch keine Sitemap generiert';
-                    $updateFile = __DIR__ . '/sitemap_last_update.txt';
-
-                    if (file_exists($updateFile)) {
-                        $lastUpdate = file_get_contents($updateFile);
+                    if (is_readable($updateFile)) {
+                        $lastUpdate = trim((string)file_get_contents($updateFile));
                     }
 
-                    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate'])) {
-                        include __DIR__ . '/../sitemap.php';
 
-                        // Datum auf deutsch
-                        file_put_contents($updateFile, date('d.m.Y H:i:s'));
 
-                        // Reload zur Anzeige
-                        header('Location: ' . $_SERVER['REQUEST_URI']);
-                        exit;
-                    }
+                    // Fehlerhandling
+
+// --- stabiler Kopf ---
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+ini_set('html_errors', '0');
+ini_set('log_errors', '1');
+
+// Gemeinsame Pfade
+$rootDir     = dirname(__DIR__);                 // /pfad/zu/webroot (von /admin/ eine Ebene hoch)
+$sitemapFile = $rootDir . '/sitemap.xml';
+$stateDir    = $rootDir . '/var';
+$updateFile  = $stateDir . '/sitemap_last_update.txt';
+
+// Anzeige letzter Stand (vor dem Formular)
+if (!is_dir($stateDir)) { @mkdir($stateDir, 0775, true); }
+$lastUpdate = 'Noch keine Sitemap generiert';
+if (is_readable($updateFile)) {
+    $lastUpdate = trim((string)file_get_contents($updateFile));
+}
+
+// ======= POST: Generieren, aber Request NICHT blockieren =======
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate'])) {
+
+    // 1) Sofortiger PRG-Redirect vorbereiten
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host   = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $target = $scheme . '://' . $host . '/admin/admincenter.php?site=settings';
+
+    // 2) Antwort an den Browser abschließen (Redirect) — danach weiterarbeiten
+    //    (a) Header setzen
+    header('Cache-Control: no-store');
+    header('Location: ' . $target, true, 303);
+    header('Connection: close');
+
+    //    (b) Kleine Body-Antwort, damit einige Server den Socket sauber schließen
+    $out = "OK";
+    $len = strlen($out);
+    header('Content-Length: ' . $len);
+
+    //    (c) Senden + Verbindung schließen
+    echo $out;
+
+    //    (d) Request wirklich beenden (PHP-FPM) oder bestmöglich flushen
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request(); // ab hier ist der Browser schon weg
+    } else {
+        @ob_flush(); @flush();
+    }
+
+    // 3) Ab hier „Hintergrund“ im selben PHP-Prozess (Browser ist schon weg)
+    ignore_user_abort(true);
+    @set_time_limit(300);               // 5 Minuten
+    @ini_set('memory_limit', '512M');   // großzügig für größere Sitemaps
+
+    try {
+        // (a) Verzeichnisse prüfen
+        $sitemapDir = dirname($sitemapFile);
+        if (!is_dir($sitemapDir)) { throw new RuntimeException("Sitemap-Verzeichnis fehlt: $sitemapDir"); }
+        if (!is_writable($sitemapDir)) { throw new RuntimeException("Sitemap-Verzeichnis nicht schreibbar: $sitemapDir"); }
+        if (!is_dir($stateDir)) { @mkdir($stateDir, 0775, true); }
+        if (!is_writable($stateDir)) { throw new RuntimeException("Update-Verzeichnis nicht schreibbar: $stateDir"); }
+
+        // (b) Sitemap generieren (Library-Modus!)
+        if (!defined('SITEMAP_EMIT')) { define('SITEMAP_EMIT', false); }
+        // Falls noch Output-Buffer offen ist, unkritisch – Sitemap liefert String:
+        $xml = include $rootDir . '/sitemap.php';
+        if (!is_string($xml) || $xml === '') {
+            throw new RuntimeException('sitemap.php hat keinen XML-String zurückgegeben.');
+        }
+        if (strpos($xml, '<urlset') === false || strpos($xml, '</urlset>') === false) {
+            throw new RuntimeException('Sitemap-XML unvollständig (kein <urlset> gefunden).');
+        }
+
+        // (c) Atomar schreiben + Rechte 0644
+        $tmp = tempnam($sitemapDir, 'smap_');
+        if ($tmp === false) { throw new RuntimeException('Tempfile fehlgeschlagen.'); }
+
+        $oldUmask = umask(0022); // neue Dateien -> 644 möglich
+        $bytes    = file_put_contents($tmp, $xml);
+        if ($bytes === false) {
+            if (isset($oldUmask)) umask($oldUmask);
+            throw new RuntimeException('Sitemap konnte nicht geschrieben werden.');
+        }
+        if (!@rename($tmp, $sitemapFile)) {
+            @unlink($tmp);
+            if (isset($oldUmask)) umask($oldUmask);
+            throw new RuntimeException('rename() auf sitemap.xml fehlgeschlagen.');
+        }
+        @chmod($sitemapFile, 0644);
+        if (isset($oldUmask)) umask($oldUmask);
+
+        // (d) Timestamp aktualisieren
+        $stamp = (new DateTime('now', new DateTimeZone('Europe/Berlin')))->format('d.m.Y H:i:s');
+        @file_put_contents($updateFile, $stamp, LOCK_EX);
+
+        // Optional: Erfolg ins Log
+        error_log('[sitemap] erfolgreich generiert am ' . $stamp);
+
+    } catch (Throwable $e) {
+        // Fehler ins Serverlog
+        error_log('Sitemap-Generate-Error: ' . $e->getMessage());
+        // Hier KEINE Header/Antwort mehr senden (Browser ist weg)
+    }
+
+    // 4) Prozess sauber beenden
+    exit;
+}
+
+// … danach dein normales Admin-HTML: Anzeige von $lastUpdate + Button name="generate"
+
+                    // … hier folgt dein normales Admin-HTML (Formular etc.),
+                    // z. B. Anzeige $lastUpdate und Button name="generate".
+
 
                     echo '
                         <div class="row d-flex align-items-stretch">
@@ -342,7 +454,7 @@ echo '
                                 <div class="row align-items-center mt-3">
                                     <div class="col-md-5 fw-semibold">' . htmlspecialchars($languageService->get('seo_url_setting')) . ':</div>
                                         <div class="col-md-7">
-                                            <a href="admincenter.php?site=admin_seo_meta" class="btn btn-primary mt-2" role="button" title="SEO Meta Einstellungen bearbeiten">
+                                            <a href="admincenter.php?site=seo_meta" class="btn btn-primary mt-2" role="button" title="SEO Meta Einstellungen bearbeiten">
                                                 SEO Meta Einstellungen bearbeiten
                                             </a>
                                         </div>

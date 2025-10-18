@@ -5,45 +5,194 @@ namespace nexpell;
 class SeoUrlHandler {
 
 
-    public static function route(?string $uri = null): void 
-    {
-        $uri = $uri ?? $_SERVER['REQUEST_URI'];
-        $path = parse_url($uri, PHP_URL_PATH);
-        $segments = explode('/', trim($path, '/'));
+public static function route(?string $uri = null): void 
+{
+    $uri = $uri ?? $_SERVER['REQUEST_URI'];
+    $path = parse_url($uri, PHP_URL_PATH);
+    $segments = explode('/', trim($path, '/'));
 
-        if (isset($segments[0]) && preg_match('/^[a-z]{2}$/i', $segments[0])) {
-            // Sprachsegment
-            $_GET['lang'] = strtolower($segments[0]);
-            $_GET['site'] = $segments[1] ?? 'index';
+    if (isset($segments[0]) && preg_match('/^[a-z]{2}$/i', $segments[0])) {
+        $_GET['lang'] = strtolower($segments[0]);
+        $_GET['site'] = $segments[1] ?? 'index';
 
-            // action nur setzen, wenn nicht nur Parameter folgt
-            $_GET['action'] = (isset($segments[2]) && !preg_match('/id$/i', $segments[2])) ? $segments[2] : null;
+        // WICHTIG: Hier sowohl alte als auch neue Aktionsnamen erlauben
+        $knownActions = [
+            'show','watch','deletecomment','edit','new','list',
+            // Forum-Varianten:
+            'thread','post','category',
+            'showthread','showpost','showcategory',
+        ];
+        $_GET['action'] = (isset($segments[2]) && in_array(strtolower($segments[2]), $knownActions, true))
+            ? strtolower($segments[2])
+            : null;
 
-            // Parameter ab Segment 2 oder 3
-            $start = ($_GET['action'] === null) ? 2 : 3;
-            for ($i = $start; $i < count($segments); $i += 2) {
-                $key = $segments[$i] ?? null;
-                $val = $segments[$i + 1] ?? null;
-                if ($key === null || $val === null) continue;
+        /* =======================
+         * NEWS: Slug/ID/Pagination
+         * ======================= */
+        if (($_GET['site'] ?? '') === 'news') {
+            $s2 = $segments[2] ?? null;
+            $s3 = $segments[3] ?? null;
+            $s4 = $segments[4] ?? null;
 
-                if (strtolower($key) === 'index.php' || strtolower($val) === 'index.php') continue;
-
-                if (preg_match('/^([a-z]+)id$/i', $key, $matches)) {
-                    $key = $matches[1] . 'ID';
+            // /{lang}/news/page/2 -> Übersicht
+            if ($s2 !== null && strtolower($s2) === 'page' && ctype_digit((string)$s3)) {
+                $_GET['page'] = (int)$s3;
+                return;
+            }
+            // /{lang}/news/{slug|id}/page/2 -> Kategorie-Pagination
+            if ($s2 !== null && $s3 !== null && strtolower($s3) === 'page' && ctype_digit((string)$s4)) {
+                if (ctype_digit((string)$s2)) {
+                    $_GET['id'] = (int)$s2;
+                    $_GET['newsID'] = (int)$s2; // Kompatibilität
+                } else {
+                    $_GET['slug'] = $s2;
                 }
-
-                $_GET[$key] = is_numeric($val) ? (int)$val : $val;
+                $_GET['page'] = (int)$s4;
+                return;
             }
-
-        } else {
-            // klassische query-Parameter
-            parse_str(parse_url($uri, PHP_URL_QUERY) ?: '', $queryParams);
-            foreach ($queryParams as $k => $v) {
-                $_GET[$k] = $v;
+            // /{lang}/news/{slug|id}
+            if ($s2 !== null && !in_array(strtolower($s2), $knownActions, true)) {
+                if (ctype_digit((string)$s2)) {
+                    $_GET['id'] = (int)$s2;
+                    $_GET['newsID'] = (int)$s2; // Kompatibilität
+                } else {
+                    $_GET['slug'] = $s2;
+                }
+                return;
             }
-            $_GET['lang'] = $_GET['lang'] ?? 'de';
         }
+
+        /* =======================
+         * FORUM: Threads/Posts/etc.
+         * Setzt IMMER alle kompatiblen Keys,
+         * damit alte Controller-Branches weiter laufen.
+         * ======================= */
+        if (($_GET['site'] ?? '') === 'forum') {
+            $s2 = $segments[2] ?? null; // thread | post | category | showthread | showpost | showcategory | page
+            $s3 = $segments[3] ?? null; // id | id | id | id | id | id | number
+            $s4 = $segments[4] ?? null; // page |    | page | page |     | page | (optional "page")
+            $s5 = $segments[5] ?? null; // number |  | number | number | | number | (page number)
+
+            // Helper zum Setzen aller Varianten für Thread/Post/Category
+            $setThreadKeys = function(int $id) {
+                $_GET['thread']   = $id;   // legacy
+                $_GET['threadID'] = $id;   // häufig verwendet
+                $_GET['id']       = $id;   // manche Controller nehmen id
+            };
+            $setPostKeys = function(int $id) {
+                $_GET['post']   = $id;
+                $_GET['postID'] = $id;
+                $_GET['id']     = $id;
+            };
+            $setCategoryKeys = function(int $id) {
+                $_GET['category']   = $id;
+                $_GET['categoryID'] = $id;
+                $_GET['id']         = $id;
+            };
+
+            // A) /{lang}/forum/thread/{id}[/page/{n}]
+            if ($s2 !== null && strtolower($s2) === 'thread' && ctype_digit((string)$s3)) {
+                $tid = (int)$s3;
+                $setThreadKeys($tid);
+                // beide Aktions-Varianten setzen:
+                $_GET['action'] = $_GET['action'] ?? 'thread';
+                $_GET['action_showthread'] = 'showthread'; // nur Info; stört nicht
+                // optional page
+                if ($s4 !== null && strtolower($s4) === 'page' && ctype_digit((string)$s5)) {
+                    $_GET['page'] = (int)$s5;
+                }
+                return;
+            }
+
+            // B) /{lang}/forum/post/{id}
+            if ($s2 !== null && strtolower($s2) === 'post' && ctype_digit((string)$s3)) {
+                $pid = (int)$s3;
+                $setPostKeys($pid);
+                $_GET['action'] = $_GET['action'] ?? 'post';   // legacy
+                $_GET['action_showpost'] = 'showpost';
+                return;
+            }
+
+            // C) /{lang}/forum/category/{id}[/page/{n}]
+            if ($s2 !== null && strtolower($s2) === 'category' && ctype_digit((string)$s3)) {
+                $cid = (int)$s3;
+                $setCategoryKeys($cid);
+                $_GET['action'] = $_GET['action'] ?? 'category';
+                $_GET['action_showcategory'] = 'showcategory';
+                if ($s4 !== null && strtolower($s4) === 'page' && ctype_digit((string)$s5)) {
+                    $_GET['page'] = (int)$s5;
+                }
+                return;
+            }
+
+            // D) /{lang}/forum/page/{n}  → Foren-Übersicht paginiert
+            if ($s2 !== null && strtolower($s2) === 'page' && ctype_digit((string)$s3)) {
+                $_GET['page'] = (int)$s3;
+                return;
+            }
+
+            // E) Direkt-Aktionspfade:
+            //    /{lang}/forum/showthread/{id}[/page/{n}]
+            if ($s2 !== null && strtolower($s2) === 'showthread' && ctype_digit((string)$s3)) {
+                $tid = (int)$s3;
+                $setThreadKeys($tid);
+                $_GET['action'] = 'showthread';
+                if ($s4 !== null && strtolower($s4) === 'page' && ctype_digit((string)$s5)) {
+                    $_GET['page'] = (int)$s5;
+                }
+                return;
+            }
+            //    /{lang}/forum/showpost/{id}
+            if ($s2 !== null && strtolower($s2) === 'showpost' && ctype_digit((string)$s3)) {
+                $pid = (int)$s3;
+                $setPostKeys($pid);
+                $_GET['action'] = 'showpost';
+                return;
+            }
+            //    /{lang}/forum/showcategory/{id}[/page/{n}]
+            if ($s2 !== null && strtolower($s2) === 'showcategory' && ctype_digit((string)$s3)) {
+                $cid = (int)$s3;
+                $setCategoryKeys($cid);
+                $_GET['action'] = 'showcategory';
+                if ($s4 !== null && strtolower($s4) === 'page' && ctype_digit((string)$s5)) {
+                    $_GET['page'] = (int)$s5;
+                }
+                return;
+            }
+            // ansonsten weiter zu Standard-Pairs
+        }
+
+        // ===== Standard Key/Value-Paare ab Segment 2/3 =====
+        $start = ($_GET['action'] === null) ? 2 : 3;
+        for ($i = $start; $i < count($segments); $i += 2) {
+            $key = $segments[$i] ?? null;
+            $val = $segments[$i + 1] ?? null;
+            if ($key === null || $val === null) continue;
+            if (preg_match('/^([a-z]+)id$/i', $key, $m)) $key = $m[1] . 'ID';
+            $_GET[$key] = is_numeric($val) ? (int)$val : $val;
+        }
+    } else {
+        // klassische query-Parameter
+        parse_str(parse_url($uri, PHP_URL_QUERY) ?: '', $queryParams);
+        foreach ($queryParams as $k => $v) $_GET[$k] = $v;
+
+        // Kompatibilität für News (Non-SEO)
+        if (($_GET['site'] ?? '') === 'news') {
+            if (!empty($_GET['newsID']) && empty($_GET['id']))     $_GET['id']     = (int) $_GET['newsID'];
+            if (!empty($_GET['id'])     && empty($_GET['newsID'])) $_GET['newsID'] = (int) $_GET['id'];
+            if (!empty($_GET['newsID']) && empty($_GET['action'])) $_GET['action'] = 'show';
+        }
+
+        $_GET['lang'] = $_GET['lang'] ?? 'de';
     }
+}
+
+
+
+
+
+
+
 
     /**
      * Wandelt einen Query-String in eine SEO-URL um
@@ -199,25 +348,29 @@ class SeoUrlHandler {
                     $url = "index.php?lang={$lang}&site=forum&action=showpost&postID={$id}&slug={$slug}";
                 }
                 break;
-            case 'plugins_news_categories':
-                // Slug aus DB holen
-                $catSlug = self::getCategorySlug($id); // Methode in SeoUrlHandler
-                if (!$catSlug) {
-                    $catTitle = self::getCategoryTitle($id);
-                    $catSlug = $catTitle ? self::slugify($catTitle) : "category{$id}";
+
+            case 'plugins_news_categories': 
+                $catSlug = self::getCategorySlug($id)
+                    ?: (self::getCategoryTitle($id) ? self::slugify(self::getCategoryTitle($id)) : "category{$id}");
+
+                if (defined('USE_SEO_URLS') && USE_SEO_URLS) {
+                    $url = "index.php?site=news&slug={$catSlug}";     // KEIN /news/... direkt!
+                } else {
+                    $url = "index.php?site=news&cat={$id}";
                 }
-                // URL ohne action=show, nur /news/slug
-                $url = "index.php?lang={$lang}&site=news&slug={$catSlug}";
                 break;
-        
-            case 'plugins_news':
-                $newsSlug = self::getNewsSlug($id); // Slug aus DB
-                if (!$newsSlug) {
-                    $newsTitle = self::getNewsTitle($id);
-                    $newsSlug = $newsTitle ? self::slugify($newsTitle) : "news{$id}";
+
+            case 'plugins_news': 
+                $newsSlug = self::getNewsSlug($id)
+                    ?: (self::getNewsTitle($id) ? self::slugify(self::getNewsTitle($id)) : null);
+
+                if (defined('USE_SEO_URLS') && USE_SEO_URLS) {
+                    $url = $newsSlug
+                        ? "index.php?site=news&slug={$newsSlug}"      // KEIN /news/... direkt!
+                        : "index.php?site=news&id={$id}";
+                } else {
+                    $url = "index.php?site=news&newsID={$id}";
                 }
-                // URL ohne action=watch, nur /news/slug
-                $url = "index.php?lang={$lang}&site=news&slug={$newsSlug}";
                 break;
 
             case 'plugins_gallery':

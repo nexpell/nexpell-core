@@ -1,6 +1,30 @@
 <?php
+declare(strict_types=1);
+
+/**
+ * register.php – Nexpell Registrierung
+ * - Sauberes Session-/Cookie-Setup (SameSite=Lax)
+ * - CSRF-Token nur im GET generiert, timing-safe Vergleich im POST
+ * - Kein Cache für Formularseite
+ * - PRG-Pattern für Erfolg/Fehler
+ * - reCAPTCHA-Check (cURL mit Fallback)
+ */
+
 if (session_status() === PHP_SESSION_NONE) {
+    // Cookie-Parameter VOR session_start() setzen
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'secure'   => !empty($_SERVER['HTTPS']),
+        'httponly' => true,
+        'samesite' => 'Lax', // 'Strict' nur wenn alles same-origin bleibt
+    ]);
     session_start();
+}
+
+// Kein Cache für die Formularseite (hilft gegen veraltete Tokens)
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
 }
 
     // LoginSecurity laden
@@ -215,13 +239,10 @@ $data_array = [
     'username' => htmlspecialchars($username),
     'email' => htmlspecialchars($email),
     'password_repeat' => htmlspecialchars($password_repeat),
-
-
     
     'message_zusatz' => '',
     'isreg' => $registrierung_erfolgreich,
     
-    #'recaptcha_site_key' => 'DEIN_SITE_KEY',  // <-- Hier dein SITE-KEY einfügen
     'security_code' => $languageService->module['security_code'],
     'recaptcha_site_key' => '<div class="g-recaptcha" data-sitekey="' . htmlspecialchars($webkey) . '"></div>',
     'reg_title' => $languageService->get('reg_title'),
@@ -240,7 +261,7 @@ $data_array = [
     'pass_text' => $languageService->get('pass_text'),
     'register' => $languageService->get('register'),
     'terms_of_use_text' => $languageService->get('terms_of_use_text'),
-    '$termsofuse' => $termsofuse,
+    'termsofuse' => $termsofuse,
 ];
 
 echo $tpl->loadTemplate("register", "content", $data_array);
