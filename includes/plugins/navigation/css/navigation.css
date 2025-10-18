@@ -1,3 +1,4 @@
+@media (min-width: 992px) { /* ab Bootstrap lg breakpoint = Desktop */
 .navbar {
   min-height: 80px;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
@@ -20,7 +21,7 @@
   transform: scale(1.05);
 }
 
-.navbar-nav .nav-link {
+.navbar .nav-link {
   font-weight: 500;
   text-transform: uppercase;
   transition: color 0.3s ease;
@@ -52,7 +53,7 @@
 /* Badge */
 #total-unread-badge {
     position: absolute;
-    top: -16px;             /* leicht nach oben über das Icon */
+    top: 6px;             /* leicht nach oben über das Icon */
     right: -6px;           /* leicht nach rechts über das Icon */
 
     display: flex;         /* damit Text mittig */
@@ -70,4 +71,32 @@
     
     line-height: 1.5rem;   /* Text vertikal ausbalanciert */
     white-space: nowrap;
+}
+
+.navbar
+{
+    height: 80px;
+    transition: all 0.5s;
+    z-index: 997;
+    transition: all 0.5s;
+    background: rgba(var(--bs-nav-bg-rgb), 1);
+    box-shadow: 0px 2px 15px rgba(255, 255, 255, 0.5);
+    
+    border-top: var(--bs-nav-border-top-size) solid rgba(var(--bs-nav-border-top-color-rgb), 1) !important;
+    border-bottom: var(--bs-nav-border-bottom-size) solid rgba(var(--bs-nav-border-bottom-color-rgb), 1) !important;
+    box-shadow:0 .46875rem 2.1875rem rgba(90,97,105,0.1),0 .9375rem 1.40625rem rgba(90,97,105,.1),0 .25rem .53125rem rgba(90,97,105,.12),0 .125rem .1875rem rgba(90,97,105,.1);
+    
+}
+
+}
+
+/* Logo */
+.logo-link img {
+    max-height: clamp(50px, 8vw, 65px);
+    height: auto;
+    transition: transform 0.3s ease;
+}
+
+.logo-link:hover img {
+    transform: scale(1.05);
 }

@@ -56,6 +56,7 @@ header('X-UA-Compatible: IE=edge');
     <!-- Apple Touch Icon (iOS) -->
     <link rel="apple-touch-icon" sizes="180x180" href="/includes/themes/default/images/favicon-180.png">
 
+
     <base href="/">
 
     <link rel="stylesheet" href="/includes/themes/<?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/css/dist/<?= htmlspecialchars($currentTheme, ENT_QUOTES, 'UTF-8'); ?>/bootstrap.min.css"/>
@@ -66,6 +67,8 @@ header('X-UA-Compatible: IE=edge');
         echo '<!--Plugin & Widget css-->' . PHP_EOL;
         echo $plugin_css ?? '';
     ?>
+
+
     
     <link rel="stylesheet" href="/includes/themes/<?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/css/stylesheet.css" />
 
