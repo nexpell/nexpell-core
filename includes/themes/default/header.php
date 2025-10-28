@@ -56,7 +56,6 @@ header('X-UA-Compatible: IE=edge');
     <!-- Apple Touch Icon (iOS) -->
     <link rel="apple-touch-icon" sizes="180x180" href="/includes/themes/default/images/favicon-180.png">
 
-
     <base href="/">
 
     <link rel="stylesheet" href="/includes/themes/<?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/css/dist/<?= htmlspecialchars($currentTheme, ENT_QUOTES, 'UTF-8'); ?>/bootstrap.min.css"/>
@@ -67,21 +66,22 @@ header('X-UA-Compatible: IE=edge');
         echo '<!--Plugin & Widget css-->' . PHP_EOL;
         echo $plugin_css ?? '';
     ?>
-
-
     
     <link rel="stylesheet" href="/includes/themes/<?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/css/stylesheet.css" />
 
 </head>
 
-<body>
+<body class="<?= isset($_GET['builder']) && $_GET['builder']==='1' ? 'builder-active' : '' ?>">
 <div class="d-flex flex-column sticky-footer-wrapper">
-    <!-- Widgets: Top -->
-    <?php if (!empty($widgetsByPosition['top'])): ?>
-        <?php foreach ($widgetsByPosition['top'] as $widget): ?>                
-            <?= $widget ?>
-        <?php endforeach; ?>
+    <!-- === TOP Widgets === -->
+    <?php if ($isBuilder || !empty($widgetsByPosition['top'])): ?>
+        <div class="nx-live-zone nx-zone" data-nx-zone="top">
+            <?php if (!empty($widgetsByPosition['top'])): ?>
+                <?php foreach ($widgetsByPosition['top'] as $widget) echo $widget; ?>
+            <?php elseif ($isBuilder): ?>
+                <div class="builder-placeholder">[Leere Zone: top]</div>
+            <?php endif; ?>
+        </div>
     <?php endif; ?>
-
     <?= $pluginManager->getNavigationModule(); ?>
     <?= get_lock_modul(); ?>

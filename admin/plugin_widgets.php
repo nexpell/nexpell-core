@@ -43,10 +43,10 @@ $__WIDGET_RESTRICTIONS = nx__load_widget_restrictions_map();
 
     function nxb_redirect_back(string $msg = '', int $delay = 0): void {
         if (function_exists('redirect')) {
-            redirect('admincenter.php?site=plugin_widgets_setting', $msg, $delay);
+            redirect('admincenter.php?site=plugin_widgets_list', $msg, $delay);
             exit;
         }
-        header('Location: admincenter.php?site=plugin_widgets_setting');
+        header('Location: admincenter.php?site=plugin_widgets_list');
         exit;
     }
 
@@ -128,15 +128,15 @@ $__WIDGET_RESTRICTIONS = nx__load_widget_restrictions_map();
 
           <nav aria-label="breadcrumb">
             <ol class="breadcrumb t-5 p-2 bg-light">
-              <li class="breadcrumb-item"><a href="admincenter.php?site=plugin_widgets_setting">Widgets verwalten</a></li>
-              <li class="breadcrumb-item"><a href="admincenter.php?site=plugin_widgets_setting&action=list">Widget Übersicht</a></li>
+              <li class="breadcrumb-item"><a href="admincenter.php?site=plugin_widgets">Widgets verwalten</a></li>
+              <li class="breadcrumb-item"><a href="admincenter.php?site=plugin_widgets&action=list">Widget Liste</a></li>
               <li class="breadcrumb-item active" aria-current="page">New / Edit</li>
             </ol>
           </nav>
 
           <div class="card-body">
           <div class="container py-5">
-            <form method="post" action="admincenter.php?site=plugin_widgets_setting">
+            <form method="post" action="admincenter.php?site=plugin_widgets_list">
               <input type="hidden" name="csrf_token" value="' . htmlspecialchars($CSRF) . '">
               <input type="hidden" name="widget_key" value="' . htmlspecialchars($edit_data['widget_key']) . '">
 
@@ -187,7 +187,7 @@ $__WIDGET_RESTRICTIONS = nx__load_widget_restrictions_map();
                 <button type="submit" name="save_widget" class="btn btn-success">
                   <i class="bi bi-save"></i> Änderungen speichern
                 </button>
-                <a href="admincenter.php?site=plugin_widgets_setting&action=list" class="btn btn-outline-secondary">
+                <a href="admincenter.php?site=plugin_widgets&action=list" class="btn btn-outline-secondary">
                   <i class="bi bi-arrow-left"></i> Zurück
                 </a>
               </div>
@@ -202,7 +202,7 @@ $__WIDGET_RESTRICTIONS = nx__load_widget_restrictions_map();
 
           <nav aria-label="breadcrumb">
             <ol class="breadcrumb t-5 p-2 bg-light">
-              <li class="breadcrumb-item"><a href="admincenter.php?site=plugin_widgets_setting">Widgets verwalten</a></li>
+              <li class="breadcrumb-item"><a href="admincenter.php?site=plugin_widgets">Widgets verwalten</a></li>
               <li class="breadcrumb-item active" aria-current="page">Widgets – Übersicht</li>
             </ol>
           </nav>
@@ -239,7 +239,7 @@ $__WIDGET_RESTRICTIONS = nx__load_widget_restrictions_map();
                   <td>' . htmlspecialchars($row['modulname'] ?? '') . '</td>
                   <td>' . $zonesLabel . '</td>
                   <td>
-                    <a href="admincenter.php?site=plugin_widgets_setting&action=edit&edit=' . urlencode($row['widget_key']) . '" class="btn btn-sm btn-primary">
+                    <a href="admincenter.php?site=plugin_widgets&action=edit&edit=' . urlencode($row['widget_key']) . '" class="btn btn-sm btn-primary">
                       <i class="bi bi-pencil-square"></i> Bearbeiten
                     </a>
                   </td>
@@ -267,13 +267,13 @@ $__WIDGET_RESTRICTIONS = nx__load_widget_restrictions_map();
   <div class="card-header d-flex justify-content-between align-items-center">
     <div><i class="bi bi-journal-text"></i> Widgets verwalten</div>
     <div>
-      <a href="admincenter.php?site=plugin_widgets_setting&action=list" class="btn btn-success"><i class="bi bi-plus"></i> Widget Liste</a>
+      <a href="admincenter.php?site=plugin_widgets&action=list" class="btn btn-success"><i class="bi bi-plus"></i> Widget Liste</a>
     </div>
   </div>
 
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb t-5 p-2 bg-light">
-      <li class="breadcrumb-item"><a href="admincenter.php?site=plugin_widgets_setting">Widgets verwalten</a></li>
+      <li class="breadcrumb-item"><a href="admincenter.php?site=plugin_widgets">Widgets verwalten</a></li>
       <li class="breadcrumb-item active" aria-current="page">New / Edit</li>
     </ol>
   </nav>

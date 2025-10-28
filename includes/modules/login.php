@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = $stmt->get_result();
         $user = $result->fetch_assoc();
 
-        if ($user) {
+        /*if ($user) {
             if (!empty($user['is_locked']) && (int)$user['is_locked'] === 1) {
                 $message = '<div class="alert alert-danger" role="alert">' . $languageService->get('error_account_locked') . '</div>';
                 $isIpBanned = true;
@@ -98,7 +98,129 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } else {
             $message = '<div class="alert alert-danger" role="alert">' . $languageService->get('error_not_found') . '</div>';
+        }*/
+        if ($user) {
+            if (!empty($user['is_locked']) && (int)$user['is_locked'] === 1) {
+                $message = '<div class="alert alert-danger" role="alert">' . $languageService->get('error_account_locked') . '</div>';
+                $isIpBanned = true;
+            } else {
+                // ===========================================
+                // 🧩 Session setzen (Basisdaten)
+                // ===========================================
+                $_SESSION['userID']   = (int)$user['userID'];
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['email']    = $user['email'];
+
+                // ===========================================
+                // 🧩 Rollen-System: alle Rollen + Namen laden
+                // ===========================================
+                $roles = [];
+                $roleNames = [];
+
+                $stmtRole = $_database->prepare("
+                    SELECT r.roleID, r.role_name
+                    FROM user_role_assignments ura
+                    JOIN user_roles r ON ura.roleID = r.roleID
+                    WHERE ura.userID = ?
+                ");
+                $stmtRole->bind_param("i", $user['userID']);
+                $stmtRole->execute();
+                $resultRole = $stmtRole->get_result();
+
+                while ($rowRole = $resultRole->fetch_assoc()) {
+                    $roles[] = (int)$rowRole['roleID'];
+                    $roleNames[] = $rowRole['role_name'];
+                }
+                $stmtRole->close();
+
+                // In Session speichern
+                $_SESSION['roles']       = $roles;
+                $_SESSION['role_names']  = $roleNames;
+
+                // ===========================================
+                // 🧩 Automatische Flags nach RolleID
+                // ===========================================
+                $_SESSION['is_admin']       = in_array(1,  $roles, true);
+                $_SESSION['is_coadmin']     = in_array(2,  $roles, true);
+                $_SESSION['is_leader']      = in_array(3,  $roles, true);
+                $_SESSION['is_coleader']    = in_array(4,  $roles, true);
+                $_SESSION['is_squadleader'] = in_array(5,  $roles, true);
+                $_SESSION['is_warorg']      = in_array(6,  $roles, true);
+                $_SESSION['is_moderator']   = in_array(7,  $roles, true);
+                $_SESSION['is_editor']      = in_array(8,  $roles, true);
+                $_SESSION['is_member']      = in_array(9,  $roles, true);
+                $_SESSION['is_trial']       = in_array(10, $roles, true);
+                $_SESSION['is_guest']       = in_array(11, $roles, true);
+                $_SESSION['is_registered']  = in_array(12, $roles, true);
+                $_SESSION['is_honor']       = in_array(13, $roles, true);
+                $_SESSION['is_streamer']    = in_array(14, $roles, true);
+                $_SESSION['is_designer']    = in_array(15, $roles, true);
+                $_SESSION['is_technician']  = in_array(16, $roles, true);
+
+                // ===========================================
+                // 🧩 Rückwärtskompatibilität + textbasierte Rolle
+                // ===========================================
+                $_SESSION['roleID'] = $_SESSION['is_admin'] ? 1 : (($_SESSION['is_registered'] ?? false) ? 12 : null);
+
+                if ($_SESSION['is_admin']) {
+                    $_SESSION['userrole'] = 'admin';
+                } elseif ($_SESSION['is_moderator']) {
+                    $_SESSION['userrole'] = 'moderator';
+                } elseif ($_SESSION['is_editor']) {
+                    $_SESSION['userrole'] = 'editor';
+                } elseif ($_SESSION['is_registered']) {
+                    $_SESSION['userrole'] = 'user';
+                } else {
+                    $_SESSION['userrole'] = 'guest';
+                }
+
+                // ===========================================
+                // 🧩 Fallback – falls User keine Rolle hat
+                // ===========================================
+                if (empty($roles)) {
+                    $res = safe_query("SELECT roleID FROM user_roles WHERE is_default = 1 LIMIT 1");
+                    if ($row = mysqli_fetch_assoc($res)) {
+                        $defaultRole = (int)$row['roleID'];
+                        safe_query("INSERT INTO user_role_assignments (userID, roleID, created_at)
+                                    VALUES (" . (int)$user['userID'] . ", $defaultRole, NOW())");
+                        $_SESSION['roles'] = [$defaultRole];
+                        $_SESSION['is_registered'] = true;
+                        $_SESSION['userrole'] = 'user';
+                    }
+                }
+
+                // ===========================================
+                // 🧩 Session absichern + Login-Status aktualisieren
+                // ===========================================
+                LoginSecurity::saveSession($user['userID']);
+
+                $login_time = date('Y-m-d H:i:s');
+                $is_online  = 1;
+
+                $updateStmt = $_database->prepare("
+                    UPDATE users 
+                    SET 
+                        lastlogin = ?,       -- Datum des letzten Logins
+                        login_time = ?,      -- Start der aktuellen Session
+                        last_activity = ?,   -- erste Aktivität = Loginzeit
+                        is_online = ?        -- User ist eingeloggt
+                    WHERE userID = ?
+                ");
+                $updateStmt->bind_param("sssii", $login_time, $login_time, $login_time, $is_online, $user['userID']);
+                $updateStmt->execute();
+                $updateStmt->close();
+
+                // Erfolgsmeldung
+                $_SESSION['success_message'] = $languageService->get('success_login');
+
+                // Weiterleitung
+                header("Location: /");
+                exit;
+            }
+        } else {
+            $message = '<div class="alert alert-danger" role="alert">' . $languageService->get('error_not_found') . '</div>';
         }
+
 
     } else {
         $userID = null;

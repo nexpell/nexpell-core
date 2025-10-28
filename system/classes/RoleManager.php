@@ -4,7 +4,7 @@ namespace nexpell;
 
 class RoleManager {
 
-    public static function getUserRoleID(int $userID): ?int {
+    /*public static function getUserRoleID(int $userID): ?int {
         global $_database;
 
         $stmt = $_database->prepare("SELECT roleID FROM user_role_assignments WHERE userID = ?");
@@ -17,6 +17,21 @@ class RoleManager {
         }
 
         return null;
+    }*/
+
+    public static function getUserRoleIDs(int $userID): array {
+        global $_database;
+
+        $stmt = $_database->prepare("SELECT roleID FROM user_role_assignments WHERE userID = ?");
+        $stmt->bind_param("i", $userID);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $roles = [];
+        while ($row = $result->fetch_assoc()) {
+            $roles[] = (int)$row['roleID'];
+        }
+        return $roles;
     }
 
     public static function roleHasPermission(int $roleID, string $permission_key): bool {
@@ -30,7 +45,7 @@ class RoleManager {
         return $stmt->num_rows > 0;
     }
 
-    public static function getUserRoles(int $userID): array {
+    /*public static function getUserRoles(int $userID): array {
         global $_database;
 
         $stmt = $_database->prepare("
@@ -48,5 +63,21 @@ class RoleManager {
             $roles[] = $row['role_name'];
         }
         return $roles;
+    }*/
+
+    public static function userHasRole(int $userID, int $roleID): bool {
+        global $_database;
+
+        $stmt = $_database->prepare("
+            SELECT 1
+            FROM user_role_assignments
+            WHERE userID = ? AND roleID = ?
+            LIMIT 1
+        ");
+        $stmt->bind_param("ii", $userID, $roleID);
+        $stmt->execute();
+        $stmt->store_result();
+
+        return $stmt->num_rows > 0;
     }
 }

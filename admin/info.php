@@ -65,7 +65,11 @@ $lastBackups = $lastBackupDate ? date('d.m.Y H:i', strtotime($lastBackupDate)) :
 
 // 6. Neueste Benutzer
 $stmt = $_database->prepare("
-    SELECT u.userID, u.username, u.registerdate AS registered_at, ur.role_name AS role
+    SELECT 
+        u.userID, 
+        u.username, 
+        u.registerdate AS registered_at,
+        GROUP_CONCAT(ur.role_name ORDER BY ur.roleID SEPARATOR ', ') AS roles
     FROM users u
     LEFT JOIN user_role_assignments ura ON u.userID = ura.userID
     LEFT JOIN user_roles ur ON ura.roleID = ur.roleID
@@ -83,22 +87,36 @@ foreach ($latestUsers as &$user) {
     $registeredTimestamp = strtotime($user['registered_at']);
     $diff = time() - $registeredTimestamp;
 
-    // Zeitangabe
+    // Zeitangabe formatieren
     if ($diff < 60) $user['when'] = $diff . ' Sek.';
     elseif ($diff < 3600) $user['when'] = floor($diff/60) . ' Min.';
     elseif ($diff < 86400) $user['when'] = floor($diff/3600) . ' Std.';
     else $user['when'] = floor($diff/86400) . ' Tagen';
 
-    // Admin markieren
-    if (stripos($user['role'], 'admin') !== false) {
-        $user['username'] = '<strong class="text-danger">' . htmlspecialchars($user['username']) . '</strong>';
-        $user['role'] = '<span class="badge bg-danger">' . htmlspecialchars($user['role']) . '</span>';
-    } else {
-        $user['username'] = htmlspecialchars($user['username']);
-        $user['role'] = '<span class="badge bg-secondary">' . htmlspecialchars($user['role']) . '</span>';
+    // Rollen-Badges erzeugen
+    $roleBadges = [];
+    $roles = array_map('trim', explode(',', $user['roles'] ?? ''));
+
+    foreach ($roles as $role) {
+        $cleanRole = htmlspecialchars($role, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        if (stripos($role, 'admin') !== false) {
+            $roleBadges[] = '<span class="badge bg-danger">' . $cleanRole . '</span>';
+            $user['username'] = '' . htmlspecialchars($user['username']) . '';
+        } elseif (stripos($role, 'moderator') !== false) {
+            $roleBadges[] = '<span class="badge bg-warning text-dark">' . $cleanRole . '</span>';
+        } elseif (stripos($role, 'redakteur') !== false || stripos($role, 'editor') !== false) {
+            $roleBadges[] = '<span class="badge bg-info text-dark">' . $cleanRole . '</span>';
+        } else {
+            $roleBadges[] = '<span class="badge bg-secondary">' . $cleanRole . '</span>';
+        }
     }
+
+    $user['role_badges'] = implode(' ', $roleBadges);
+    $user['username'] = htmlspecialchars($user['username'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 unset($user);
+
 
 
 
@@ -327,8 +345,10 @@ if ($json !== false) {
                                     <?php foreach ($latestUsers as $u): ?>
                                         <tr>
                                             <td><?= $u['username'] ?></td>
-                                            <td class="text-start"><?= $u['role'] ?></td>
-                                            <td class="text-end small-muted"><?= htmlspecialchars($u['when']) ?></td>
+                                            <td class="text-start">
+                                                <?= $u['role_badges'] ?? '<span class="badge bg-secondary">Keine Rollen</span>' ?>
+                                            </td>
+                                            <td class="text-end small text-muted"><?= htmlspecialchars($u['when']) ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
@@ -336,6 +356,7 @@ if ($json !== false) {
                                         <td colspan="3" class="text-center text-muted">Keine neuen Benutzer gefunden.</td>
                                     </tr>
                                 <?php endif; ?>
+
                             </tbody>
                         </table>
                     </div>
