@@ -38,15 +38,20 @@ if ($result) {
 
 if (isset($_POST['submit'])) {
     $current_datetime = date("Y-m-d H:i:s");
-    $nameArray = $_POST['privacy_policy_text'] ?? [];
+    #$nameArray = $_POST['privacy_policy_text'] ?? [];
     $editor = isset($_POST['editor']) ? '1' : '0';
 
-    // Multilang zusammenbauen
-    $privacy_policy_text = '';
-    foreach ($languages as $code => $label) {
-        $text = $nameArray[$code] ?? '';
-        $privacy_policy_text .= "[[lang:$code]]" . $text;
-    }
+    // Mehrsprachigen privacy_policy_text zusammensetzen
+        $languages = ['de', 'en', 'it']; // Definiere deine Sprachen hier, passend zum Frontend
+        $privacy_policy_text = '';
+        if (isset($_POST['privacy_policy_text']) && is_array($_POST['privacy_policy_text'])) {
+            foreach ($languages as $lang) {
+                $text = trim($_POST['privacy_policy_text'][$lang] ?? '');
+                if ($text !== '') {
+                    $privacy_policy_text .= "[[lang:$lang]]" . $text . "\n";
+                }
+            }
+        }
 
     if ($CAPCLASS->checkCaptcha(0, $_POST['captcha_hash'])) {
         if (mysqli_num_rows(safe_query("SELECT * FROM settings_privacy_policy"))) {

@@ -132,6 +132,41 @@ if (!isset($_SESSION['userID']) || !checkUserRoleAssignment($_SESSION['userID'])
     exit;
 }
 
+// --- Check für Impressum & Datenschutz ---
+$impressumOk = false;
+$datenschutzOk = false;
+
+// Impressum prüfen
+$res1 = $_database->query("SELECT disclaimer FROM settings_imprint LIMIT 1");
+if ($res1 && $row1 = $res1->fetch_assoc()) {
+    if (!empty(trim($row1['disclaimer']))) {
+        $impressumOk = true;
+    }
+}
+
+// Datenschutz prüfen
+$res2 = $_database->query("SELECT privacy_policy_text FROM settings_privacy_policy LIMIT 1");
+if ($res2 && $row2 = $res2->fetch_assoc()) {
+    if (!empty(trim($row2['privacy_policy_text']))) {
+        $datenschutzOk = true;
+    }
+}
+
+
+if (!$impressumOk || !$datenschutzOk): ?>
+  <div class="alert alert-warning d-flex align-items-center" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>
+    <div>
+      <strong>Hinweis:</strong>
+      <?= !$impressumOk ? 'Das <b>Impressum</b> ist noch leer. ' : '' ?>
+      <?= !$datenschutzOk ? 'Die <b>Datenschutzerklärung</b> ist noch leer. ' : '' ?>
+      Bitte ergänze die fehlenden Inhalte unter 
+      <?= !$impressumOk ? '<a href="admincenter.php?site=settings_imprint" class="alert-link">Impressum</a> ' : '' ?>
+      <?= !$datenschutzOk ? '<a href="admincenter.php?site=settings_privacy_policy" class="alert-link">Datenschutz</a> ' : '' ?>
+    </div>
+  </div>
+<?php endif;
+
 // $_SERVER['REQUEST_URI'] absichern (normalerweise vorhanden)
 if (!isset($_SERVER['REQUEST_URI'])) {
     $arr = explode('/', $_SERVER['PHP_SELF']);

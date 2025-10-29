@@ -264,6 +264,7 @@ $editor_checked = ($ds['editor'] ?? 0) == 1 ? 'checked' : '';
             <?php if ($success): ?>
                 <div class="alert alert-success">
                     <?= $languageService->module['save_changes'] ?>
+                    <script>setTimeout(() => window.location.href="admincenter.php?site=settings_imprint", 3000);</script>
                 </div>
             <?php endif; ?>
 
