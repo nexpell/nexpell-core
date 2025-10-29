@@ -80,6 +80,13 @@ $language_array = array(
     'activate_user' => 'Benutzer aktivieren',
     'deactivate_user' => 'Benutzer deaktivieren',
     'activated' => 'Aktiviert',
+    'no_modules_in_category' => 'Keine Module in dieser Kategorie',
+    'activate' => 'Aktivieren',
+    'deactivate' => 'Deaktivieren',
+    'active' => 'Aktiv',
+    'inactive' => 'Inaktiv',
+    'role_activated' => 'Rolle wurde aktiviert.',
+    'role_deactivated' => 'Rolle wurde deaktiviert.',
 
 
 

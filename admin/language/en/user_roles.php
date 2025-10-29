@@ -75,6 +75,13 @@ $language_array = array(
     'activate_user'             => 'Activate user',
     'deactivate_user'           => 'Deactivate user',
     'activated'                 => 'Activated',
+    'no_modules_in_category' => 'No modules in this category',
+    'activate' => 'Activate',
+    'deactivate' => 'Deactivate',
+    'active' => 'Active',
+    'inactive' => 'Inactive',
+    'role_activated' => 'Role has been activated.',
+    'role_deactivated' => 'Role has been deactivated.',
 
     'email_text' => 'Hello %email%,
 Your password has been reset. Your new password is:

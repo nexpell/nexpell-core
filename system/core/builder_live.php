@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+
 require_once BASE_PATH . '/system/core/builder_core.php';
 
 $page = $_GET['site'] ?? 'index';

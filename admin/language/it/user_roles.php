@@ -74,6 +74,13 @@ $language_array = array(
     'activate_user'             => 'Attiva utente',
     'deactivate_user'           => 'Disattiva utente',
     'activated'                 => 'Attivato',
+    'no_modules_in_category' => 'Nessun modulo in questa categoria',
+    'activate' => 'Attiva',
+    'deactivate' => 'Disattiva',
+    'active' => 'Attivo',
+    'inactive' => 'Inattivo',
+    'role_activated' => 'Il ruolo è stato attivato.',
+    'role_deactivated' => 'Il ruolo è stato disattivato.',
 
     'email_text' => 'Ciao %email%,
 La tua password è stata reimpostata. La nuova password è:
