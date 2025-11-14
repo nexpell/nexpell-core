@@ -88,49 +88,76 @@ function nx_load_widgets_for_page(string $page): array {
     global $_database;
 
     $out = [];
-    if (!$_database || $_database->connect_errno) return $out;
+    if (!$_database || $_database->connect_errno) {
+        echo "<div class='text-danger'>❌ DB-Verbindung ungültig</div>";
+        return $out;
+    }
 
     $stmt = $_database->prepare("
         SELECT 
             p.position,
             p.widget_key,
             p.instance_id,
-            p.settings,
-            w.title,
-            w.allowed_zones
+            COALESCE(p.settings, '{}') AS settings,
+            COALESCE(w.title, p.widget_key) AS title,
+            COALESCE(w.allowed_zones, '') AS allowed_zones
         FROM settings_widgets_positions AS p
         LEFT JOIN settings_widgets AS w ON w.widget_key = p.widget_key
         WHERE p.page = ?
         ORDER BY p.position ASC, p.sort_order ASC
     ");
-    if (!$stmt) return $out;
+
+    if (!$stmt) {
+        echo "<div class='text-danger'>❌ Prepare fehlgeschlagen: " . htmlspecialchars($_database->error) . "</div>";
+        return $out;
+    }
 
     $stmt->bind_param('s', $page);
     if (!$stmt->execute()) {
+        echo "<div class='text-danger'>❌ Execute fehlgeschlagen: " . htmlspecialchars($stmt->error) . "</div>";
         $stmt->close();
         return $out;
     }
 
     $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) {
-        $pos = $row['position'];
+        $pos = $row['position'] ?: 'unknown';
         if (!isset($out[$pos])) $out[$pos] = [];
 
-        $settings = json_decode($row['settings'] ?? '{}', true);
-        if (!is_array($settings)) $settings = [];
+        // Robust gegen ungültiges JSON
+        $settings = [];
+        $json = trim($row['settings'] ?? '');
+        if ($json !== '') {
+            $decoded = json_decode($json, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $settings = $decoded;
+            } else {
+                // Fehlerhafte JSONs sicher reparieren
+                $settings = [];
+            }
+        }
 
         $out[$pos][] = [
-            'widget_key'     => $row['widget_key'],
-            'instance_id'    => $row['instance_id'],
-            'title'          => $row['title'] ?? $row['widget_key'],
-            'settings'       => $settings,
-            'allowed_zones'  => $row['allowed_zones'] ?? ''
+            'widget_key'    => (string)$row['widget_key'],
+            'instance_id'   => (string)$row['instance_id'],
+            'title'         => (string)$row['title'],
+            'settings'      => $settings,
+            'allowed_zones' => (string)($row['allowed_zones'] ?? '')
         ];
     }
 
     $stmt->close();
+
+    // 🧪 Debug optional
+    if (isset($_GET['debug_builder'])) {
+        echo "<pre class='small text-muted bg-light border p-2'><b>🧩 Debug nx_load_widgets_for_page({$page}):</b>\n";
+        echo htmlspecialchars(print_r($out, true));
+        echo "</pre>";
+    }
+
     return $out;
 }
+
 
 
 /**

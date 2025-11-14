@@ -778,3 +778,41 @@ blockquote {
     color: #3a4651 !important;
     font-size: 16px;
 }
+
+
+
+
+/* Grundfarbe & Übergänge */
+.nav.nav-tabs .nav-link {
+  color: #fe821d !important;
+  border: 1px solid transparent;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Hover-Effekt */
+.nav.nav-tabs .nav-link:hover {
+  color: #ff9541 !important; /* leicht helleres Orange */
+  border-color: #fe821d !important;
+  background-color: rgba(254, 130, 29, 0.08);
+}
+
+/* Aktiver Tab */
+.nav.nav-tabs .nav-link.active,
+.nav.nav-tabs .nav-link.active:hover,
+.nav.nav-tabs .nav-link.active:focus {
+  color: #fff !important;
+  background-color: #fe821d !important;
+  border-color: #fe821d !important;
+}
+
+/* Fokus für Tastatursteuerung */
+.nav.nav-tabs .nav-link:focus {
+  outline: none;
+  box-shadow: 0 0 0 0.15rem rgba(254, 130, 29, 0.4);
+}
+
+/* Optional: Tab-Leiste selbst */
+.nav.nav-tabs {
+  border-bottom: 2px solid #fe821d;
+}
+

@@ -144,3 +144,11 @@ h2 span {
 .login-heading {
   font-weight: 300;
 }
+.nav.nav-tabs.in {
+    --raid-nav-link-color: #ff7800 !important;
+}
+.nav.nav-tabs.in .nav-link,
+.nav.nav-tabs.in .nav-link:hover,
+.nav.nav-tabs.in .nav-link.active {
+    color: var(--raid-nav-link-color);
+}

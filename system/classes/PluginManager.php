@@ -66,28 +66,46 @@ class PluginManager
     /* =========================
        WIDGET-FUNKTIONEN
        ========================= */
-    public function renderWidget(string $widgetKey): string
+    /**
+     * Rendert ein Widget und stellt dem Include diese Variablen bereit:
+     * - $instanceId (string)
+     * - $settings   (array)
+     * - $title      (string)
+     * - $ctx        (array)  // z.B. ['builder'=>true, 'page'=>'index', ...]
+     */
+    public function renderWidget(string $widgetKey, array $context = []): string
     {
         $widgetData = $this->getWidgetData($widgetKey);
-        if (!$widgetData) return "";
-
-        $plugin = $widgetData['plugin'];
-
-        if (!$this->isPluginActive($plugin)) return "";
-
-        // Widget CSS/JS laden
-        $this->loadWidgetAssets($widgetKey);
-
-        // Widget-Datei einbinden
-        $widgetFile = $_SERVER['DOCUMENT_ROOT'] . "/includes/plugins/{$plugin}/{$widgetKey}.php";
-        if (file_exists($widgetFile)) {
-            ob_start();
-            include $widgetFile;
-            return ob_get_clean();
+        if (!$widgetData) {
+            error_log("renderWidget: unknown widget_key: {$widgetKey}");
+            return "";
         }
 
-        error_log("Widget-Datei nicht gefunden: {$widgetFile}");
-        return "";
+        $plugin = $widgetData['plugin'];
+        if (!$this->isPluginActive($plugin)) {
+            error_log("renderWidget: plugin inactive: {$plugin}");
+            return "";
+        }
+
+        // Assets (CSS/JS) des Widgets laden (einmalig)
+        $this->loadWidgetAssets($widgetKey);
+
+        // Widget-Datei
+        $widgetFile = $_SERVER['DOCUMENT_ROOT'] . "/includes/plugins/{$plugin}/{$widgetKey}.php";
+        if (!file_exists($widgetFile)) {
+            error_log("Widget-Datei nicht gefunden: {$widgetFile}");
+            return "";
+        }
+
+        // Kontext-Variablen für das Include
+        $instanceId = (string)($context['instanceId'] ?? '');
+        $settings   = (array) ($context['settings']   ?? []);
+        $title      = (string)($context['title']      ?? ($widgetData['widget_key'] ?? $widgetKey));
+        $ctx        = (array) ($context['ctx']        ?? $context); // alles Weitere
+
+        ob_start();
+        include $widgetFile;  // Include erhält $instanceId, $settings, $title, $ctx
+        return (string)ob_get_clean();
     }
 
     private function getWidgetData(string $widgetKey)
@@ -109,7 +127,7 @@ class PluginManager
 
         if (!in_array($widgetKey, $this->_loadedAssets['widgets'], true)) {
             $this->loadAsset('css', $basePath, $widgetKey);
-            $this->loadAsset('js', $basePath, $widgetKey);
+            $this->loadAsset('js',  $basePath, $widgetKey);
             $this->_loadedAssets['widgets'][] = $widgetKey;
         }
     }
@@ -127,8 +145,6 @@ class PluginManager
         if (!$row) return null;
 
         $plugin = $row['modulname'];
-
-        // Plugin-Datei zurückgeben, wird erst in get_mainContent() included
         $pluginFile = $_SERVER['DOCUMENT_ROOT'] . "/includes/plugins/{$plugin}/{$plugin}.php";
         return file_exists($pluginFile) ? $pluginFile : null;
     }
@@ -146,10 +162,9 @@ class PluginManager
     public function loadPluginAssets(string $plugin): void
     {
         $basePath = "/includes/plugins/{$plugin}";
-
         if (!in_array($plugin, $this->_loadedAssets['plugins'], true)) {
             $this->loadAsset('css', $basePath, $plugin);
-            $this->loadAsset('js', $basePath, $plugin);
+            $this->loadAsset('js',  $basePath, $plugin);
             $this->_loadedAssets['plugins'][] = $plugin;
         }
     }

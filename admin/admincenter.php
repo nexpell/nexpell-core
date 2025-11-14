@@ -44,6 +44,7 @@ include SYSTEM_PATH . 'functions.php';
 include SYSTEM_PATH . 'multi_language.php';
 include SYSTEM_PATH . 'classes/Template.php';
 include SYSTEM_PATH . 'classes/TextFormatter.php';
+#include SYSTEM_PATH . 'classes/PluginManager.php';
 
 // Namespaces importieren
 use nexpell\RoleManager;
@@ -53,7 +54,6 @@ use nexpell\PluginManager;
 global $pluginManager;
 
 // Plugin-Manager laden und Sprachmodul für Admincenter initialisieren
-#$load = new plugin_manager();
 $load = new \nexpell\PluginManager($_database);
 
 global $languageService;
@@ -188,38 +188,86 @@ $userID = $_SESSION['userID'];
 
 function dashnavi() {
     global $_database; // mysqli-Objekt
+
     $links = '';
     $current_query = $_GET['site'] ?? '';
     $lang = $_SESSION['language'] ?? 'de';
-    $roleID = (int)($_SESSION['roleID'] ?? 0);
-    if (!$roleID) {
-        return '<li>Keine Rolle gefunden, Zugriff verweigert.</li>';
+
+    // --- Rollen prüfen ---
+    $roleIDs = $_SESSION['roles'] ?? [];
+    if (empty($roleIDs)) {
+        if (!empty($_SESSION['roleID'])) {
+            $roleIDs = [ (int)$_SESSION['roleID'] ];
+        } else {
+            return '<li>Keine Rollen gefunden, Zugriff verweigert.</li>';
+        }
     }
 
+    // --- SQL-kompatible Liste bauen ---
+    $roleList = implode(',', array_map('intval', $roleIDs));
+
+    // --- Rechte einmalig laden ---
+    $rights = [
+        'category' => [],
+        'link' => []
+    ];
+    $res = $_database->query("
+        SELECT type, modulname 
+        FROM user_role_admin_navi_rights 
+        WHERE roleID IN ($roleList)
+    ");
+    if ($res) {
+        while ($r = $res->fetch_assoc()) {
+            $rights[$r['type']][] = $r['modulname'];
+        }
+    }
+
+    // --- Prüfen: Hat der User überhaupt min. 1 Kategorie & Link-Recht? ---
+    $hasCategory = !empty($rights['category']);
+    $hasLink = !empty($rights['link']);
+    if (!$hasCategory || !$hasLink) {
+        // Kein Zugriff auf irgendetwas → nichts anzeigen
+        return '<li>
+            <div class="alert alert-info mb-0 small d-flex align-items-start gap-2" role="alert" style="border-radius:0.5rem;">
+                <i class="bi bi-info-circle-fill fs-5"></i>
+                <div>
+                    <strong>Keine zugriffsberechtigten Bereiche gefunden.</strong><br>
+                    Dir sind aktuell keine Menüpunkte im Admincenter zugewiesen.<br>
+                    <span class="text-muted">
+                        Bitte wende dich an einen Administrator, um entsprechende Rollen oder Zugriffsrechte zu erhalten.
+                    </span>
+                </div>
+            </div>
+        </li>';
+    }
+
+    // --- Kategorien laden ---
     $categoriesResult = $_database->query("SELECT * FROM navigation_dashboard_categories ORDER BY sort");
     if (!$categoriesResult) {
         return '<li>Fehler beim Laden der Kategorien.</li>';
     }
 
+    // --- Durch alle Kategorien ---
     while ($cat = $categoriesResult->fetch_assoc()) {
         $catID = (int)$cat['catID'];
 
         // Rechtecheck Kategorie
-        $sqlCatRight = "SELECT 1 FROM user_role_admin_navi_rights 
-                WHERE roleID = $roleID AND type = 'category' 
-                AND modulname = '" . $cat['modulname'] . "' 
-                LIMIT 1";
-        $catRightResult = $_database->query($sqlCatRight);
-        if (!$catRightResult || $catRightResult->num_rows === 0) {
-            continue; // keine Rechte für diese Kategorie
+        if (!in_array($cat['modulname'], $rights['category'] ?? [], true)) {
+            continue;
         }
 
+        // Sprachen
         $translateCat = new multiLanguage($lang);
         $translateCat->detectLanguages($cat['name']);
         $catName = $translateCat->getTextByLanguage($cat['name']);
         $fa_name = $cat['fa_name'];
 
-        $linksResult = $_database->query("SELECT * FROM navigation_dashboard_links WHERE catID = $catID ORDER BY sort");
+        // Links dieser Kategorie laden
+        $linksResult = $_database->query("
+            SELECT * FROM navigation_dashboard_links 
+            WHERE catID = $catID 
+            ORDER BY sort
+        ");
         if (!$linksResult) {
             continue;
         }
@@ -228,22 +276,17 @@ function dashnavi() {
         $cat_links_html = '';
 
         while ($link = $linksResult->fetch_assoc()) {
-            $linkID = (int)$link['linkID'];
-
             // Rechtecheck Link
-            $sqlLinkRight = "SELECT 1 FROM user_role_admin_navi_rights
-                 WHERE roleID = $roleID AND type = 'link' 
-                 AND modulname = '" . $link['modulname'] . "' 
-                 LIMIT 1";
-            $linkRightResult = $_database->query($sqlLinkRight);
-            if (!$linkRightResult || $linkRightResult->num_rows === 0) {
-                continue; // keine Rechte für diesen Link
+            if (!in_array($link['modulname'], $rights['link'] ?? [], true)) {
+                continue;
             }
 
+            // Sprachen
             $translateLink = new multiLanguage($lang);
             $translateLink->detectLanguages($link['name']);
             $linkName = $translateLink->getTextByLanguage($link['name']);
 
+            // Aktive Seite bestimmen
             $url = $link['url'];
             $url_parts = parse_url($url);
             parse_str($url_parts['query'] ?? '', $url_query);
@@ -252,32 +295,53 @@ function dashnavi() {
                 $cat_active = true;
             }
 
+            // CSS-Klassen
             $active_class = $is_active ? 'active' : '';
             $icon_class = $is_active ? 'bi bi-arrow-right' : 'bi bi-plus-lg';
 
-            $cat_links_html .= '<li class="' . $active_class . '">'
-                . '<a href="' . htmlspecialchars($url) . '">'
-                . '<i class="' . $icon_class . ' ac-link"></i> '
-                . htmlspecialchars($linkName)
-                . '</a></li>';
+            // Link-HTML
+            $cat_links_html .= '
+                <li class="' . $active_class . '">
+                    <a href="' . htmlspecialchars($url) . '">
+                        <i class="' . $icon_class . ' ac-link"></i> ' . htmlspecialchars($linkName) . '
+                    </a>
+                </li>';
         }
 
+        // Kategorie mit Links ausgeben (nur, wenn erlaubt und Links vorhanden)
         if (!empty($cat_links_html)) {
             $expand_class = $cat_active ? 'mm-active' : '';
             $aria_expanded = $cat_active ? 'true' : 'false';
             $show_class = $cat_active ? 'style="display:block;"' : '';
 
-            $links .= '<li class="' . $expand_class . '">'
-                . '<a class="has-arrow" aria-expanded="' . $aria_expanded . '" href="#">'
-                . '<i class="' . htmlspecialchars($fa_name) . '" style="font-size: 1rem;"></i> ' . htmlspecialchars($catName)
-                . '</a><ul class="nav nav-third-level" ' . $show_class . '>'
-                . $cat_links_html
-                . '</ul></li>';
+            $links .= '
+                <li class="' . $expand_class . '">
+                    <a class="has-arrow" aria-expanded="' . $aria_expanded . '" href="#">
+                        <i class="' . htmlspecialchars($fa_name) . '" style="font-size: 1rem;"></i> ' . htmlspecialchars($catName) . '
+                    </a>
+                    <ul class="nav nav-third-level" ' . $show_class . '>
+                        ' . $cat_links_html . '
+                    </ul>
+                </li>';
         }
     }
 
-    return $links ?: '<li>Keine zugriffsberechtigten Links gefunden.</li>';
+    // --- Falls keine Einträge sichtbar waren ---
+    return $links ?: '<li>
+            <div class="alert alert-info mb-0 small d-flex align-items-start gap-2" role="alert" style="border-radius:0.5rem;">
+                <i class="bi bi-info-circle-fill fs-5"></i>
+                <div>
+                    <strong>Keine zugriffsberechtigten Bereiche gefunden.</strong><br>
+                    Dir sind aktuell keine Menüpunkte im Admincenter zugewiesen.<br>
+                    <span class="text-muted">
+                        Bitte wende dich an einen Administrator, um entsprechende Rollen oder Zugriffsrechte zu erhalten.
+                    </span>
+                </div>
+            </div>
+        </li>';
 }
+
+
 
 
 

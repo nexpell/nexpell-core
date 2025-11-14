@@ -87,6 +87,7 @@ class PluginInstaller
         closedir($dir);
     }
 
+
     private static function registerPluginInDatabase(string $modulname): void
     {
         global $_database;

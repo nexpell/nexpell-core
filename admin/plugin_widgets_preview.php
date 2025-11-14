@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 // Basis & DB
 if (!defined('BASE_PATH')) {
-  define('BASE_PATH', dirname(__DIR__)); // /admin → eine Ebene höher → /demo_nexpell
+  define('BASE_PATH', dirname(__DIR__)); // /admin → eine Ebene höher → /nexpell
 }
-require_once BASE_PATH . '/system/core/builder_core.php';
+require_once BASE_PATH . '/system/core/builder_live.php';
 
-// Seite bestimmen
-$page = preg_replace('/[^a-z0-9_-]/i', '', $_GET['page'] ?? 'index');
+// === Seite bestimmen ===
+$page = trim($_GET['page'] ?? 'index');
+if ($page === '' || strtolower($page) === 'startseite') {
+  $page = 'index';
+}
+$page = preg_replace('/[^a-z0-9_-]/i', '', $page);
 
 // Widgets & Positionen laden
 $available = nx_load_available_widgets();
@@ -230,6 +234,7 @@ body{background:#fff}
   </div>
 </div>
 
+
 <script>
 const CSRF = <?= json_encode($CSRF) ?>;
 const PAGE = <?= json_encode($page) ?>;
@@ -258,47 +263,31 @@ document.querySelectorAll('.nx-zone').forEach(zone => {
     },
     animation: 150,
 
-    onStart: evt => {
+    onStart: () => {
       document.querySelectorAll('.nx-zone')
         .forEach(z => z.classList.remove('nx-zone-allowed','nx-zone-forbidden'));
     },
 
-    onMove: evt => {
-      const toZone = evt.to?.dataset.pos || '';
-      const dragged = evt.dragged;
-      const allowed = getAllowedZones(dragged);
-      const ok = !allowed.length || allowed.includes(toZone);
+    onEnd: async evt => {
       document.querySelectorAll('.nx-zone')
         .forEach(z => z.classList.remove('nx-zone-allowed','nx-zone-forbidden'));
-      evt.to.classList.add(ok ? 'nx-zone-allowed' : 'nx-zone-forbidden');
-      return ok;
-    },
-
-    onEnd: evt => {
-      document.querySelectorAll('.nx-zone')
-        .forEach(z => z.classList.remove('nx-zone-allowed','nx-zone-forbidden'));
+      await saveState(true);
     },
 
     onAdd: async evt => {
       const el = evt.item;
       if (evt.from.id === 'available') {
-        // Neues Widget aus der Palette → vollständige Struktur erzeugen
         el.dataset.iid = 'w_' + Math.random().toString(36).substr(2, 8);
         el.dataset.settings = '{}';
         el.innerHTML = `
           <span class="widget-handle">⋮⋮</span>
           <span class="widget-title">${el.dataset.title || el.dataset.id}</span>
           <span class="widget-actions">
-            <button type="button" class="btn btn-light btn-sm btn-settings" title="Einstellungen">
-              <i class="bi bi-sliders"></i>
-            </button>
-            <button type="button" class="btn btn-outline-danger btn-sm btn-remove" title="Entfernen">
-              <i class="bi bi-x-lg"></i>
-            </button>
-          </span>
-        `;
+            <button type="button" class="btn btn-light btn-sm btn-settings" title="Einstellungen"><i class="bi bi-sliders"></i></button>
+            <button type="button" class="btn btn-outline-danger btn-sm btn-remove" title="Entfernen"><i class="bi bi-x-lg"></i></button>
+          </span>`;
       }
-      await saveState();
+      await saveState(true);
     }
   });
 });
@@ -311,7 +300,7 @@ new Sortable(document.getElementById('available'), {
 });
 
 /* === SAVE === */
-async function saveState() {
+async function saveState(reloadAfter = false) {
   const data = {};
   document.querySelectorAll('.nx-zone').forEach(zone => {
     const pos = zone.dataset.pos;
@@ -332,12 +321,17 @@ async function saveState() {
     });
     const j = await res.json().catch(() => ({ ok: false }));
     console.log(j.ok ? '✅ Saved' : '❌ Save failed', j);
+
+    if (j.ok && reloadAfter) {
+      // Widgets direkt neu laden, damit sie angezeigt werden
+      setTimeout(() => location.reload(), 250);
+    }
   } catch (err) {
     console.error('❌ Save error', err);
   }
 }
 
-/* === Delete Widget (ohne Bestätigung) === */
+/* === Delete Widget === */
 document.addEventListener('click', async e => {
   const btn = e.target.closest('.btn-remove');
   if (!btn) return;
@@ -345,30 +339,19 @@ document.addEventListener('click', async e => {
   if (!li) return;
 
   const iid = li.dataset.iid;
-  li.remove(); // Sofort visuell entfernen
-
-  if (!iid) { 
-    await saveState();
-    return;
-  }
+  li.remove();
 
   try {
     const delPayload = { page: PAGE, removedInstanceIds: [iid], csrf: CSRF };
-    const res = await fetch(SAVE_ENDPOINT, {
+    await fetch(SAVE_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
       body: JSON.stringify(delPayload)
     });
-    const result = await res.json();
-    if (result.ok) {
-      console.log('🗑️ Widget gelöscht:', iid);
-    } else {
-      console.warn('❌ Remove failed', result);
-    }
   } catch (err) {
     console.error('❌ Remove error', err);
   }
-  await saveState();
+  await saveState(true);
 });
 
 /* === Settings Modal === */
@@ -387,7 +370,7 @@ document.addEventListener('click', e => {
       const val = document.getElementById('widgetSettingsJson').value.trim() || '{}';
       JSON.parse(val);
       li.dataset.settings = val;
-      await saveState();
+      await saveState(true);
       modal.hide();
     } catch (err) {
       alert('Ungültiges JSON: ' + err.message);
@@ -395,7 +378,7 @@ document.addEventListener('click', e => {
   };
 });
 
-document.getElementById('nx-save-all').addEventListener('click', saveState);
+document.getElementById('nx-save-all').addEventListener('click', () => saveState(true));
 </script>
 
 </body>

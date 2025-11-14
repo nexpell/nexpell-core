@@ -52,7 +52,7 @@
     return $meta[$site] ?? $defaults;
 }*/
 
-function getSeoMeta(string $site): array {
+/*function getSeoMeta(string $site): array {
     global $_database;
 
     // Sprache automatisch aus der Session holen, Fallback 'de'
@@ -94,5 +94,62 @@ function getSeoMeta(string $site): array {
             ];
     }
 }
+*/
+
+function getSeoMeta(string $site): array {
+    global $_database;
+
+    // Sprache aus Session, Fallback 'de'
+    $language = $_SESSION['language'] ?? 'de';
+
+    // 1️⃣ – Versuche, einen Eintrag für die Seite und Sprache zu finden
+    $stmt = $_database->prepare("
+        SELECT title, description 
+        FROM settings_seo_meta 
+        WHERE site = ? AND language = ?
+        LIMIT 1
+    ");
+    $stmt->bind_param("ss", $site, $language);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($row = $result->fetch_assoc()) {
+        $stmt->close();
+        return [
+            'title' => $row['title'],
+            'description' => $row['description'],
+        ];
+    }
+    $stmt->close();
+
+    // 2️⃣ – Fallback: "default" oder "global" in settings_seo_meta
+    $fallbackKeys = ['default', 'global', 'index', 'home'];
+    foreach ($fallbackKeys as $fallbackSite) {
+        $stmt = $_database->prepare("
+            SELECT title, description 
+            FROM settings_seo_meta 
+            WHERE site = ? AND language = ?
+            LIMIT 1
+        ");
+        $stmt->bind_param("ss", $fallbackSite, $language);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            $stmt->close();
+            return [
+                'title' => $row['title'],
+                'description' => $row['description'],
+            ];
+        }
+        $stmt->close();
+    }
+
+    // 3️⃣ – Letzter Fallback: statische Minimalwerte (nur falls DB leer)
+    return [
+        'title' => 'Nexpell CMS',
+        'description' => 'Ein modulares Open-Source-CMS für Communities und Clans.',
+    ];
+}
+
 
 

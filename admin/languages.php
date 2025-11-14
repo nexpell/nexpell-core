@@ -92,7 +92,7 @@ $messageClass = 'alert-danger';
 } else {
 $success = $langManager->insertLanguage($data);
 if ($success) {
-header("Location: admincenter.php?site=admin_languages&success=add");
+header("Location: admincenter.php?site=languages&success=add");
 exit;
 } else {
 $message = $languageService->get('language_add_error');
@@ -185,12 +185,12 @@ $languages = $langManager->getAllLanguages();
 <button type="submit" class="btn btn-primary">
 <?php echo $action === 'edit' ? $languageService->get('save_language_button') : $languageService->get('add_language_button'); ?>
 </button>
-<a href="admincenter.php?site=admin_languages" class="btn btn-secondary"><?= $languageService->get('back_to_overview_button') ?></a>
+<a href="admincenter.php?site=languages" class="btn btn-secondary"><?= $languageService->get('back_to_overview_button') ?></a>
 </form>
 
 <?php else: ?>
 
-<a href="admincenter.php?site=admin_languages&action=add" class="btn btn-success mb-3"><?= $languageService->get('add_new_language_button') ?></a>
+<a href="admincenter.php?site=languages&action=add" class="btn btn-success mb-3"><?= $languageService->get('add_new_language_button') ?></a>
 
 <table class="table table-bordered table-striped align-middle">
 <thead>
@@ -230,8 +230,8 @@ $languages = $langManager->getAllLanguages();
 <?php endif; ?>
 </td>
 <td>
-<a href="admincenter.php?site=admin_languages&action=edit&id=<?php echo (int)$lang['id']; ?>" class="btn btn-primary"><?= $languageService->get('edit_button') ?></a>
-<a href="admincenter.php?site=admin_languages&action=delete&id=<?php echo (int)$lang['id']; ?>" class="btn btn-danger ms-1" onclick="return confirm('<?= $languageService->get('confirm_delete') ?>');"><?= $languageService->get('delete_button') ?></a>
+<a href="admincenter.php?site=languages&action=edit&id=<?php echo (int)$lang['id']; ?>" class="btn btn-primary"><?= $languageService->get('edit_button') ?></a>
+<a href="admincenter.php?site=languages&action=delete&id=<?php echo (int)$lang['id']; ?>" class="btn btn-danger ms-1" onclick="return confirm('<?= $languageService->get('confirm_delete') ?>');"><?= $languageService->get('delete_button') ?></a>
 </td>
 </tr>
 <?php endforeach; ?>

@@ -130,20 +130,68 @@ $recentLogs = [
 ];
 
 // 8. Versionsprüfung für Updates
-$current_version = file_exists(__DIR__ . '/../system/version.php') ? include __DIR__ . '/../system/version.php' : '2.0.0';
+
+// === Version & Updateprüfung mit visible_for + release_date + local last_update.txt ===
+
+// Aktuelle Version ermitteln
+$current_version = file_exists(__DIR__ . '/../system/version.php')
+    ? include __DIR__ . '/../system/version.php'
+    : '1.0.0';
+
+// Lokales Update-Datum laden
+$last_update_file = __DIR__ . '/../system/last_update.txt';
+$last_update_date = 'unbekannt';
+if (file_exists($last_update_file)) {
+    $content = trim(file_get_contents($last_update_file));
+    if ($content !== '') {
+        $last_update_date = htmlspecialchars($content);
+    }
+}
+
+// Update-Manifest abrufen
 $update_info_url = "https://update.nexpell.de/updates/update_info.json";
 $update_info = json_decode(@file_get_contents($update_info_url), true);
+
+// Aktueller Benutzer (sichtbar für bestimmte Updates)
+$current_user_email = $_SESSION['user_email'] ?? 'info@nexpell.de'; // Fallback
+
 $updateAvailable = false;
+$updateVersion = '';
+$updateDate = '';
 $updateText = 'Aktuell';
+$updateChangelog = '';
+$requiresNewUpdater = false;
+
 if (isset($update_info['updates']) && is_array($update_info['updates'])) {
     foreach ($update_info['updates'] as $update) {
-        if (version_compare($update['version'], $current_version, '>')) {
+
+        // --- Sichtbarkeitsprüfung ---
+        $visible_for = [];
+        if (!empty($update['visible_for'])) {
+            if (is_string($update['visible_for'])) {
+                $visible_for = array_map('trim', explode(',', $update['visible_for']));
+            } elseif (is_array($update['visible_for'])) {
+                foreach ($update['visible_for'] as $entry) {
+                    $visible_for = array_merge($visible_for, array_map('trim', explode(',', $entry)));
+                }
+            }
+        }
+
+        $is_visible = empty($visible_for) || in_array($current_user_email, $visible_for, true);
+
+        // --- Versionsvergleich ---
+        if ($is_visible && version_compare($update['version'], $current_version, '>')) {
             $updateAvailable = true;
-            $updateText = "v{$update['version']} verfügbar";
+            $updateVersion   = $update['version'];
+            $updateDate      = $update['release_date'] ?? 'unbekannt';
+            $updateChangelog = $update['changelog'] ?? '';
+            $requiresNewUpdater = $update['requires_new_updater'] ?? false;
+            $updateText = "v{$updateVersion} verfügbar";
             break;
         }
     }
 }
+
 
 
 $news_updates = [];
@@ -195,20 +243,106 @@ if ($json !== false) {
 <!-- Hauptbereich -->
 <div class="container-fluid p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0">Hallo, <?= htmlspecialchars($adminName) ?> 👋</h1>
-            <div class="small-muted">Übersicht & Schnellzugriffe</div>
-        </div>
-        <div class="text-end">
-            Aktuelle Version: <strong><?= htmlspecialchars($current_version) ?></strong>
-            <?php if ($updateAvailable): ?>
-                <a href="admincenter.php?site=update_core" class="btn btn-warning">
-                    <i class="bi bi-arrow-up-circle"></i> Update: <?= htmlspecialchars($updateText) ?>
-                </a>
-            <?php else: ?>
-                <span class="badge bg-success">System aktuell</span>
-            <?php endif; ?>
-        </div>
+
+<div>
+  <h1 class="h3 mb-0">Hallo, <?= htmlspecialchars($adminName) ?> 👋</h1>
+  <div class="small text-muted mb-3">Übersicht & Schnellzugriffe</div>
+
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+      <div class="d-flex align-items-start mb-2">
+        <i class="bi bi-info-circle text-primary fs-3 me-2"></i>
+        <h5 class="card-title mb-0">Willkommen im Nexpell Admincenter</h5>
+      </div>
+      <p class="mb-3 text-muted">
+        Das <strong>Admincenter</strong> ist die zentrale Steuerzentrale deines Nexpell-Systems.
+        Hier kannst du sämtliche Module, Plugins und Themes verwalten, neue Funktionen aktivieren
+        und dein System aktuell halten. Über die übersichtliche Navigation erreichst du schnell
+        alle wichtigen Bereiche – von der Benutzer- und Rechteverwaltung bis zu Widgets, Seiten
+        und System-Updates.
+      </p>
+      <p class="mb-3 text-muted">
+  Die <strong>Info-Seite</strong> bietet dir einen umfassenden Überblick über den aktuellen Zustand deiner Nexpell-Installation.
+  Hier findest du nicht nur technische Daten wie <b>Server-Umgebung</b>, <b>PHP-Version</b> und <b>Datenbank-Verbindung</b>,
+  sondern auch eine Zusammenfassung der aktivierten <b>Plugins</b>, <b>Themes</b> und zuletzt ausgeführten <b>Backups</b>.
+</p>
+
+<p class="mb-3 text-muted">
+  Darüber hinaus zeigt dir die Info-Seite wichtige Betriebsinformationen wie die aktuelle Anzahl der
+  <b>Online-Nutzer</b>, <b>Besucherstatistiken</b> und <b>Systemaktivitäten</b> — etwa letzte Logins,
+  ausgeführte Updates oder gespeicherte Backups. Diese Daten helfen dir dabei, den Systemstatus
+  stets im Blick zu behalten und frühzeitig auf mögliche Probleme zu reagieren.
+</p>
+
+<p class="mb-3 text-muted">
+  Im Abschnitt <strong>Neuigkeiten vom Nexpell-Team</strong> erhältst du außerdem aktuelle Informationen
+  rund um dein System: Ankündigungen zu neuen Versionen, Sicherheitshinweise, Funktionsupdates und
+  Hinweise zu kritischen Bugs. Diese Nachrichten werden regelmäßig aktualisiert, um dich über alle
+  relevanten Änderungen, geplante Features und verfügbare Updates auf dem Laufenden zu halten.
+</p>
+
+<p class="mb-0 text-muted">
+  Nutze die Info-Seite regelmäßig, um sicherzustellen, dass dein System auf dem neuesten Stand ist.
+  Besonders vor einem <b>Core-Update</b> oder größeren Plugin-Änderungen empfiehlt es sich, einen Blick
+  in diese Übersicht zu werfen – so kannst du die Integrität deines Systems gewährleisten, Probleme
+  frühzeitig erkennen und bei Bedarf direkt über die <b>Backup- oder Update-Verwaltung</b> handeln.
+</p>
+
+      <p class="mb-3 text-muted">
+        Zudem bietet dir das Admincenter eine integrierte Update-Verwaltung, mit der du automatisch
+        prüfen kannst, ob neue Versionen verfügbar sind. Alle Updates werden sicher über den
+        <strong>Nexpell Update-Server</strong> geladen und installiert – inklusive Datenbank-Migration
+        und Integritätsprüfung. Nach jedem erfolgreichen Update wird automatisch das Datum in
+        <code>/system/last_update.txt</code> gespeichert.
+      </p>
+
+      
+      <?php
+if ($updateAvailable) {
+    echo "
+    <div class='alert alert-warning small mb-3'>
+      <div><strong>💡 Aktuelle Systeminformationen:</strong></div>
+      <ul class='mb-0 mt-1'>
+        <li><b>🔔 Update {$updateVersion}</b> verfügbar</li>
+        <li>Veröffentlicht: " . htmlspecialchars($updateDate) . "</li>
+        <li>Installierte Version: <code>" . htmlspecialchars($current_version) . "</code></li>
+        <li>Zuletzt aktualisiert am: <code>" . htmlspecialchars($last_update_date) . "</code></li>
+      </ul>
+      " . ($requiresNewUpdater
+            ? "<div class='text-danger mt-2'><b>⚠️ Dieses Update erfordert einen neuen Updater!</b></div>"
+            : "") . "
+      <hr class='my-2'>
+      <div class='small'>" . nl2br(htmlspecialchars($updateChangelog)) . "</div>
+    </div>";
+} else {
+    echo "
+    <div class='alert alert-success small mb-3'>
+      <div><strong>💡 Aktuelle Systeminformationen:</strong></div>
+      <ul class='mb-0 mt-1'>
+        <li>✅ System ist aktuell</li>
+        <li><span class='text-muted'>Version: <code>" . htmlspecialchars($current_version) . "</code></span></li>
+        <li><span class='text-muted'>Zuletzt aktualisiert am: <code>" . htmlspecialchars($last_update_date) . "</code></span></li>
+        <li><strong>Pfad:</strong> <code>" . htmlspecialchars(realpath(__DIR__ . '/..')) . "</code></li>
+      </ul>
+    </div>";
+}
+
+?>
+
+      <hr class="my-3">
+
+      <p class="small text-muted mb-0">
+        <i class="bi bi-shield-check"></i>
+        Bitte beachte, dass nur Benutzer mit ausreichenden Rechten Zugriff auf die administrativen
+        Funktionen haben. Achte stets darauf, dass du regelmäßig Backups anlegst, bevor du große
+        Änderungen oder System-Updates durchführst.
+      </p>
+    </div>
+  </div>
+</div>
+
+
+        
     </div>
 
     <!-- Dashboard-Kacheln -->

@@ -33,6 +33,16 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error !== null) {
+        echo "<pre style='background:#fee;color:#900;padding:10px;border:1px solid #900;'>";
+        echo "FATAL ERROR:\n";
+        print_r($error);
+        echo "</pre>";
+    }
+});
+
 // === Session starten ===
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

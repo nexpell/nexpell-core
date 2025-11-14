@@ -1,80 +1,25 @@
-<!-- update_core_content -->
-<div class="card">
-    <div class="card-header">
-        <i class="bi bi-paragraph"></i> Update Manager
+<!-- update_core_wizard -->
+<div class="card shadow-sm">
+    <div class="card-header bg-light border-bottom">
+        <i class="bi bi-gear-fill text-success me-2"></i> Nexpell Core Updater
     </div>
 
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb t-5 p-2 bg-light">
-            <li class="breadcrumb-item">
-                <a href="admincenter.php?site=user_roles">Update Manager</a>
-            </li>
-            <li class="breadcrumb-item active" aria-current="page">Update</li>
-        </ol>
-    </nav>
-
     <div class="card-body">
-        <div class="container py-5">
-            <h4 class="mb-4">Update Manager</h4>
+        <!-- Fortschrittsbalken -->
+        {progress_bar}
 
-            <!-- Systeminformationen -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">
-                        <i class="bi bi-info-circle-fill text-primary me-2"></i> Systeminformationen
-                    </h5>
+        <!-- Wizard Tabs -->
+        {wizard_nav}
 
-                    <p class="mb-2">
-                        <i class="bi bi-hdd-fill text-secondary me-1"></i>
-                        <strong>Installierte Version:</strong>
-                        <span class="text-muted">{current_version}</span><br>
-                        <small class="text-body-secondary">Dies ist die aktuell aktive CMS-Version.</small>
-                    </p>
-
-                    {if has_update}
-                        <hr class="my-3">
-                        <p class="mb-2">
-                            <i class="bi bi-cloud-download-fill text-success me-1"></i>
-                            <strong>Verfügbare Version:</strong>
-                            <span class="text-muted">{new_version}</span><br>
-                            <small class="text-body-secondary">Ein Update ist verfügbar und kann installiert werden.</small>
-                        </p>
-
-                        <hr class="my-3">
-                        <p>
-                            <i class="bi bi-pencil-fill text-warning me-1"></i>
-                            <strong>Änderungen im Update:</strong><br>
-                            <span class="text-muted">{changelog}</span>
-                        </p>
-                    {endif}
-                </div>
-            </div>
-
-            {if show_button}
-                <!-- Update-Button -->
-                <form method="post" class="mb-4">
-                    <button type="submit" class="btn btn-warning shadow-sm">
-                        <i class="bi bi-arrow-clockwise me-1"></i> Update jetzt starten
-                    </button>
-                </form>
-            {endif}
-
-            <!-- Update-Log oder Erfolgs-/Infomeldung -->
-            <div class="update-log mt-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h6 class="card-title mb-3">
-                            <i class="bi bi-terminal text-info me-2"></i> Update-Status & Log
-                        </h6>
-                        <div class="small text-body">
-                            {update_status}
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- Aktueller Schritt -->
+        <div class="p-3 border rounded bg-white shadow-sm">
+            {content}
         </div>
     </div>
 </div>
+<!-- end -->
+<!-- update_core_content -->
+<div></div>
 
 <!-- end -->
 

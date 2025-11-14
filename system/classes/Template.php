@@ -29,35 +29,61 @@ class Template
     {
         switch ($source) {
             case "plugin":
-                if (empty($plugin_name)) {
-                    // Plugin-Name dynamisch ermitteln
-                    $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-                    foreach ($backtrace as $trace) {
-                        if (isset($trace['file']) && preg_match("#includes/plugins/([^/]+)/#", $trace['file'], $matches)) {
-                            $plugin_name = $matches[1];
-                            break;
-                        }
-                    }
-                }
+    if (empty($plugin_name)) {
+        // Plugin-Name dynamisch ermitteln (z. B. aus Stacktrace)
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+        foreach ($backtrace as $trace) {
+            if (isset($trace['file']) && preg_match("#includes/plugins/([^/]+)/#", $trace['file'], $matches)) {
+                $plugin_name = $matches[1];
+                break;
+            }
+        }
+    }
 
-                if (!$plugin_name) {
-                    throw new Exception("Plugin-Name konnte nicht automatisch ermittelt werden.");
-                }
+    if (!$plugin_name) {
+        throw new Exception("Plugin-Name konnte nicht automatisch ermittelt werden (file=$file, block=$block).");
+    }
 
-                return "includes/plugins/" . $plugin_name . "/templates/" . $file . ".html";  // Verwende $file anstelle von $template_name
+    // === Reihenfolge der Kandidaten-Dateien ===
+    $candidates = [
+        BASE_PATH . "/includes/plugins/{$plugin_name}/templates/{$file}.html",
+        BASE_PATH . "/includes/plugins/{$plugin_name}/templates/{$block}.html",
+        BASE_PATH . "/includes/plugins/{$plugin_name}/templates/default.html"
+    ];
+
+    foreach ($candidates as $path) {
+        if (file_exists($path)) {
+            return $path;
+        }
+    }
+
+    throw new Exception(
+        "Template-Datei nicht gefunden: " . implode(' ', $candidates)
+    );
+
+
             case 'admin':
                 $path = $this->admin_path . $file . '.html';
                 if (!file_exists($path)) {
-                    throw new \Exception("Template-Datei nicht gefunden: $path");
+                    if (defined('NXB_DEBUG') && NXB_DEBUG) {
+                        throw new \Exception("Admin-Template-Datei nicht gefunden: $path");
+                    }
+                    return "<!-- Missing admin template: $path -->";
                 }
                 return $path;
+
             case 'theme':
-                // Hier wird der Pfad korrekt gesetzt, ohne doppelte "default"
-                //return $this->themes_path . rtrim($this->theme, '/') . '' . $this->template_path . $file . '.html';
-                return $this->themes_path . rtrim($this->theme, '/') . '/' . $this->template_path . $file . '.html';
+                $path = $this->themes_path . rtrim($this->theme, '/') . '/' . $this->template_path . $file . '.html';
+                if (!file_exists($path)) {
+                    if (defined('NXB_DEBUG') && NXB_DEBUG) {
+                        throw new \Exception("Theme-Template nicht gefunden: $path");
+                    }
+                    return "<!-- Missing theme template: $path -->";
+                }
+                return $path;
 
             default:
-                throw new \Exception("Unbekannte Quelle: $source");
+                throw new \Exception("Unbekannte Template-Quelle: $source");
         }
     }
 

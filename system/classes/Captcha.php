@@ -4,6 +4,7 @@ namespace nexpell;
 
 class Captcha
 {
+
     
     // Definiere die benötigten Eigenschaften
     public $hash;
