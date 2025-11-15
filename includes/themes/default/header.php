@@ -62,12 +62,14 @@ header('X-UA-Compatible: IE=edge');
 
     <?php
         echo $components_css ?? '';
-        echo $theme_css ?? '';
+        
         echo '<!--Plugin & Widget css-->' . PHP_EOL;
         echo $plugin_css ?? '';
+
+        echo $theme_css ?? '';
     ?>
     
-    <link rel="stylesheet" href="/includes/themes/<?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8'); ?>/css/stylesheet.css" />
+    
 
 </head>
 

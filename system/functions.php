@@ -15,58 +15,39 @@ function show_var($var) {
 // Funktion zum Laden von CSS- und JS-Dateien aus einem Template-Verzeichnis
 function headfiles($var, $path) {
     $css = "";
-    $js = "\n";
-    
-    // Überprüfung für den Fall, dass CSS-Dateien geladen werden sollen
-    switch ($var) {
-        case "css":
-            // Überprüfen, ob das Verzeichnis für CSS-Dateien existiert
-            if (is_dir($path . "css/")) { 
-                $subf = "css/"; 
-            } else { 
-                $subf = ""; 
-            }
-            
-            // Array für die CSS-Dateien
-            $f = glob(preg_replace('/(\*|\?|\[)/', '[$1]', $path . $subf) . '*.css');
-            $fc = count($f, COUNT_RECURSIVE);  // Zählen der CSS-Dateien
+    $js  = "\n";
 
-            // Wenn CSS-Dateien gefunden wurden, diese hinzufügen
+    switch ($var) {
+
+        case "css":
+            $subf = is_dir($path . "css/") ? "css/" : "";
+            $f = glob($path . $subf . '*.css');
+            $fc = count($f);
+
             if ($fc > 0) {
-                for ($b = 0; $b <= $fc - 2; $b++) {
-                    $css .= '<link type="text/css" rel="stylesheet" href="./' . $f[$b] . '" />' . chr(0x0D) . chr(0x0A);
+                for ($b = 0; $b < $fc; $b++) {
+                    $css .= '<link type="text/css" rel="stylesheet" href="./' . $f[$b] . '" />' . "\r\n";
                 }
             }
             return $css;
-            break;
 
-        // Überprüfung für den Fall, dass JS-Dateien geladen werden sollen
         case "js":
-            // Überprüfen, ob das Verzeichnis für JS-Dateien existiert
-            if (is_dir($path . "js/")) { 
-                $subf2 = "js/"; 
-            } else { 
-                $subf2 = ""; 
-            }
-            
-            // Array für die JS-Dateien
-            $g = glob(preg_replace('/(\*|\?|\[)/', '[$1]', $path . $subf2) . '*.js');
-            $fc = count($g, COUNT_RECURSIVE);  // Zählen der JS-Dateien
+            $subf2 = is_dir($path . "js/") ? "js/" : "";
+            $g = glob($path . $subf2 . '*.js');
+            $fc = count($g);
 
-            // Wenn JS-Dateien gefunden wurden, diese hinzufügen
             if ($fc > 0) {
-                for ($d = 0; $d <= $fc - 2; $d++) {
-                    $js .= '<script defer src="./' . $g[$d] . '"></script>' . chr(0x0D) . chr(0x0A);
+                for ($d = 0; $d < $fc; $d++) {
+                    $js .= '<script defer src="./' . $g[$d] . '"></script>' . "\r\n";
                 }
             }
             return $js;
-            break;
 
-        // Standardfall für ungültige Parameter
         default:
             return "<!-- invalid parameter, use 'css', 'js' or 'components' -->";
     }
 }
+
 
 
 

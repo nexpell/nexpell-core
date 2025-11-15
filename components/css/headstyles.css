@@ -127,7 +127,7 @@
   margin: 0 0 20px 0;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--bs-link-color)
+  color: var(--bs-link-color);
   font-family: "Poppins", sans-serif;
 }
 

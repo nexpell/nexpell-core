@@ -88,51 +88,234 @@ while ($row = $result->fetch_assoc()) {
     <!-- Vorschaukarten -->
     <div class="row g-3 mb-4" id="themeCards"></div>
 
-    <div class="row">
+    <div class="row border-top pt-4">
       <div class="col-md-6">
-        <h4>Navigation (Demo)</h4>
-        <?php
-        $navbars = [
-            ['id' => 'nav1', 'value' => 'bg-primary|light', 'class' => 'bg-primary', 'theme' => 'light'],
-            ['id' => 'nav2', 'value' => 'bg-dark|dark', 'class' => 'bg-dark', 'theme' => 'dark'],
-            ['id' => 'nav3', 'value' => 'bg-light|light', 'class' => 'bg-light', 'theme' => 'light'],
-            ['id' => 'nav4', 'value' => 'bg-body-tertiary|light', 'class' => 'bg-body-tertiary', 'theme' => 'light'],
-        ];
-        foreach ($navbars as $nav) {
-          $checked = $navbarStyle === $nav['value'] ? 'checked' : '';
-          echo <<<HTML
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="navbarStyle" id="{$nav['id']}" value="{$nav['value']}" $checked>
-            <label class="form-check-label" for="{$nav['id']}">
-              <nav class="navbar navbar-expand-lg {$nav['class']} mb-2" data-bs-theme="{$nav['theme']}">
-                <div class="container-fluid">
-                  <a class="navbar-brand" href="#">DemoNavbar</a>
-                </div>
-              </nav>
+    <h4>Navigation (Demo)</h4>
+
+    <?php
+    $navbars = [
+        ['id' => 'nav1', 'value' => 'bg-primary|light', 'class' => 'bg-primary', 'theme' => 'light'],
+        ['id' => 'nav2', 'value' => 'bg-dark|dark', 'class' => 'bg-dark', 'theme' => 'dark'],
+        ['id' => 'nav3', 'value' => 'bg-light|light', 'class' => 'bg-light', 'theme' => 'light'],
+        ['id' => 'nav4', 'value' => 'bg-body-tertiary|light', 'class' => 'bg-body-tertiary', 'theme' => 'light'],
+    ];
+
+    foreach ($navbars as $nav) {
+        $checked = $navbarStyle === $nav['value'] ? 'checked' : '';
+
+        echo <<<HTML
+        <div class="form-check mb-3 w-100">
+            <input class="form-check-input" type="radio" name="navbarStyle" id="{$nav['id']}"
+                value="{$nav['value']}" $checked>
+
+            <label class="form-check-label w-100" for="{$nav['id']}">
+                <nav class="navbar navbar-expand-lg {$nav['class']} mb-2 w-100 shadow-sm" data-bs-theme="{$nav['theme']}">
+                    <div class="container-fluid">
+                        <a class="navbar-brand fw-bold" href="#">Demo</a>
+
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#demoNav{$nav['id']}" aria-controls="demoNav{$nav['id']}"
+                                aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+
+                        <div class="collapse navbar-collapse" id="demoNav{$nav['id']}">
+                            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                                <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Start</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#">News</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#">Forum</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#">User</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#">Kontakt</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
             </label>
-          </div>
+        </div>
 HTML;
-        }
-        ?>
-      </div>
+    }
+    ?>
+</div>
+
 
       <div class="col-md-6">
-        <div class="mb-4">
-          <h4>Buttons (Demo)</h4>
-          <div class="d-flex flex-wrap gap-2">
-            <button class="btn btn-primary">Primär</button>
-            <button class="btn btn-secondary">Sekundär</button>
-            <button class="btn btn-success">Erfolg</button>
-            <button class="btn btn-danger">Fehler</button>
-            <button class="btn btn-warning">Warnung</button>
+    <div class="mb-4">
+        <h4>Buttons (Demo)</h4>
+
+        <!-- Standard Buttons -->
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <button class="btn btn-primary">Primary</button>
+            <button class="btn btn-secondary">Secondary</button>
+            <button class="btn btn-success">Success</button>
+            <button class="btn btn-danger">Danger</button>
+            <button class="btn btn-warning">Warning</button>
             <button class="btn btn-info">Info</button>
-            <button class="btn btn-light">Hell</button>
-            <button class="btn btn-dark">Dunkel</button>
-            <button class="btn btn-outline-primary">Umriss</button>
-          </div>
+            <button class="btn btn-light">Light</button>
+            <button class="btn btn-dark">Dark</button>
         </div>
-      </div>
+
+        <!-- Outline Buttons -->
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <button class="btn btn-outline-primary">Primary</button>
+            <button class="btn btn-outline-secondary">Secondary</button>
+            <button class="btn btn-outline-success">Success</button>
+            <button class="btn btn-outline-danger">Danger</button>
+            <button class="btn btn-outline-warning">Warning</button>
+            <button class="btn btn-outline-info">Info</button>
+            <button class="btn btn-outline-dark">Dark</button>
+        </div>
+
+        <!-- Größen -->
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <button class="btn btn-primary btn-sm">Klein</button>
+            <button class="btn btn-primary">Normal</button>
+            <button class="btn btn-primary btn-lg">Groß</button>
+        </div>
+
+        <!-- Block Buttons -->
+        <div class="mb-3">
+            <button class="btn btn-primary w-100 mb-2">Block Button 1</button>
+            <button class="btn btn-secondary w-100">Block Button 2</button>
+        </div>
+
+        <!-- Buttons mit Icons -->
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <button class="btn btn-primary">
+                <i class="bi bi-star-fill"></i> Favorit
+            </button>
+            <button class="btn btn-success">
+                <i class="bi bi-check-circle"></i> OK
+            </button>
+            <button class="btn btn-danger">
+                <i class="bi bi-x-circle"></i> Löschen
+            </button>
+        </div>
+
+        <!-- Loading Buttons -->
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <button class="btn btn-primary" disabled>
+                <span class="spinner-border spinner-border-sm"></span>
+                Lädt...
+            </button>
+            <button class="btn btn-secondary" disabled>
+                <span class="spinner-grow spinner-grow-sm"></span>
+                Warte...
+            </button>
+        </div>
+
+        <!-- Button Group -->
+        <div class="btn-group mb-3" role="group">
+            <button class="btn btn-outline-primary">Links</button>
+            <button class="btn btn-outline-primary">Mitte</button>
+            <button class="btn btn-outline-primary">Rechts</button>
+        </div>
     </div>
+</div>
+
+
+    <!-- Weitere Bootstrap Komponenten -->
+<div class="row mt-4">
+    <!-- Alerts -->
+    <div class="col-md-6 mb-4">
+        <h4>Alerts (Demo)</h4>
+        <div class="alert alert-primary">Primary Alert</div>
+        <div class="alert alert-success">Success Alert</div>
+        <div class="alert alert-danger">Danger Alert</div>
+        <div class="alert alert-warning">Warning Alert</div>
+    </div>
+
+    <!-- Badges & Progress -->
+    <div class="col-md-6 mb-4">
+        <h4>Badges & Progress</h4>
+        <span class="badge bg-primary">Primary</span>
+        <span class="badge bg-secondary">Secondary</span>
+        <span class="badge bg-success">Success</span>
+
+        <div class="progress mt-3" style="height: 20px;">
+            <div class="progress-bar" role="progressbar" style="width: 60%;">
+                60%
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Card Style Preview -->
+    <div class="col-md-6 mb-4">
+        <h4>Card (Demo)</h4>
+        <div class="card shadow-sm">
+            <div class="card-header">Card Header</div>
+            <div class="card-body">
+                <h5 class="card-title">Card Title</h5>
+                <p class="card-text">
+                    Beispieltext für eine Standard-Bootstrap-Karte.
+                </p>
+                <a href="#" class="btn btn-primary btn-sm">Button</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabelle -->
+    <div class="col-md-6 mb-4">
+        <h4>Tabelle (Demo)</h4>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Max Mustermann</td>
+                    <td><span class="badge bg-success">Aktiv</span></td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Lisa Beispiel</td>
+                    <td><span class="badge bg-warning">Wartend</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Accordion & Pagination -->
+<div class="row mt-4 mb-5">
+    <div class="col-md-6 mb-4">
+        <h4>Accordion (Demo)</h4>
+        <div class="accordion" id="demoAcc">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="acc1">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#col1">
+                        Accordion Titel
+                    </button>
+                </h2>
+                <div id="col1" class="accordion-collapse collapse show">
+                    <div class="accordion-body">
+                        Beispielinhalt des Accordions.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="col-md-6 mb-4">
+        <h4>Pagination (Demo)</h4>
+        <nav>
+            <ul class="pagination">
+                <li class="page-item disabled"><span class="page-link">Zurück</span></li>
+                <li class="page-item active"><span class="page-link">1</span></li>
+                <li class="page-item"><span class="page-link">2</span></li>
+                <li class="page-item"><span class="page-link">Weiter</span></li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
 
     <!-- Speichern -->
     <div class="mb-5">

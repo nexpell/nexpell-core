@@ -11,5 +11,5 @@ use nexpell\AccessControl;
 AccessControl::checkAdminAccess('ac_theme');
 
 ?>
-<iframe src="theme_preview.php?v=<?php echo time(); ?>" width="100%" height="800" style="border: 1px solid #ccc;"></iframe>
+<iframe src="theme_preview.php?v=<?php echo time(); ?>" width="100%" height="2200" style="border: 1px solid #ccc;"></iframe>
 

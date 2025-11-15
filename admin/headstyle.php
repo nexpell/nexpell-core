@@ -1,120 +1,171 @@
 <?php
 use nexpell\LanguageService;
+use nexpell\AccessControl;
 
 // Session absichern
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Standard setzen, wenn nicht vorhanden
+// Standard Sprache setzen wenn nicht vorhanden
 $_SESSION['language'] = $_SESSION['language'] ?? 'de';
 
-// Initialisieren
-global $languageService;
+// Language init
+global $languageService,$_database;;
 $languageService = new LanguageService($_database);
-
-// Admin-Modul laden
 $languageService->readModule('headstyle', true);
 
-use nexpell\AccessControl;
-
-// Admin access check
+// Admin Rechte
 AccessControl::checkAdminAccess('ac_headstyle');
 
-// Handle form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_style'])) {
-    // sanitize input
-    $style = htmlspecialchars($_POST['selected_style'] ?? '', ENT_QUOTES, 'UTF-8');
-    // update in database (use prepared statement)
-    $stmt =  $_database->prepare("UPDATE settings_headstyle_config SET selected_style = ? WHERE id = 1");
-    mysqli_stmt_bind_param($stmt, 's', $style);
-    mysqli_stmt_execute($stmt);
-    mysqli_stmt_close($stmt);
-
-    echo '<div class="alert alert-success alert-dismissible fade show" role="alert">';
-    echo sprintf($languageService->get('alert_save_success'), htmlspecialchars($style));
-    echo '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="' . $languageService->get('close') . '"></button>';
-    echo '</div>';
-}
-
-// Fetch current selection
+// Aktuellen Style laden
 $res = safe_query("SELECT selected_style FROM settings_headstyle_config WHERE id = 1");
 $current = mysqli_fetch_assoc($res);
 $selected = $current['selected_style'] ?? '';
 
-// Styles array (key => label)
+// Styles array (key → label)
 $styles = [];
 for ($i = 1; $i <= 10; $i++) {
     $key = "head-boxes-$i";
     $styles[$key] = sprintf($languageService->get('headline_style'), $i);
 }
-
 ?>
+
 <style>
-    input[type="radio"]:checked + label {
-        font-weight: bold;
-        font-size: 0.9rem;
-        color: #fe821d;
-    }
+.style-card {
+    cursor: pointer;
+    transition: 0.25s ease;
+}
 
-    input[type="radio"]:checked + label::before {
-        content: '✔ ';
-        font-size: 1.2rem;
-        color: #fe821d;
-    }
+.style-card.active {
+    border: 2px solid #28a745 !important;
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.45);
+    transform: scale(1.01);
+}
 
-    input[type="radio"]:checked {
-        transform: scale(1.2);
-    }
+.style-card:hover {
+    border-color: #fe821d;
+}
 
-    input[type="radio"].form-check-input:checked {
-        accent-color: #0d6efd;
-    }
-    .form-check-label.custom-height {
-        height: 30px;
-        line-height: 30px;
-    }
+/* Bootstrap Toast rechts unten */
+.toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 99999;
+}
 </style>
+
+<div class="toast-container"></div>
 
 <div class="card">
     <div class="card-header">
         <?= $languageService->get('select_headline_style'); ?>
     </div>
-    <div class="card-body"><div class="container py-5">
 
-<form method="post" class="row">
-    
-    <?php foreach (array_chunk($styles, 5, true) as $column): ?>
-        <div class="col-md-6">
-            <div class="row row-cols-1">
-                <?php foreach ($column as $key => $label): ?>
-                    <div class="col">
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <input class="form-check-input mb-2"
-                                        type="radio"
-                                        name="selected_style"
-                                        id="style_<?= $key ?>"
-                                        value="<?= htmlspecialchars($key) ?>"
-                                        <?= $selected === $key ? 'checked' : '' ?> />
+    <div class="card-body">
+        <div class="container py-5">
 
-                                <label class="form-check-label d-block mb-2 custom-height" for="style_<?= $key ?>">
-                                    <?= htmlspecialchars($label) ?>
-                                </label>
-                                <img src="/admin/images/headlines/<?= str_replace('head-boxes-', 'headlines-', $key) ?>.jpg"
-                                            alt="<?= htmlspecialchars($label) ?>"
-                                            class="img-fluid rounded"
-                                            style="max-height: 180px; border:1px solid #dee2e6;" />
-                            </div>
+            <div class="row">
+
+            <?php foreach (array_chunk($styles, 5, true) as $column): ?>
+                <div class="col-md-6">
+                    <div class="row row-cols-1">
+                    <?php foreach ($column as $key => $label): ?>
+                        <div class="col">
+
+                            <!-- Klickbare Card -->
+                            <label class="card style-card <?= ($selected === $key ? 'active' : '') ?>">
+
+                                <!-- Radio (unsichtbar, aber klickbar über die Karte) -->
+                                <input type="radio"
+                                       name="selected_style"
+                                       class="select-radio d-none"
+                                       value="<?= htmlspecialchars($key) ?>"
+                                       <?= $selected === $key ? 'checked' : '' ?> />
+
+                                <div class="card-body text-center">
+
+                                    <div class="fw-bold mb-2 custom-height">
+                                        <?= htmlspecialchars($label) ?>
+                                    </div>
+
+                                    <img src="/admin/images/headlines/<?= str_replace('head-boxes-', 'headlines-', $key) ?>.jpg"
+                                        alt="<?= htmlspecialchars($label) ?>"
+                                        class="img-fluid rounded"
+                                        style="max-height: 180px; border:1px solid #dee2e6;">
+                                </div>
+
+                            </label>
+
                         </div>
+                    <?php endforeach; ?>
                     </div>
-                <?php endforeach; ?>
+                </div>
+            <?php endforeach; ?>
+
             </div>
+
         </div>
-    <?php endforeach; ?>
-    <br class="mb-3">
-    <div class="col-12 mb-3">
-        <button type="submit" class="btn btn-primary"><?= $languageService->get('save'); ?></button>
     </div>
-</form>
-</div></div></div>
+</div>
+
+<!-- JAVASCRIPT: Auswahl & Speichern per AJAX -->
+<script>
+// Toast Nachricht anzeigen
+// Toast Nachricht anzeigen
+function showToast(type, message) {
+    const id = "toast-" + Math.random().toString(36).substring(2);
+
+    const toastHTML = `
+        <div id="${id}" class="toast align-items-center text-white bg-${type} border-0 mb-2" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>`;
+
+    document.querySelector(".toast-container").insertAdjacentHTML("beforeend", toastHTML);
+
+    const toastElement = new bootstrap.Toast(document.getElementById(id));
+    toastElement.show();
+}
+
+// Live-Auswahl & Speichern
+document.querySelectorAll('.select-radio').forEach(radio => {
+
+    radio.addEventListener('change', function () {
+
+        let selectedStyle = this.value;
+
+        document.querySelectorAll('.style-card').forEach(card => {
+            card.classList.remove('active');
+        });
+        this.closest('.style-card').classList.add('active');
+
+        fetch("headstyle_save.php", {
+    method: "POST",
+    credentials: 'include',
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: "style=" + encodeURIComponent(selectedStyle)
+})
+.then(res => res.text())
+.then(msg => {
+    console.log("Antwort:", msg);
+
+    if (msg.trim() === "OK") {
+        showToast('success', '✔ Stil gespeichert!');
+    } else {
+        showToast('danger', '❌ Fehler: ' + msg);
+    }
+})
+.catch(err => {
+    console.error(err);
+    showToast('danger', '❌ AJAX Fehler');
+});
+
+    });
+
+});
+
+</script>
