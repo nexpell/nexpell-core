@@ -236,11 +236,20 @@ $data_array['current_version'] = CURRENT_VERSION;
 // ============================================================
 // 🧩 Jetzt: Beta- und Zugriffsschutz-Filter anwenden
 // ============================================================
+// -------------------------------------------------------
+// Benutzer-IP holen
+// -------------------------------------------------------
 $client_ip = $_SERVER['REMOTE_ADDR'] ?? '';
-//$user_email = $_SESSION['user_email'] ?? '';
-// Fallback: Wenn keine E-Mail in der Session steht, aus Datenbank laden
+
+
+// -------------------------------------------------------
+// Benutzer-E-Mail holen
+// -------------------------------------------------------
+$user_email = $_SESSION['user_email'] ?? '';
+
 if (empty($user_email) && isset($_SESSION['userID'])) {
     $uid = (int)$_SESSION['userID'];
+
     $res = safe_query("SELECT email FROM users WHERE userID = {$uid} LIMIT 1");
     if ($res && mysqli_num_rows($res) > 0) {
         $row = mysqli_fetch_assoc($res);
@@ -248,11 +257,23 @@ if (empty($user_email) && isset($_SESSION['userID'])) {
     }
 }
 
-$updates = array_filter($update_info['updates'], function ($entry) use ($client_ip, $user_email) {
-    // Normale Updates → sichtbar
-    if (empty($entry['beta']) || !$entry['beta']) return true;
 
-    // Beta → nur für bestimmte Nutzer/IPs
+// -------------------------------------------------------
+// Updates filtern
+// -------------------------------------------------------
+$updates = array_filter($update_info['updates'], function ($entry) use ($client_ip, $user_email) {
+
+    // Normale Updates → immer sichtbar
+    if (empty($entry['beta']) || !$entry['beta']) {
+        return true;
+    }
+
+    // Beta + visible_for = ["all"] → alle dürfen sehen
+    if (!empty($entry['visible_for']) && in_array('all', $entry['visible_for'], true)) {
+        return true;
+    }
+
+    // Beta → nur bestimmte Nutzer/IPs
     if (!empty($entry['visible_for'])) {
         foreach ($entry['visible_for'] as $allowed) {
             if ($client_ip === $allowed || $user_email === $allowed) {
@@ -260,14 +281,21 @@ $updates = array_filter($update_info['updates'], function ($entry) use ($client_
             }
         }
     }
+
+    // Standard: Nicht sichtbar
     return false;
 });
 
+
+// -------------------------------------------------------
 // Nur neuere Versionen als aktuelle anzeigen
+// -------------------------------------------------------
 $updates = array_values(array_filter(
     $updates,
     fn($entry) => version_compare($entry['version'], CURRENT_VERSION, '>')
 ));
+
+
 
 /* ========================================================================
    🧩 ACTION: START
@@ -676,5 +704,4 @@ if ($action === 'finish') {
     echo $tpl->loadTemplate('update_core', 'wizard', $data_array, 'admin');
     #exit;
 }
-
 

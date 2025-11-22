@@ -12,13 +12,32 @@ class CMSUpdater
     {
         $this->logMsg("🚀 CMS-Update gestartet...");
 
-        // --- Bootstrap-Systemdateien zuerst aktualisieren ---
-        $this->updateCoreFiles();
+        $lockfile = __DIR__ . '/../../system/update_lock.txt';
+        $versionFile = __DIR__ . '/../../system/version.php';
+        $currentVersion = file_exists($versionFile) ? include $versionFile : '1.0.0';
 
-        // --- Migrationen ausführen ---
+        // 1️⃣ Stop bei 1.0.1 (alter Updater)
+        if (($currentVersion === '1.0.1') || (file_exists($lockfile) && version_compare($currentVersion, '1.0.1', '<='))) {
+            $this->logMsg("⛔ Update gestoppt – Lockdatei erkannt oder Version {$currentVersion} blockiert weitere Updates.");
+            return $this->renderLog();
+        }
+
+        // 2️⃣ Lock entfernen wenn neuer Updater aktiv
+        if (file_exists($lockfile) && version_compare($currentVersion, '1.0.1', '>')) {
+            @unlink($lockfile);
+            $this->logMsg("🔓 Lockdatei entfernt – neuer Updater erkannt (Version {$currentVersion}).");
+        }
+
+        // 🔄 Migrationen
         $this->runMigrations();
 
-        // --- Temporäres Updateverzeichnis bereinigen ---
+        // 📦 Systemdateien
+        $this->updateCoreFiles();
+
+        // 🔄 Statistiken loggen
+        $this->sendUpdateStats($currentVersion);
+
+        // 🧹 TMP löschen
         $this->cleanupTmp();
 
         $this->logMsg("✅ Update abgeschlossen.");
@@ -26,8 +45,38 @@ class CMSUpdater
     }
 
     /**
-     * Kopiert CMSUpdater.php & DatabaseMigrationHelper.php
-     * aus dem temporären Update-Paket nach /system/classes/
+     * 📡 Statistiken an update.nexpell.de senden
+     */
+    private function sendUpdateStats(string $oldVersion): void
+    {
+        $site = $_SERVER['SERVER_NAME'] ?? 'unknown';
+        $ip   = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+
+        // Versionsdatei lesen nach Update
+        $versionFile = __DIR__ . '/../../system/version.php';
+        $newVersion = file_exists($versionFile) ? include $versionFile : $oldVersion;
+
+        $url = "https://update.nexpell.de/system/download.php"
+             . "?type=update"
+             . "&file=" . rawurlencode("core_update_{$newVersion}.zip")
+             . "&version_old=" . rawurlencode($oldVersion)
+             . "&version_new=" . rawurlencode($newVersion)
+             . "&site=" . rawurlencode($site)
+             . "&ip=" . rawurlencode($ip);
+
+        $this->logMsg("🌐 Sende Update-Statistik an update.nexpell.de ...");
+
+        $res = @file_get_contents($url);
+
+        if ($res !== false) {
+            $this->logMsg("📊 Update-Statistik erfolgreich übermittelt.");
+        } else {
+            $this->logMsg("⚠️ Update-Statistik konnte nicht gesendet werden.");
+        }
+    }
+
+    /**
+     * Systemdateien aktualisieren
      */
     private function updateCoreFiles(): void
     {
@@ -41,13 +90,6 @@ class CMSUpdater
             'DatabaseMigrationHelper.php'
         ];
 
-        // 👉 Dateien, die bei bestimmten Übergangs-Versionen fehlen dürfen
-        $skipMissing = [];
-        if (defined('CURRENT_VERSION') && CURRENT_VERSION === '1.0.1') {
-            // Bei Update 1.0.2 bewusst keine Warnung
-            $skipMissing = $files;
-        }
-
         foreach ($files as $file) {
             $src = $source . $file;
             $dst = $target . $file;
@@ -59,19 +101,13 @@ class CMSUpdater
                     $this->logMsg("❌ Fehler: $file konnte nicht kopiert werden!");
                 }
             } else {
-                // ❗️nur loggen, wenn Datei NICHT in Skip-Liste
-                if (!in_array($file, $skipMissing, true)) {
-                    $this->logMsg("⚠️ Datei $file fehlt im Update-Paket.");
-                } else {
-                    $this->logMsg("ℹ️ $file wird bei Version 1.0.2 nicht aktualisiert (Übergangsupdate).");
-                }
+                $this->logMsg("ℹ️ $file nicht im Updatepaket gefunden – übersprungen.");
             }
         }
     }
 
-
     /**
-     * Führt Migrationen (z. B. /admin/tmp/migrations/*.php) aus
+     * Migrationen ausführen
      */
     private function runMigrations(): void
     {
@@ -89,10 +125,7 @@ class CMSUpdater
             return;
         }
 
-        // Nach Version sortieren (z. B. 1.0.0, 1.0.1, 1.0.2)
         sort($migrations, SORT_NATURAL);
-
-        // Nur die höchste Version behalten
         $latestFile = end($migrations);
         $latestVersion = basename($latestFile, '.php');
 
@@ -101,9 +134,8 @@ class CMSUpdater
         foreach ($migrations as $migrationFile) {
             $version = basename($migrationFile, '.php');
 
-            // Nur die höchste Version wirklich ausführen
             if ($version !== $latestVersion) {
-                $this->logMsg("⏩ Überspringe ältere Migration $version (bereits veraltet).");
+                $this->logMsg("⏩ Überspringe ältere Migration $version.");
                 continue;
             }
 
@@ -117,9 +149,8 @@ class CMSUpdater
         }
     }
 
-
     /**
-     * Löscht /admin/tmp/ nach erfolgreichem Update
+     * TMP löschen
      */
     private function cleanupTmp(): void
     {
@@ -145,7 +176,6 @@ class CMSUpdater
         $this->logMsg("✅ Temporäres Verzeichnis gelöscht (/admin/tmp/).");
     }
 
-    // --- Logging-Helfer ---
     private function logMsg(string $message): void
     {
         $this->log[] = date('[Y-m-d H:i:s] ') . $message;
@@ -157,10 +187,12 @@ class CMSUpdater
         foreach ($this->log as $entry) {
             if (str_contains($entry, '❌')) {
                 $html .= "<div class='alert alert-danger py-1 my-1'><i class='bi bi-x-circle-fill me-2'></i>" . htmlspecialchars($entry) . "</div>";
-            } elseif (str_contains($entry, '⚠️')) {
+            } elseif (str_contains($entry, '⚠️') || str_contains($entry, '⛔')) {
                 $html .= "<div class='alert alert-warning py-1 my-1'><i class='bi bi-exclamation-triangle-fill me-2'></i>" . htmlspecialchars($entry) . "</div>";
             } elseif (str_contains($entry, '✅')) {
                 $html .= "<div class='alert alert-success py-1 my-1 small'><i class='bi bi-check-circle-fill me-2'></i>" . htmlspecialchars($entry) . "</div>";
+            } elseif (str_contains($entry, '🌐')) {
+                $html .= "<div class='alert alert-info py-1 my-1 small'><i class='bi bi-cloud-arrow-up me-2'></i>" . htmlspecialchars($entry) . "</div>";
             } else {
                 $html .= "<div class='text-muted small'>" . htmlspecialchars($entry) . "</div>";
             }

@@ -282,69 +282,62 @@ echo '
 
 function download_plugin_files(string $plugin_folder, string $local_plugin_folder, string $plugin_path): bool
 {
-    // Vollständige URL zum Download der ZIP-Datei, z.B.:
-    // https://www.update.nexpell.de/plugins/download.php?plugin=mein_plugin&site=deinedomain.de
-    $url = rtrim($plugin_path, '/') . '/download.php?plugin=' . rawurlencode($plugin_folder) . '&site=' . rawurlencode($_SERVER['SERVER_NAME']);
-    
-    // Temporärer Pfad für die ZIP-Datei
-    $local_zip = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $plugin_folder . '.zip';
+    // NEUE UNIVERSAL-DOWNLOAD-API — KORREKTER LINK
+    $download_url =
+        "https://www.update.nexpell.de/system/download.php"
+        . "?type=plugin"
+        . "&file=" . rawurlencode($plugin_folder . ".zip")
+        . "&site=" . rawurlencode($_SERVER['SERVER_NAME']);
 
-    // Lokales Plugin-Verzeichnis anlegen, falls nicht existent
-    if (!is_dir($local_plugin_folder) && !mkdir($local_plugin_folder, 0755, true)) {
-        echo '<div class="alert alert-danger">Kann Verzeichnis nicht erstellen: ' . htmlspecialchars($local_plugin_folder) . '</div>';
-        return false;
+    // Temporäre Datei
+    $local_zip = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $plugin_folder . ".zip";
+
+    // Plugin-Ordner anlegen
+    if (!is_dir($local_plugin_folder)) {
+        mkdir($local_plugin_folder, 0755, true);
     }
 
-    // ZIP-Datei vom Server herunterladen
-    $zip_content = @file_get_contents($url);
+    // ZIP herunterladen
+    $zip_content = @file_get_contents($download_url);
     if ($zip_content === false) {
-        echo '<div class="alert alert-danger">Download fehlgeschlagen: ' . htmlspecialchars($url) . '</div>';
+        echo '<div class="alert alert-danger">Download fehlgeschlagen: ' . htmlspecialchars($download_url) . '</div>';
         return false;
     }
 
-    // ZIP-Inhalt in temporäre Datei speichern
+    // Speichern
     if (file_put_contents($local_zip, $zip_content) === false) {
-        echo '<div class="alert alert-danger">Konnte ZIP-Datei nicht speichern.</div>';
+        echo '<div class="alert alert-danger">Konnte ZIP nicht speichern.</div>';
         return false;
     }
 
-    // ZIP-Datei öffnen
+    // ZIP öffnen
     $zip = new ZipArchive();
-    if ($zip->open($local_zip) === true) {
-
-        // Vorheriges Plugin-Verzeichnis löschen, falls vorhanden
-        if (is_dir($local_plugin_folder)) {
-            deleteFolder($local_plugin_folder);
-        }
-
-        // Sicherstellen, dass Zielordner existiert
-        if (!mkdir($local_plugin_folder, 0755, true) && !is_dir($local_plugin_folder)) {
-            echo '<div class="alert alert-danger">Konnte Zielverzeichnis nicht anlegen.</div>';
-            $zip->close();
-            @unlink($local_zip);
-            return false;
-        }
-
-        // ZIP entpacken
-        if (!$zip->extractTo($local_plugin_folder)) {
-            echo '<div class="alert alert-danger">ZIP-Datei konnte nicht entpackt werden.</div>';
-            $zip->close();
-            @unlink($local_zip);
-            return false;
-        }
-
-        $zip->close();
-    } else {
-        echo '<div class="alert alert-danger">ZIP-Datei konnte nicht geöffnet werden.</div>';
+    if ($zip->open($local_zip) !== true) {
+        echo '<div class="alert alert-danger">ZIP konnte nicht geöffnet werden.</div>';
         @unlink($local_zip);
         return false;
     }
 
-    // Temporäre ZIP-Datei löschen
+    // Vorher altes Plugin löschen
+    if (is_dir($local_plugin_folder)) {
+        deleteFolder($local_plugin_folder);
+        mkdir($local_plugin_folder, 0755, true);
+    }
+
+    // Entpacken
+    if (!$zip->extractTo($local_plugin_folder)) {
+        echo '<div class="alert alert-danger">Entpacken fehlgeschlagen.</div>';
+        $zip->close();
+        @unlink($local_zip);
+        return false;
+    }
+
+    $zip->close();
     @unlink($local_zip);
 
     return true;
 }
+
 
 /**
  * Löscht ein Verzeichnis rekursiv.

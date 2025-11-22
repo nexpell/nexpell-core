@@ -1,5 +1,8 @@
 STARTSEITE
- └── Pakete / Preise             → index.php?site=pricing
+
+Aktuelles
+ ├── Pakete / Preise             → index.php?site=pricing
+ └── News                      	 → index.php?site=news
 
 ÜBER UNS
  ├── Über uns                    → index.php?site=about
@@ -17,18 +20,22 @@ MEDIEN
  ├── Galerie                     → index.php?site=gallery
  └── Serverliste (Masterlist)    → index.php?site=masterlist
 
-PARTNER & SUPPORT
+SERVICE 
+ ├── Links                       → index.php?site=links
+ └── Downloads                   → index.php?site=downloads
+
+
  ├── Partner                     → index.php?site=partners
  ├── Sponsoren                   → index.php?site=sponsors
  ├── Links                       → index.php?site=links
  └── Downloads                   → index.php?site=downloads
 
 NETZWERK
- └── Discord                     → index.php?site=discord
-
-INFORMATION
  ├── Kontakt                     → index.php?site=contact
  ├── Serverstatus                → index.php?site=servers
- ├── Gametracker                 → index.php?site=gametracker
+ └── Discord                     → index.php?site=discord
+
+im FOOTER
+ ├── Kontakt                     → index.php?site=contact
  ├── Datenschutz                 → index.php?site=privacy_policy
  └── Impressum                   → index.php?site=imprint

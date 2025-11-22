@@ -260,70 +260,75 @@ break;
  */
 function download_theme_files(string $theme_folder, string $local_theme_folder, string $theme_path): bool
 {
-    $remote_url = $theme_path . '/' . $theme_folder . '.zip';
+    // Neue Remote-URL mit Statistik-Tracking
+    $remote_url = "https://update.nexpell.de/system/download.php"
+                . "?type=theme"
+                . "&file=" . rawurlencode($theme_folder . ".zip")
+                . "&site=" . rawurlencode($_SERVER['SERVER_NAME']);
+
     $local_zip = tempnam(sys_get_temp_dir(), 'theme_') . '.zip';
 
-    if (!@copy($remote_url, $local_zip)) {
+    // ZIP laden
+    $zip_content = @file_get_contents($remote_url);
+    if ($zip_content === false) {
+        echo '<div class="alert alert-danger">Download fehlgeschlagen: ' . htmlspecialchars($remote_url) . '</div>';
+        return false;
+    }
+
+    if (file_put_contents($local_zip, $zip_content) === false) {
+        echo '<div class="alert alert-danger">ZIP konnte lokal nicht gespeichert werden.</div>';
         return false;
     }
 
     $zip = new ZipArchive();
-    if ($zip->open($local_zip) === true) {
-        $temp_extract_dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'theme_extract_' . uniqid();
-        @mkdir($temp_extract_dir, 0755, true);
-        
-        if (!$zip->extractTo($temp_extract_dir)) {
-            $zip->close();
-            unlink($local_zip);
-            return false;
-        }
-
-        $zip->close();
+    if ($zip->open($local_zip) !== true) {
         unlink($local_zip);
-
-        // Prüfe, ob innerhalb des Archivs ein Ordner liegt
-        $entries = scandir($temp_extract_dir);
-        $entries = array_diff($entries, ['.', '..']);
-
-        if (count($entries) === 1 && is_dir($temp_extract_dir . '/' . reset($entries))) {
-            // ZIP enthält einen Ordner mit demselben Namen – verschiebe nur diesen
-            $source_dir = $temp_extract_dir . '/' . reset($entries);
-        } else {
-            // ZIP enthält direkt Dateien – nimm gesamten temp-Ordner als Quelle
-            $source_dir = $temp_extract_dir;
-        }
-
-        // Lösche ggf. bestehendes Theme-Verzeichnis
-        if (is_dir($local_theme_folder)) {
-            deleteFolder($local_theme_folder);
-        }
-
-        // Zielordner anlegen
-        @mkdir($local_theme_folder, 0755, true);
-
-        // Inhalte kopieren
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($source_dir, RecursiveDirectoryIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::SELF_FIRST
-        );
-
-        foreach ($iterator as $item) {
-            $targetPath = $local_theme_folder . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
-            if ($item->isDir()) {
-                @mkdir($targetPath, 0755, true);
-            } else {
-                copy($item, $targetPath);
-            }
-        }
-
-        // Temporären Entpack-Ordner löschen
-        deleteFolder($temp_extract_dir);
-
-        return true;
+        echo '<div class="alert alert-danger">ZIP konnte nicht geöffnet werden.</div>';
+        return false;
     }
 
-    return false;
+    // Entpack-Pfad vorbereiten
+    $temp_extract_dir = sys_get_temp_dir() . '/theme_extract_' . uniqid();
+    mkdir($temp_extract_dir, 0755, true);
+
+    if (!$zip->extractTo($temp_extract_dir)) {
+        $zip->close();
+        unlink($local_zip);
+        echo '<div class="alert alert-danger">ZIP konnte nicht entpackt werden.</div>';
+        return false;
+    }
+    $zip->close();
+    unlink($local_zip);
+
+    // Verschieben / ins Ziel kopieren
+    $entries = array_diff(scandir($temp_extract_dir), ['.', '..']);
+    $source_dir = (count($entries) == 1 && is_dir($temp_extract_dir . '/' . reset($entries)))
+        ? $temp_extract_dir . '/' . reset($entries)
+        : $temp_extract_dir;
+
+    if (is_dir($local_theme_folder)) {
+        deleteFolder($local_theme_folder);
+    }
+    mkdir($local_theme_folder, 0755, true);
+
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($source_dir, RecursiveDirectoryIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST
+    );
+
+    foreach ($iterator as $item) {
+        $targetPath = $local_theme_folder . '/' . $iterator->getSubPathName();
+        if ($item->isDir()) {
+            mkdir($targetPath, 0755, true);
+        } else {
+            copy($item, $targetPath);
+        }
+    }
+
+    deleteFolder($temp_extract_dir);
+    return true;
 }
+
 
 
 /**
