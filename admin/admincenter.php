@@ -511,14 +511,15 @@ header('Content-Type: text/html; charset=UTF-8');
 		#$roleID = RoleManager::getUserRoleID($userID);
 
         #if ($roleID !== null && RoleManager::roleHasPermission($roleID, 'ckeditor_full')) {
-            echo '<script src="../components/ckeditor/ckeditor.js"></script>';
-            echo '<script src="../components/ckeditor/config.js"></script>';
+            #echo '<script src="../components/ckeditor/ckeditor.js"></script>';
+            #echo '<script src="../components/ckeditor/config.js"></script>';
         #} else {
         #    echo '<script src="../components/ckeditor/ckeditor.js"></script>';
         #    echo '<script src="../components/ckeditor/user_config.js"></script>';
         #}
 		?>
-
+        <script src="../components/ckeditor/ckeditor.js"></script>
+        <script src="../components/ckeditor/config.js"></script>
 		<!-- jQuery -->
 		<script src="/admin/js/jquery.min.js"></script>
 

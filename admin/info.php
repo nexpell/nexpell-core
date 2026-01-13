@@ -527,7 +527,7 @@ if ($updateAvailable) {
                                     <strong><?= htmlspecialchars($news['title']); ?></strong>
                                     <small class="text-muted"><?= htmlspecialchars($news['date']); ?></small>
                                 </div>
-                                <p class="mb-0 small"><?= htmlspecialchars($news['summary']); ?></p>
+                                <p class="mb-0 small"><?= $news['summary']; ?></p>
                             </a>
                         <?php else: ?>
                             <div class="list-group-item">
@@ -535,7 +535,7 @@ if ($updateAvailable) {
                                     <strong><?= htmlspecialchars($news['title']); ?></strong>
                                     <small class="text-muted"><?= htmlspecialchars($news['date']); ?></small>
                                 </div>
-                                <p class="mb-0 small"><?= htmlspecialchars($news['summary']); ?></p>
+                                <p class="mb-0 small"><?= $news['summary']; ?></p>
                             </div>
                         <?php endif; ?>
                     <?php endforeach; ?>
