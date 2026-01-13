@@ -66,7 +66,7 @@ Die Installation erfolgt **ausschließlich über den neuen Web-Installer**, der 
    Lade den Installer auf deinen Webserver (Root-Verzeichnis)
 
 3. **Installer aufrufen:**  
-   `https://deinedomain.de/installer.php`
+   `https://deinedomain.de/index.php oder https://deinedomain.de/install/index.php`
 
 4. **Durch die 6 Schritte folgen:**
    - Serverprüfung
